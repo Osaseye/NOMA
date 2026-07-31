@@ -1,0 +1,33 @@
+export const storefrontRoutes = {
+  home: '/',
+  catalog: '/catalog',
+  category: '/category/:categoryId',
+  product: '/product/:slug',
+  cart: '/cart',
+  checkout: '/checkout',
+  success: '/order-success',
+  tracking: '/track-order',
+  whatsapp: '/whatsapp-order',
+  about: '/about',
+  contact: '/contact',
+  faq: '/faq',
+  policies: '/policies',
+  account: '/account',
+}
+
+export const adminRoutes = {
+  login: '/admin/login',
+  dashboard: '/admin',
+  orders: '/admin/orders',
+  orderDetail: '/admin/orders/:orderId',
+  products: '/admin/products',
+  productEditor: '/admin/products/:productId/edit',
+  inventory: '/admin/inventory',
+  categories: '/admin/categories',
+  customers: '/admin/customers',
+  revenue: '/admin/revenue',
+  profit: '/admin/profit',
+  suppliers: '/admin/suppliers',
+  reports: '/admin/reports',
+  settings: '/admin/settings',
+}
