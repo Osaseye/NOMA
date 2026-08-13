@@ -1,7 +1,6 @@
-import { ChevronLeft, ChevronRight, Heart, Search, Star, Zap } from 'lucide-react'
+import { ChevronRight, Heart, Search, Star, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useCartStore } from '../../store/cartStore'
 import type { Product } from '../../types/commerce'
 import { formatNaira } from '../../utils/pricing'
 
@@ -28,7 +27,6 @@ export function ProductDetail({ product, onAddToCart }: { product: Product; onAd
   const [selectedSize, setSelectedSize] = useState('M')
   const [selectedColor, setSelectedColor] = useState('black')
 
-  const { addItem } = useCartStore()
   const isClothing = product.category === 'clothing'
 
   const handleAddToCart = () => {

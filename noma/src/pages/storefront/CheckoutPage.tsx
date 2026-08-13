@@ -1,4 +1,4 @@
-import { Check, CreditCard, Lock, MapPin, Smartphone, Truck, User } from 'lucide-react'
+import { CreditCard, Lock, MapPin, Smartphone, Truck, User } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'

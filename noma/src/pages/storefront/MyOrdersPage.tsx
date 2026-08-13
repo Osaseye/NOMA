@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronDown, ChevronUp, MapPin, Package, Truck, User } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronUp, Truck, User } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatNaira } from '../../utils/pricing'

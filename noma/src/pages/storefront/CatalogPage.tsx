@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, Home, Search, Truck } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { categories, products } from '../../mock/commerce'
 import { useCartStore } from '../../store/cartStore'
@@ -15,7 +15,6 @@ const sortOptions = [
 
 export function CatalogPage() {
   const { categoryId } = useParams()
-  const navigate = useNavigate()
   const addItem = useCartStore((s) => s.addItem)
   const [sort, setSort] = useState('popular')
   const [sortOpen, setSortOpen] = useState(false)

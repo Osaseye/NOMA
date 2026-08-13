@@ -1,4 +1,4 @@
-export type CategoryId = 'electronics' | 'appliances' | 'cooking' | 'bicycles' | 'wines' | 'general'
+export type CategoryId = 'electronics' | 'appliances' | 'cooking' | 'bicycles' | 'wines' | 'general' | 'clothing'
 
 export type OrderStatus = 'placed' | 'packed' | 'dispatched' | 'delivered'
 
