@@ -1,65 +1,47 @@
-import { ChevronLeft, ChevronRight, Truck } from 'lucide-react'
+// TrendingNow.tsx
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { ImagePlaceholder } from '../../components/ui/ImagePlaceholder'
 import { formatNaira } from '../../utils/pricing'
+import { FaShoppingBag } from 'react-icons/fa'
 
 type TrendingProduct = {
   id: string
   slug: string
   name: string
-  image: string
   price: number
 }
 
-// Update image filenames as you add pictures to /public/products/
 const trendingProducts: TrendingProduct[] = [
   {
     id: 't1',
     slug: 'sumec-firman-generator',
     name: 'Sumec Firman Generator',
-    image: '/products/generator.png',
     price: 320000,
   },
   {
     id: 't2',
     slug: 'xiaomi-smart-air-fryer',
     name: 'Xiaomi Smart Air Fryer',
-    image: '/products/air-fryer.png',
     price: 95000,
   },
   {
     id: 't3',
     slug: 'binatone-blender',
     name: 'Binatone Blender',
-    image: '/products/hero-wine.png',
     price: 45000,
   },
   {
     id: 't4',
     slug: 'hisense-2-door-fridge',
     name: 'Hisense 2-Door Fridge',
-    image: '/products/hero-bike.png',
     price: 350000,
   },
   {
     id: 't5',
     slug: 'oraimo-power-bank',
     name: 'Oraimo Power Bank',
-    image: '/products/hero-tv.png',
-    price: 18500,
-  },
-  {
-    id: 't6',
-    slug: 'oraimo-power-bank',
-    name: 'Oraimo Power Bank',
-    image: '/products/cookware.png',
-    price: 18500,
-  },
-  {
-    id: 't7',
-    slug: 'oraimo-power-bank',
-    name: 'Oraimo Power Bank',
-    image: '/products/blender.png',
     price: 18500,
   },
 ]
@@ -78,7 +60,6 @@ export function TrendingNow() {
 
   return (
     <section className="bg-[#F7F8FA] py-10 md:py-14">
-      {/* Removed mx-auto max-w-7xl, added responsive padding to match header/hero */}
       <div className="w-full px-4 md:px-8 lg:px-12">
         {/* Header row */}
         <div className="mb-6 flex items-center justify-between">
@@ -123,12 +104,13 @@ export function TrendingNow() {
               aria-label={`View ${product.name}`}
               className="group flex w-[180px] shrink-0 flex-col justify-between rounded-3xl border border-black/5 bg-white p-4 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.12)] md:w-[220px] md:p-5"
             >
-              {/* Product image */}
-              <div className="mb-4 flex h-[120px] items-center justify-center md:h-[140px]">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+              {/* ImagePlaceholder utility */}
+              <div className="mb-4">
+                <ImagePlaceholder
+                  label="Product"
+                  variant="skeleton"
+                  aspectRatio="aspect-square"
+                  className="rounded-2xl"
                 />
               </div>
 
@@ -143,13 +125,13 @@ export function TrendingNow() {
                   </span>
                 </div>
 
-                {/* Cart / Delivery Icon Button */}
+                {/* Cart Action Button */}
                 <button
                   aria-label={`Add ${product.name} to cart`}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#EEF2FF] text-[#2F5FE3] transition-colors hover:bg-[#D8E3FF] md:h-9 md:w-9"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F0F4FF] text-[#2F5FE3] transition-colors hover:bg-[#2F5FE3] hover:text-white md:h-9 md:w-9"
                   onClick={(e) => e.preventDefault()}
                 >
-                  <Truck size={16} strokeWidth={2.5} />
+                  <FaShoppingBag className="text-xs" />
                 </button>
               </div>
             </Link>

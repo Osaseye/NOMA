@@ -1,7 +1,7 @@
 export const brand = {
   name: 'Noma',
   tagline: 'Everything You Need',
-  legalEntity: 'Crownlith Solutions',
+  legalEntity: 'Wavecrest Solutions',
   phone: '+234 800 000 0000',
   whatsapp: 'https://wa.me/2348000000000',
   salary: 80000,

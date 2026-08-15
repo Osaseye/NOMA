@@ -27,6 +27,9 @@ import { RevenuePage } from '../pages/admin/RevenuePage'
 import { SettingsPage } from '../pages/admin/SettingsPage'
 import { SuppliersPage } from '../pages/admin/SuppliersPage'
 
+import { AccountPage } from '../pages/storefront/AccountPage'
+import { WishlistPage } from '../pages/storefront/WishlistPage'
+
 export const router = createBrowserRouter([
   {
     element: <StorefrontLayout />,
@@ -34,6 +37,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/catalog', element: <CatalogPage /> },
+      { path: '/categories', element: <CatalogPage /> },
       { path: '/category/:categoryId', element: <CatalogPage /> },
       { path: '/search', element: <SearchPage /> },
       { path: '/product/:slug', element: <ProductDetailPage /> },
@@ -41,12 +45,13 @@ export const router = createBrowserRouter([
       { path: '/checkout', element: <CheckoutPage /> },
       { path: '/order-success', element: <OrderSuccessPage /> },
       { path: '/orders', element: <MyOrdersPage /> },
+      { path: '/wishlist', element: <WishlistPage /> },
+      { path: '/account', element: <AccountPage /> },
       { path: '/whatsapp-order', element: <WhatsAppOrderPage /> },
       { path: '/about', element: <StaticInfoPage type="about" /> },
       { path: '/contact', element: <StaticInfoPage type="contact" /> },
       { path: '/faq', element: <StaticInfoPage type="faq" /> },
       { path: '/policies', element: <StaticInfoPage type="policies" /> },
-      { path: '/account', element: <StaticInfoPage type="account" /> },
     ],
   },
   { path: '/admin/login', element: <LoginPage /> },

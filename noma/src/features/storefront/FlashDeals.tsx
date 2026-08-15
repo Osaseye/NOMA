@@ -1,4 +1,4 @@
-import { ArrowRight, Zap } from 'lucide-react'
+import { ArrowRight, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatNaira } from '../../utils/pricing'
@@ -71,7 +71,7 @@ export function FlashDeals() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F44336] shadow-[4px_4px_0_0_#12203D] border-2 border-[#12203D]">
-                <Zap size={24} className="fill-white text-white" strokeWidth={0} />
+                <Sparkles size={24} className="text-white" />
               </div>
               <h2 className="font-['Outfit'] text-[2.5rem] font-black leading-none tracking-tight text-[#12203D] md:text-[4rem]">
                 FLASH DEALS

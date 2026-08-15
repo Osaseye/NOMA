@@ -1,4 +1,15 @@
-export type CategoryId = 'electronics' | 'appliances' | 'cooking' | 'bicycles' | 'wines' | 'general'
+export type CategoryId =
+  | 'electronics'
+  | 'appliances'
+  | 'cooking'
+  | 'kitchen'
+  | 'phones'
+  | 'home-essentials'
+  | 'outdoor'
+  | 'bicycles'
+  | 'wines'
+  | 'general'
+  | 'clothing'
 
 export type OrderStatus = 'placed' | 'packed' | 'dispatched' | 'delivered'
 
@@ -11,8 +22,11 @@ export type Product = {
   basePrice: number
   stockQty: number
   rating: number
+  reviewsCount?: number
   image: string
   badge: string
+  discountBadge?: string
+  brand?: string
   bulky?: boolean
   description: string
   specs: string[]

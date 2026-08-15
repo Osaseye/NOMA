@@ -1,4 +1,4 @@
-import { ChevronDown, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
+import { ChevronDown, Mail, MessageCircle, Phone } from 'lucide-react'
 import { useState } from 'react'
 import { brand } from '../../constants/brand'
 
@@ -72,48 +72,136 @@ export function StaticInfoPage({ type }: { type: keyof typeof copy }) {
         )}
 
         {/* ── CONTACT ── */}
+        {/* ── CONTACT / HELP & SUPPORT matching Section 4 of ChatGPT Image ── */}
         {type === 'contact' && (
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_400px]">
-            <div className="rounded-3xl bg-white p-8 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.06)] md:p-10">
-              <h2 className="mb-6 text-xl font-bold text-[#12203D]">Send us a message</h2>
-              <form className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <input placeholder="Full Name" className="rounded-2xl border border-black/8 bg-[#F7F8FA] px-4 py-3.5 text-[14px] font-medium text-[#12203D] outline-none transition-all focus:border-[#2F5FE3]/30 focus:bg-white" />
-                  <input placeholder="Email Address" className="rounded-2xl border border-black/8 bg-[#F7F8FA] px-4 py-3.5 text-[14px] font-medium text-[#12203D] outline-none transition-all focus:border-[#2F5FE3]/30 focus:bg-white" />
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            {/* Column 1: Contact Us */}
+            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-xs space-y-6">
+              <h3 className="text-base font-extrabold text-[#12203D]">Contact Us</h3>
+
+              {/* WhatsApp Card */}
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-2xs">
+                    <MessageCircle size={18} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-extrabold text-[#12203D]">Chat with us on WhatsApp</h4>
+                    <p className="text-[11px] text-gray-500">Get quick answers to your questions</p>
+                  </div>
                 </div>
-                <input placeholder="Order Number (Optional)" className="rounded-2xl border border-black/8 bg-[#F7F8FA] px-4 py-3.5 text-[14px] font-medium text-[#12203D] outline-none transition-all focus:border-[#2F5FE3]/30 focus:bg-white" />
-                <textarea rows={5} placeholder="How can we help you?" className="resize-none rounded-2xl border border-black/8 bg-[#F7F8FA] p-4 text-[14px] font-medium text-[#12203D] outline-none transition-all focus:border-[#2F5FE3]/30 focus:bg-white" />
-                <button className="mt-2 rounded-2xl bg-[#2F5FE3] py-4 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(47,95,227,0.3)] hover:bg-[#2348C0]">
-                  Send Message
-                </button>
-              </form>
+                <a
+                  href={brand.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 transition-colors"
+                >
+                  <MessageCircle size={14} />
+                  <span>Chat on WhatsApp</span>
+                </a>
+              </div>
+
+              {/* Call Us */}
+              <div className="flex items-start gap-3 pt-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2F5FE3]">
+                  <Phone size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#12203D]">Call Us</h4>
+                  <p className="text-[11px] text-gray-400">Mon - Sat (8am - 8pm)</p>
+                  <span className="text-xs font-black text-[#12203D] mt-0.5 block">
+                    0901 234 5678
+                  </span>
+                </div>
+              </div>
+
+              {/* Email Us */}
+              <div className="flex items-start gap-3 border-t border-gray-100 pt-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2F5FE3]">
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#12203D]">Email Us</h4>
+                  <span className="text-xs font-extrabold text-[#2F5FE3] block">support@noma.ng</span>
+                  <p className="text-[11px] text-gray-400 mt-0.5">We usually respond within 24 hours</p>
+                </div>
+              </div>
             </div>
-            
-            <div className="flex flex-col gap-4">
-              <div className="rounded-3xl bg-[#12203D] p-8 text-white shadow-[0_4px_16px_-8px_rgba(0,0,0,0.06)] md:p-10">
-                <h2 className="mb-6 text-lg font-bold">Contact Info</h2>
-                <div className="flex flex-col gap-5 text-[14px] text-white/70">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10"><Phone size={18} /></div>
-                    <span>{brand.phone}</span>
+
+            {/* Column 2: Popular Topics */}
+            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-xs space-y-4">
+              <h3 className="text-base font-extrabold text-[#12203D]">Popular Topics</h3>
+              <div className="space-y-2 text-xs font-semibold text-gray-700">
+                {[
+                  'How do I place an order?',
+                  'How do I track my order?',
+                  'Delivery & Shipping',
+                  'Returns & Refunds',
+                  'Payment Methods',
+                ].map((topic, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setOpenFaq(i)}
+                    className="flex w-full items-center justify-between rounded-xl bg-gray-50/80 px-4 py-3 text-left hover:bg-blue-50/70 hover:text-[#2F5FE3] transition-colors"
+                  >
+                    <span>{topic}</span>
+                    <ChevronDown size={14} className="text-gray-400" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Column 3: Start a Conversation Live Chat Box */}
+            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-xs space-y-4 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-[#12203D] mb-3">Start a Conversation</h3>
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5 flex items-center gap-3 mb-4">
+                  <div className="relative">
+                    <img
+                      src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80"
+                      alt="Agent"
+                      className="h-10 w-10 rounded-full object-cover border-2 border-white"
+                    />
+                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10"><Mail size={18} /></div>
-                    <span>support@shopnoma.com</span>
+                  <div>
+                    <h4 className="text-xs font-extrabold text-[#12203D]">Chat with Noma Support</h4>
+                    <p className="text-[10px] text-gray-500">We typically reply in a few minutes</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10"><MapPin size={18} /></div>
-                    <span>Lagos, Nigeria</span>
+                </div>
+
+                {/* Chat Bubbles */}
+                <div className="space-y-3 text-xs">
+                  <div className="rounded-2xl rounded-tl-xs bg-gray-100 p-3 max-w-[85%] font-medium text-gray-800">
+                    Hello! How can we help you today?
+                    <span className="block text-[9px] text-gray-400 mt-1">10:30 AM</span>
+                  </div>
+
+                  <div className="rounded-2xl rounded-tr-xs bg-[#2F5FE3] p-3 max-w-[85%] ml-auto font-medium text-white shadow-2xs">
+                    I need help with my order
+                    <span className="block text-[9px] text-blue-200 mt-1">10:31 AM</span>
+                  </div>
+
+                  <div className="rounded-2xl rounded-tl-xs bg-gray-100 p-3 max-w-[85%] font-medium text-gray-800">
+                    Sure! Please share your order number and we'll assist you right away.
+                    <span className="block text-[9px] text-gray-400 mt-1">10:31 AM</span>
                   </div>
                 </div>
               </div>
-              <a href={brand.whatsapp} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 rounded-3xl bg-[#25D366] p-8 text-white shadow-[0_4px_16px_-8px_rgba(37,211,102,0.3)] transition-all hover:bg-[#1fba59] md:p-10">
-                <div className="flex flex-col items-center text-center">
-                  <MessageCircle size={32} className="mb-3" />
-                  <span className="text-[18px] font-extrabold tracking-tight">Chat with us on WhatsApp</span>
-                  <span className="mt-1 text-[13px] font-medium text-white/80">Fastest response time</span>
+
+              {/* Chat Input */}
+              <div className="pt-3 border-t border-gray-100">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Type a message..."
+                    className="w-full rounded-full border border-gray-200 bg-gray-50/70 pl-4 pr-10 py-2.5 text-xs outline-none focus:border-[#2F5FE3]"
+                  />
+                  <button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-[#2F5FE3] p-1.5 text-white shadow-2xs hover:bg-[#254ec4]">
+                    <MessageCircle size={13} />
+                  </button>
                 </div>
-              </a>
+              </div>
             </div>
           </div>
         )}

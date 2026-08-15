@@ -1,10 +1,11 @@
-import { FlashDeals } from '../../features/storefront/FlashDeals'
 import { HomeHero } from '../../features/storefront/HomeHero'
-import { NewArrivals } from '../../features/storefront/NewArrivals'
-import { NewsletterCTA } from '../../features/storefront/NewsletterCTA'
-import { ShopByCategory } from '../../features/storefront/ShopByCategory'
-import { TrendingNow } from '../../features/storefront/TrendingNow'
 import { TrustStrip } from '../../features/storefront/TrustStrip'
+import { TrendingNow } from '../../features/storefront/TrendingNow'
+import { ShopByCategory } from '../../features/storefront/ShopByCategory'
+import { TodaysBestDeals } from '../../features/storefront/TodaysBestDeals'
+import { WhyNoma } from '../../features/storefront/WhyNoma'
+import { CuratedBanners } from '../../features/storefront/CuratedBanners'
+import { NewsletterCTA } from '../../features/storefront/NewsletterCTA'
 
 export function HomePage() {
   return (
@@ -13,8 +14,9 @@ export function HomePage() {
       <TrustStrip />
       <TrendingNow />
       <ShopByCategory />
-      <FlashDeals />
-      <NewArrivals />
+      <TodaysBestDeals />
+      <WhyNoma />
+      <CuratedBanners />
       <NewsletterCTA />
     </main>
   )
