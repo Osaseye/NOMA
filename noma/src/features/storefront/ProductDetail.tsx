@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import type { Product } from '../../types/commerce'
 import { useUserStore } from '../../store/userStore'
 import { useCartStore } from '../../store/cartStore'
+import { useProductStore } from '../../store/productStore'
 import { products } from '../../mock/commerce'
 import { formatNaira } from '../../utils/pricing'
 
@@ -42,6 +43,54 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'delivery' | 'reviews' | 'qa'>('overview')
   const [deliveryLocation, setDeliveryLocation] = useState('Ibadan, Oyo State')
   const [changingLocation, setChangingLocation] = useState(false)
+
+  // Product Reviews Store State
+  const { reviews, addReview } = useProductStore()
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [reviewRatingInput, setReviewRatingInput] = useState(5)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [reviewerName, setReviewerName] = useState('')
+  const [reviewerEmail, setReviewerEmail] = useState('')
+  const [reviewTitle, setReviewTitle] = useState('')
+  const [reviewComment, setReviewComment] = useState('')
+  const [filterRating, setFilterRating] = useState<number | 'all'>('all')
+
+  const productReviews = useMemo(() => {
+    return reviews.filter((r) => r.productId === product.id && r.status === 'approved')
+  }, [reviews, product.id])
+
+  const filteredProductReviews = useMemo(() => {
+    if (filterRating === 'all') return productReviews
+    return productReviews.filter((r) => r.rating === filterRating)
+  }, [productReviews, filterRating])
+
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!reviewerName.trim() || !reviewComment.trim()) {
+      toast.error('Please enter your name and review comment.')
+      return
+    }
+
+    addReview({
+      productId: product.id,
+      productName: product.name,
+      author: reviewerName.trim(),
+      email: reviewerEmail.trim(),
+      rating: reviewRatingInput,
+      title: reviewTitle.trim() || undefined,
+      comment: reviewComment.trim(),
+      verifiedPurchase: true,
+      status: 'approved',
+    })
+
+    toast.success('Thank you! Your product review has been submitted and published.')
+    setReviewerName('')
+    setReviewerEmail('')
+    setReviewTitle('')
+    setReviewComment('')
+    setReviewRatingInput(5)
+    setShowReviewModal(false)
+  }
 
   // Touch Swipe tracking for mobile carousel
   const touchStartX = useRef<number | null>(null)
@@ -534,44 +583,224 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
 
           {/* Tab 4: Reviews */}
           {activeTab === 'reviews' && (
-            <div className="mt-8 space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-amber-400">
-                  <Star size={20} className="fill-amber-400" />
-                  <span className="text-xl font-extrabold text-[#12203D]">4.8</span>
+            <div className="mt-8 space-y-8 animate-in fade-in">
+              {/* Reviews Overview Header Card */}
+              <div className="rounded-3xl border border-gray-100 bg-white p-6 sm:p-8 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="flex flex-col items-center justify-center rounded-2xl bg-amber-50 border border-amber-100 p-4 shrink-0 min-w-[110px]">
+                    <span className="text-3xl font-black text-[#12203D]">
+                      {product.rating || (productReviews.length > 0 ? (productReviews.reduce((a, b) => a + b.rating, 0) / productReviews.length).toFixed(1) : '5.0')}
+                    </span>
+                    <div className="flex items-center gap-0.5 text-amber-400 my-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star key={star} size={13} className="fill-amber-400 text-amber-400" />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase text-amber-800">
+                      {productReviews.length} {productReviews.length === 1 ? 'Review' : 'Reviews'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-extrabold text-[#12203D]">Customer Ratings & Reviews</h3>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Real feedback from verified purchasers of {product.name}.
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-gray-500">Based on {product.reviewsCount ?? 124} customer reviews</span>
+
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-[#2F5FE3] px-6 py-3.5 text-xs font-black text-white shadow-xs hover:bg-[#254ec4] transition-all"
+                >
+                  <Plus size={16} />
+                  <span>Write a Product Review</span>
+                </button>
               </div>
-              <div className="space-y-4 divide-y divide-gray-100">
-                <div className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#12203D]">Adebayo K.</span>
-                    <span className="text-[10px] text-gray-400">2 days ago</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-amber-400 my-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} className="fill-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-600 font-normal">
-                    Delivered right on time in Ibadan. Amazing picture clarity and sound!
-                  </p>
-                </div>
-                <div className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#12203D]">Grace O.</span>
-                    <span className="text-[10px] text-gray-400">1 week ago</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-amber-400 my-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} className="fill-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-600 font-normal">
-                    Easy to set up and super fast shipping. Highly recommend Noma store!
-                  </p>
-                </div>
+
+              {/* Rating Breakdown & Filter Tabs */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-4 text-xs font-bold">
+                <span className="text-gray-400 mr-2 text-[11px]">Filter by:</span>
+                {(['all', 5, 4, 3, 2, 1] as const).map((r) => (
+                  <button
+                    key={String(r)}
+                    onClick={() => setFilterRating(r)}
+                    className={`rounded-full px-3.5 py-1.5 transition-all ${
+                      filterRating === r
+                        ? 'bg-[#12203D] text-white shadow-2xs font-extrabold'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {r === 'all' ? 'All Ratings' : `${r} ★`}
+                  </button>
+                ))}
               </div>
+
+              {/* Reviews List */}
+              {filteredProductReviews.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center flex flex-col items-center justify-center gap-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 mb-1">
+                    <Star size={28} className="fill-amber-400 text-amber-400" />
+                  </div>
+                  <h4 className="font-extrabold text-base text-[#12203D]">No Product Reviews Yet</h4>
+                  <p className="text-xs text-gray-500 max-w-sm font-medium">
+                    Have you purchased or used this item? Share your opinion with other customers!
+                  </p>
+                  <button
+                    onClick={() => setShowReviewModal(true)}
+                    className="mt-2 inline-flex items-center gap-2 rounded-2xl bg-[#2F5FE3] px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#254ec4]"
+                  >
+                    <Plus size={14} /> Be the first to review
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredProductReviews.map((rev) => (
+                    <div
+                      key={rev.id}
+                      className="rounded-2xl border border-gray-100 bg-white p-5 shadow-2xs space-y-2 hover:border-gray-200 transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-xs text-[#12203D]">{rev.author}</span>
+                          {rev.verifiedPurchase && (
+                            <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-extrabold uppercase">
+                              Verified Buyer
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-medium text-gray-400">{rev.date}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-amber-400">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={12}
+                            className={star <= rev.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
+                          />
+                        ))}
+                      </div>
+
+                      {rev.title && <h5 className="text-xs font-bold text-[#12203D]">{rev.title}</h5>}
+                      <p className="text-xs text-gray-600 font-normal leading-relaxed">{rev.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Write a Review Modal */}
+              {showReviewModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in">
+                  <div className="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+                    <button
+                      onClick={() => setShowReviewModal(false)}
+                      className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+
+                    <div className="border-b border-gray-100 pb-4">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-extrabold text-[#2F5FE3] uppercase">
+                        Submit Feedback
+                      </span>
+                      <h3 className="text-xl font-extrabold text-[#12203D] mt-2">
+                        Write a Review for {product.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-medium">Your rating and review help shoppers make informed choices.</p>
+                    </div>
+
+                    <form onSubmit={handleSubmitReview} className="space-y-4 text-xs">
+                      {/* Interactive Star Picker */}
+                      <div>
+                        <label className="block font-extrabold text-[#12203D] mb-2">Overall Rating *</label>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setReviewRatingInput(star)}
+                              onMouseEnter={() => setHoverRating(star)}
+                              onMouseLeave={() => setHoverRating(0)}
+                              className="p-1 text-amber-400 transition-transform hover:scale-125"
+                            >
+                              <Star
+                                size={24}
+                                className={(hoverRating || reviewRatingInput) >= star ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
+                              />
+                            </button>
+                          ))}
+                          <span className="text-xs font-black text-amber-600 ml-2">
+                            {hoverRating || reviewRatingInput} / 5 Stars
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#12203D] mb-1.5">Your Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={reviewerName}
+                          onChange={(e) => setReviewerName(e.target.value)}
+                          placeholder="E.g. Adebayo K."
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/60 p-3 font-medium text-[#12203D] outline-none focus:border-[#2F5FE3] focus:bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#12203D] mb-1.5">Email Address (Optional)</label>
+                        <input
+                          type="email"
+                          value={reviewerEmail}
+                          onChange={(e) => setReviewerEmail(e.target.value)}
+                          placeholder="adebayo@example.com"
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/60 p-3 font-medium text-[#12203D] outline-none focus:border-[#2F5FE3] focus:bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#12203D] mb-1.5">Review Headline / Summary</label>
+                        <input
+                          type="text"
+                          value={reviewTitle}
+                          onChange={(e) => setReviewTitle(e.target.value)}
+                          placeholder="E.g. Excellent build quality & fast delivery"
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/60 p-3 font-medium text-[#12203D] outline-none focus:border-[#2F5FE3] focus:bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#12203D] mb-1.5">Detailed Review Comment *</label>
+                        <textarea
+                          rows={4}
+                          required
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          placeholder="Share details about what you liked or disliked about this product..."
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/60 p-3 font-medium text-[#12203D] outline-none focus:border-[#2F5FE3] focus:bg-white"
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowReviewModal(false)}
+                          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-600 hover:bg-gray-100"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="rounded-xl bg-[#2F5FE3] px-6 py-2.5 font-extrabold text-white shadow-xs hover:bg-[#254ec4]"
+                        >
+                          Submit Review
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -644,7 +873,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                     </span>
                     <button
                       onClick={() => {
-                        addItem(relProduct)
+                        addItem(relProduct.id)
                         toast.success(`Added ${relProduct.name} to cart`)
                       }}
                       className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-[#2F5FE3] hover:bg-[#2F5FE3] hover:text-white transition-colors"

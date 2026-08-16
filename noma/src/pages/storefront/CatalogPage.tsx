@@ -20,7 +20,8 @@ import {
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { categories, products } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
+import { useAdminStore } from '../../store/adminStore'
 import { useCartStore } from '../../store/cartStore'
 import { useUserStore } from '../../store/userStore'
 import { formatNaira } from '../../utils/pricing'
@@ -91,6 +92,8 @@ const categoryImages: Record<string, string> = {
 export function CatalogPage() {
   const { categoryId } = useParams<{ categoryId: string }>()
   const navigate = useNavigate()
+  const { products, categories } = useProductStore()
+  const { settings } = useAdminStore()
   const addItem = useCartStore((s) => s.addItem)
   const { isInWishlist, toggleWishlist: toggleWishlistStore } = useUserStore()
 
@@ -103,7 +106,7 @@ export function CatalogPage() {
   const [maxPriceFilter, setMaxPriceFilter] = useState<number>(2000000)
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
 
-  // Find dynamic active category metadata
+  // Find dynamic active category metadata from admin store
   const activeCategory = useMemo(() => {
     if (!categoryId || categoryId === 'all') {
       return {
@@ -113,18 +116,32 @@ export function CatalogPage() {
           "Explore Noma's full catalog of tested gadgets, kitchen appliances, and home essentials.",
       }
     }
+    const cleanKey = categoryId.toLowerCase()
     return (
-      categories.find((c) => c.id === categoryId) || {
+      categories.find(
+        (c) => c.id.toLowerCase() === cleanKey || c.label.toLowerCase() === cleanKey
+      ) || {
         id: categoryId,
         label: categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace('-', ' '),
         merchandisingLine: 'Quality items curated with receipt-ready support.',
       }
     )
-  }, [categoryId])
+  }, [categoryId, categories])
 
-  // Get active subcategories & hero image
+  // Get active subcategories & hero image (Strictly uses admin set category image)
   const currentSubCategories = subCategoryMap[activeCategory.id] || subCategoryMap.default
-  const currentHeroImage = categoryImages[activeCategory.id] || categoryImages.default
+  const currentHeroImage = useMemo(() => {
+    if ((!categoryId || categoryId === 'all') && settings.allProductsBannerImage) {
+      return settings.allProductsBannerImage
+    }
+    const adminSetCategory = categories.find(
+      (c) => c.id.toLowerCase() === activeCategory.id.toLowerCase()
+    )
+    if (adminSetCategory?.image) {
+      return adminSetCategory.image
+    }
+    return (activeCategory as any)?.image || categoryImages[activeCategory.id] || categoryImages.default
+  }, [activeCategory, categoryId, categories, settings.allProductsBannerImage])
 
   // Dynamic filtering logic (Brand filter removed as requested)
   const filteredProducts = useMemo(() => {

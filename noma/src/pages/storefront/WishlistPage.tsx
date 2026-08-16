@@ -1,22 +1,23 @@
 // WishlistPage.tsx - Replicating Section 2 of ChatGPT Image Aug 14, 2026, 09_34_22 PM.png
 import { Link } from 'react-router-dom'
 import {
-  ChevronRight,
-  Heart,
-  ShoppingBag,
-  Plus,
-  Share2,
-  Bell,
-  Star,
-} from 'lucide-react'
+  HiChevronRight,
+  HiHeart,
+  HiShoppingBag,
+  HiPlus,
+  HiShare,
+  HiBell,
+  HiStar,
+} from 'react-icons/hi2'
 import { toast } from 'sonner'
-import { products } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
 import { useCartStore } from '../../store/cartStore'
 import { useUserStore } from '../../store/userStore'
 import { formatNaira } from '../../utils/pricing'
 
 export function WishlistPage() {
   const addItem = useCartStore((s) => s.addItem)
+  const { products } = useProductStore()
   const { wishlistProductIds, toggleWishlist } = useUserStore()
 
   // Filter products in wishlist
@@ -24,7 +25,7 @@ export function WishlistPage() {
 
   const handleMoveAllToCart = () => {
     wishlistedProducts.forEach((product) => {
-      addItem(product.id)
+      addItem(product)
     })
     toast.success(`Moved all ${wishlistedProducts.length} items to cart!`)
   }
@@ -42,7 +43,7 @@ export function WishlistPage() {
           <Link to="/" className="hover:text-[#2F5FE3] transition-colors">
             Home
           </Link>
-          <ChevronRight size={12} className="text-gray-400" />
+          <HiChevronRight size={12} className="text-gray-400" />
           <span className="font-bold text-[#12203D]">Wishlist</span>
         </nav>
 
@@ -66,14 +67,14 @@ export function WishlistPage() {
                 onClick={handleMoveAllToCart}
                 className="flex items-center gap-2 rounded-xl bg-[#2F5FE3] px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#254ec4] transition-all"
               >
-                <ShoppingBag size={15} />
+                <HiShoppingBag size={15} />
                 <span>Move all to cart</span>
               </button>
               <button
                 onClick={handleShareWishlist}
                 className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-[#12203D] hover:border-gray-300 transition-all"
               >
-                <Share2 size={15} />
+                <HiShare size={15} />
                 <span>Share wishlist</span>
               </button>
             </div>
@@ -84,7 +85,7 @@ export function WishlistPage() {
           /* Empty Wishlist State */
           <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white py-24 text-center px-4">
             <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-red-500">
-              <Heart size={36} />
+              <HiHeart size={36} />
             </div>
             <h2 className="text-2xl font-extrabold text-[#12203D]">Your Wishlist is Empty</h2>
             <p className="mt-2 mb-6 text-xs text-gray-500 max-w-md">
@@ -114,7 +115,7 @@ export function WishlistPage() {
                       </span>
                     )}
 
-                    {/* Solid Blue Heart Button matching ChatGPT Image Section 2 */}
+                    {/* Solid Blue Heart Button */}
                     <button
                       onClick={() => {
                         toggleWishlist(product.id)
@@ -123,7 +124,7 @@ export function WishlistPage() {
                       className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-2xs transition-colors hover:scale-105"
                       aria-label="Remove from wishlist"
                     >
-                      <Heart size={15} className="fill-[#2F5FE3] text-[#2F5FE3]" />
+                      <HiHeart size={15} className="text-[#2F5FE3]" />
                     </button>
 
                     <Link to={`/product/${product.slug || product.id}`}>
@@ -154,7 +155,7 @@ export function WishlistPage() {
                     {/* Rating & Stock */}
                     <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
                       <span className="flex items-center gap-0.5 text-amber-500 font-bold">
-                        <Star size={10} className="fill-amber-400 text-amber-400" />
+                        <HiStar size={10} className="text-amber-400" />
                         {product.rating}
                       </span>
                       <span>•</span>
@@ -164,12 +165,12 @@ export function WishlistPage() {
                     {/* Add to Cart Button */}
                     <button
                       onClick={() => {
-                        addItem(product.id)
+                        addItem(product)
                         toast.success(`Added ${product.name} to cart`)
                       }}
                       className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-blue-200 bg-blue-50/70 py-2 text-xs font-bold text-[#2F5FE3] hover:bg-[#2F5FE3] hover:text-white transition-all active:scale-98"
                     >
-                      <Plus size={13} strokeWidth={2.5} />
+                      <HiPlus size={13} />
                       <span>Add to Cart</span>
                     </button>
                   </div>
@@ -177,11 +178,11 @@ export function WishlistPage() {
               ))}
             </div>
 
-            {/* Price Drop Alert Banner Card matching ChatGPT Image Section 2 */}
+            {/* Price Drop Alert Banner Card */}
             <div className="rounded-3xl border border-blue-100 bg-[#F0F4FF] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#2F5FE3] shadow-xs">
-                  <Bell size={22} />
+                  <HiBell size={22} />
                 </div>
                 <div>
                   <h4 className="text-sm font-extrabold text-[#12203D]">Price drop alert</h4>

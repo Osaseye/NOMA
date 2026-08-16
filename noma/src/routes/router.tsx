@@ -26,6 +26,7 @@ import { ReportsPage } from '../pages/admin/ReportsPage'
 import { RevenuePage } from '../pages/admin/RevenuePage'
 import { SettingsPage } from '../pages/admin/SettingsPage'
 import { SuppliersPage } from '../pages/admin/SuppliersPage'
+import { ReviewsPage } from '../pages/admin/ReviewsPage'
 
 import { AccountPage } from '../pages/storefront/AccountPage'
 import { WishlistPage } from '../pages/storefront/WishlistPage'
@@ -45,12 +46,17 @@ export const router = createBrowserRouter([
       { path: '/checkout', element: <CheckoutPage /> },
       { path: '/order-success', element: <OrderSuccessPage /> },
       { path: '/orders', element: <MyOrdersPage /> },
+      { path: '/track-order', element: <MyOrdersPage /> },
       { path: '/wishlist', element: <WishlistPage /> },
       { path: '/account', element: <AccountPage /> },
       { path: '/whatsapp-order', element: <WhatsAppOrderPage /> },
       { path: '/about', element: <StaticInfoPage type="about" /> },
       { path: '/contact', element: <StaticInfoPage type="contact" /> },
       { path: '/faq', element: <StaticInfoPage type="faq" /> },
+      { path: '/returns', element: <StaticInfoPage type="returns" /> },
+      { path: '/privacy', element: <StaticInfoPage type="privacy" /> },
+      { path: '/terms', element: <StaticInfoPage type="terms" /> },
+      { path: '/delivery-policy', element: <StaticInfoPage type="delivery" /> },
       { path: '/policies', element: <StaticInfoPage type="policies" /> },
     ],
   },
@@ -63,6 +69,7 @@ export const router = createBrowserRouter([
       { path: 'orders', element: <OrdersPage /> },
       { path: 'orders/:orderId', element: <OrderDetailPage /> },
       { path: 'products', element: <ProductsPage /> },
+      { path: 'products/new', element: <ProductEditorPage /> },
       { path: 'products/:productId/edit', element: <ProductEditorPage /> },
       { path: 'inventory', element: <InventoryPage /> },
       { path: 'categories', element: <CategoriesPage /> },
@@ -71,6 +78,7 @@ export const router = createBrowserRouter([
       { path: 'profit', element: <ProfitPage /> },
       { path: 'suppliers', element: <SuppliersPage /> },
       { path: 'reports', element: <ReportsPage /> },
+      { path: 'reviews', element: <ReviewsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },

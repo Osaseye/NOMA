@@ -1,70 +1,228 @@
-import { BarChart3, ClipboardList, LayoutDashboard, Package, Settings, Tags, Users, WalletCards, LogOut, Store } from 'lucide-react'
-import { NavLink, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
+import {
+  HiSquares2X2,
+  HiClipboardDocumentList,
+  HiShoppingBag,
+  HiCube,
+  HiTag,
+  HiUsers,
+  HiChartBar,
+  HiAdjustmentsHorizontal,
+  HiBuildingStorefront,
+  HiArrowRightOnRectangle,
+  HiWrenchScrewdriver,
+  HiSparkles,
+  HiChevronDown,
+  HiBars3,
+  HiXMark,
+  HiChatBubbleBottomCenterText,
+} from 'react-icons/hi2'
+import { useAdminStore } from '../../store/adminStore'
 
-const links = [
-  ['Dashboard', '/admin', LayoutDashboard],
-  ['Orders', '/admin/orders', ClipboardList],
-  ['Products', '/admin/products', Package],
-  ['Inventory', '/admin/inventory', Package],
-  ['Categories', '/admin/categories', Tags],
-  ['Customers', '/admin/customers', Users],
-  ['Revenue', '/admin/revenue', BarChart3],
-  ['Profit', '/admin/profit', WalletCards],
-  ['Suppliers', '/admin/suppliers', WalletCards],
-  ['Reports', '/admin/reports', BarChart3],
-  ['Settings', '/admin/settings', Settings],
-] as const
+interface SubItem {
+  label: string
+  href: string
+  icon: any
+}
+
+interface NavGroup {
+  title: string
+  icon: any
+  items: SubItem[]
+}
+
+const navGroups: NavGroup[] = [
+  {
+    title: 'Overview',
+    icon: HiSquares2X2,
+    items: [
+      { label: 'Dashboard', href: '/admin', icon: HiSquares2X2 },
+      { label: 'Orders & Shipping', href: '/admin/orders', icon: HiClipboardDocumentList },
+      { label: 'Site Settings & Banners', href: '/admin/settings', icon: HiWrenchScrewdriver },
+    ],
+  },
+  {
+    title: 'Catalog',
+    icon: HiShoppingBag,
+    items: [
+      { label: 'Products', href: '/admin/products', icon: HiShoppingBag },
+      { label: 'Inventory', href: '/admin/inventory', icon: HiCube },
+      { label: 'Categories & Markups', href: '/admin/categories', icon: HiTag },
+      { label: 'Product Reviews', href: '/admin/reviews', icon: HiChatBubbleBottomCenterText },
+    ],
+  },
+  {
+    title: 'Financials & Reports',
+    icon: HiChartBar,
+    items: [
+      { label: 'Customers', href: '/admin/customers', icon: HiUsers },
+      { label: 'Revenue', href: '/admin/revenue', icon: HiChartBar },
+      { label: 'Profit & Margin', href: '/admin/profit', icon: HiSparkles },
+      { label: 'Suppliers', href: '/admin/suppliers', icon: HiBuildingStorefront },
+      { label: 'Reports', href: '/admin/reports', icon: HiAdjustmentsHorizontal },
+    ],
+  },
+]
 
 export function AdminSidebar() {
-  return (
-    <aside className="sticky top-0 h-screen w-64 shrink-0 bg-[#12203D] text-white flex flex-col justify-between p-6 shadow-xl hidden md:flex">
-      <div className="flex flex-col gap-8 overflow-y-auto pr-1">
+  const { logout, operatorUser } = useAdminStore()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Track expanded groups (all open by default in compact mode)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    Overview: true,
+    Catalog: true,
+    'Financials & Reports': true,
+  })
+
+  const toggleGroup = (title: string) => {
+    setExpanded((prev) => ({ ...prev, [title]: !prev[title] }))
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/admin/login')
+  }
+
+  const sidebarContent = (
+    <div className="flex h-full flex-col justify-between p-3.5 text-white overflow-hidden">
+      <div className="flex flex-col gap-3 overflow-hidden">
         {/* Brand Header */}
-        <div className="flex items-center gap-3 border-b border-white/10 pb-6">
-          <img src="/icon.PNG" alt="Noma Icon" className="h-10 w-10 object-contain rounded-xl bg-white p-1" />
-          <div className="flex flex-col">
-            <span className="font-['Outfit'] text-lg font-extrabold tracking-tight text-white">NOMA ADMIN</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#2F5FE3]">Operator Portal</span>
-          </div>
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <Link to="/admin" className="flex items-center gap-2.5 group">
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-white p-1 shadow-sm group-hover:scale-105 transition-transform">
+              <img src="/icon.PNG" alt="Noma Logo" className="h-6 w-6 object-contain" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-['Outfit'] text-xs font-black tracking-tight text-white flex items-center gap-1">
+                NOMA ADMIN <span className="rounded bg-emerald-500/20 px-1 py-0.2 text-[8px] font-bold text-emerald-400">PRO</span>
+              </span>
+              <span className="text-[9px] font-extrabold uppercase tracking-widest text-emerald-400">Master Control</span>
+            </div>
+          </Link>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden text-gray-400 hover:text-white p-1"
+          >
+            <HiXMark size={20} />
+          </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex flex-col gap-1.5" aria-label="Admin Sidebar">
-          {links.map(([label, href, Icon]) => (
-            <NavLink
-              key={href}
-              to={href}
-              end={href === '/admin'}
-              className={({ isActive }) =>
-                `flex items-center gap-3.5 rounded-xl px-4 py-3 text-[13px] font-bold tracking-wide transition-all duration-200 ${
-                  isActive
-                    ? 'bg-[#2F5FE3] text-white shadow-md shadow-[#2F5FE3]/30 translate-x-1'
-                    : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`
-              }
-            >
-              <Icon size={18} strokeWidth={2.2} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+        {/* Navigation Groups */}
+        <nav className="flex flex-col gap-2 overflow-y-auto pr-0.5" aria-label="Admin Sidebar">
+          {navGroups.map((group) => {
+            const GroupIcon = group.icon
+            const isOpen = expanded[group.title]
+
+            return (
+              <div key={group.title} className="flex flex-col">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.title)}
+                  className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <GroupIcon size={13} className="text-emerald-400" />
+                    <span>{group.title}</span>
+                  </div>
+                  <HiChevronDown
+                    size={12}
+                    className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="mt-0.5 flex flex-col gap-0.5 pl-2 border-l border-white/10 ml-3">
+                    {group.items.map((item) => {
+                      const Icon = item.icon
+                      const isActive =
+                        item.href === '/admin'
+                          ? location.pathname === '/admin'
+                          : location.pathname.startsWith(item.href)
+
+                      return (
+                        <NavLink
+                          key={item.href}
+                          to={item.href}
+                          end={item.href === '/admin'}
+                          onClick={() => setMobileOpen(false)}
+                          className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold tracking-wide transition-all ${
+                            isActive
+                              ? 'bg-emerald-600 text-white shadow-xs font-black'
+                              : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <Icon size={14} className="shrink-0 opacity-80" />
+                          <span className="truncate">{item.label}</span>
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </nav>
       </div>
 
-      {/* Footer Actions */}
-      <div className="flex flex-col gap-2 border-t border-white/10 pt-4 mt-4">
-        <Link
-          to="/"
-          className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-[12px] font-bold text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-        >
-          <Store size={16} /> View Storefront
-        </Link>
-        <Link
-          to="/admin/login"
-          className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-[12px] font-bold text-[#F44336] hover:bg-[#F44336]/10 transition-colors"
-        >
-          <LogOut size={16} /> Sign out
-        </Link>
+      {/* Footer Profile & Actions */}
+      <div className="flex flex-col gap-2 border-t border-white/10 pt-3 mt-2">
+
+        <div className="grid grid-cols-2 gap-1.5">
+          <Link
+            to="/"
+            target="_blank"
+            className="flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-white/10 transition-colors"
+          >
+            <HiBuildingStorefront size={13} /> Store
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-center gap-1 rounded-lg border border-rose-500/20 bg-rose-500/10 py-1.5 text-[10px] font-bold text-rose-300 hover:bg-rose-500/20 transition-colors"
+          >
+            <HiArrowRightOnRectangle size={13} /> Sign out
+          </button>
+        </div>
       </div>
-    </aside>
+    </div>
+  )
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="sticky top-0 h-screen w-56 shrink-0 bg-slate-900 shadow-xl hidden md:flex border-r border-slate-800">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Top Header Toggle */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between bg-slate-900 p-3 border-b border-slate-800 text-white">
+        <div className="flex items-center gap-2">
+          <img src="/icon.PNG" alt="Noma Logo" className="h-6 w-6 rounded bg-white p-0.5" />
+          <span className="font-['Outfit'] font-black text-xs text-white">NOMA ADMIN</span>
+        </div>
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="rounded-lg bg-white/10 p-1.5 text-white hover:bg-white/20"
+        >
+          <HiBars3 size={18} />
+        </button>
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="relative w-64 max-w-full bg-slate-900 h-full shadow-2xl z-10">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   )
 }

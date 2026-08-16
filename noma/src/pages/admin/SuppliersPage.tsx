@@ -1,12 +1,17 @@
 import { AdminTitle } from '../../components/admin/AdminTitle'
 import { SupplierLedgerTable } from '../../features/admin-reports/SupplierLedgerTable'
-import { orders } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
 
 export function SuppliersPage() {
+  const { orders } = useProductStore()
+
   return (
-    <>
-      <AdminTitle title="Supplier tracking" detail="Off-platform supplier reconciliation from order-level base amounts." />
+    <div className="flex flex-col gap-6 pb-12">
+      <AdminTitle
+        title="Supplier Invoice Ledger & Reconciliation"
+        detail="Track base cost obligations owed to off-platform suppliers from customer order checkouts."
+      />
       <SupplierLedgerTable orders={orders} />
-    </>
+    </div>
   )
 }

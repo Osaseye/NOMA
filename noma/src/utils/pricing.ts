@@ -9,6 +9,10 @@ export function markupPercent(product: Product) {
   return Math.round(((product.finalPrice - product.basePrice) / product.basePrice) * 100)
 }
 
+export function getMarkupAmount(finalPrice: number, basePrice: number) {
+  return Math.max(0, finalPrice - basePrice)
+}
+
 export function monthlySummary(orders: Order[]) {
   const totalSales = orders.reduce((sum, order) => sum + order.total, 0)
   const owedToSupplier = orders.reduce((sum, order) => sum + order.baseAmountOwed, 0)

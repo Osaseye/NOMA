@@ -1,16 +1,22 @@
 import { useParams } from 'react-router-dom'
 import { AdminTitle } from '../../components/admin/AdminTitle'
 import { ProductEditorForm } from '../../features/product-management/ProductEditorForm'
-import { products } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
 
 export function ProductEditorPage() {
   const { productId } = useParams()
-  const product = products.find((item) => item.id === productId) ?? products[0]
+  const { products } = useProductStore()
+
+  const isNew = !productId || productId === 'new'
+  const product = isNew ? undefined : products.find((item) => item.id === productId)
 
   return (
-    <>
-      <AdminTitle title={`Edit ${product.name}`} detail="Base price and markup are visible only in this authenticated operator surface." />
+    <div className="flex flex-col gap-6">
+      <AdminTitle
+        title={isNew ? 'Create New Storefront Product' : `Edit Product: ${product?.name || productId}`}
+        detail="Supplier base costs and profit markup margins remain visible only to authenticated operators."
+      />
       <ProductEditorForm product={product} />
-    </>
+    </div>
   )
 }

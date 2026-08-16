@@ -13,6 +13,20 @@ export type CategoryId =
 
 export type OrderStatus = 'placed' | 'packed' | 'dispatched' | 'delivered'
 
+export type ProductReview = {
+  id: string
+  productId: string
+  productName?: string
+  author: string
+  email?: string
+  rating: number
+  date: string
+  title?: string
+  comment: string
+  verifiedPurchase?: boolean
+  status: 'approved' | 'pending' | 'rejected'
+}
+
 export type Product = {
   id: string
   slug: string
@@ -33,10 +47,11 @@ export type Product = {
 }
 
 export type Category = {
-  id: CategoryId
+  id: CategoryId | string
   label: string
   defaultMarkupPercent: number
   merchandisingLine: string
+  image?: string
 }
 
 export type CartLine = {
@@ -61,6 +76,8 @@ export type Customer = {
   id: string
   name: string
   phone: string
+  email?: string
   lifetimeValue: number
   orders: number
+  isGuest?: boolean
 }

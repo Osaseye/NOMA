@@ -13,14 +13,14 @@ const footerLinks = {
   help: [
     { label: 'Track My Order', href: '/track-order' },
     { label: 'FAQ', href: '/faq' },
-    { label: 'Returns & Refunds', href: '/policies' },
+    { label: 'Returns & Refunds', href: '/returns' },
     { label: 'Contact Us', href: '/contact' },
-    { label: 'WhatsApp Support', href: brand.whatsapp, external: true },
+    { label: 'WhatsApp Support', href: '/whatsapp-order' },
   ],
   legal: [
-    { label: 'Privacy Policy', href: '/policies' },
-    { label: 'Terms of Service', href: '/policies' },
-    { label: 'Delivery Policy', href: '/policies' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Delivery Policy', href: '/delivery-policy' },
     { label: 'About Noma', href: '/about' },
   ],
 }
@@ -127,8 +127,8 @@ export function StoreFooter() {
             <span>EVERYTHING YOUR HOME NEEDS</span>
 
             <div className="flex gap-6">
-              <Link to="/policies" className="transition-colors hover:text-[#12203D]">TERMS & CONDITIONS</Link>
-              <Link to="/policies" className="transition-colors hover:text-[#12203D]">PRIVACY POLICY</Link>
+              <Link to="/terms" className="transition-colors hover:text-[#12203D]">TERMS & CONDITIONS</Link>
+              <Link to="/privacy" className="transition-colors hover:text-[#12203D]">PRIVACY POLICY</Link>
             </div>
 
             <span>©{new Date().getFullYear()} {brand.legalEntity}. ALL RIGHTS RESERVED.</span>

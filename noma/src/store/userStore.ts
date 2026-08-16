@@ -28,6 +28,8 @@ interface UserState {
   updateDefaultAddress: (address: Partial<DeliveryAddress>) => void
   toggleWishlist: (productId: string) => void
   isInWishlist: (productId: string) => boolean
+  login: (userData?: { name?: string; email?: string; phone?: string }) => void
+  logout: () => void
 }
 
 const initialAddress: DeliveryAddress = {
@@ -73,6 +75,23 @@ export const useUserStore = create<UserState>()(
           }
         }),
       isInWishlist: (productId) => get().wishlistProductIds.includes(productId),
+      login: (userData) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            isGuest: false,
+            name: userData?.name || state.profile.name || 'Adebayo Ogunlesi',
+            email: userData?.email || state.profile.email || 'adebayo@example.com',
+            phone: userData?.phone || state.profile.phone || '08012345678',
+          },
+        })),
+      logout: () =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            isGuest: true,
+          },
+        })),
     }),
     {
       name: 'noma-user-storage',

@@ -1,12 +1,17 @@
 import { AdminTitle } from '../../components/admin/AdminTitle'
 import { OrdersTable } from '../../features/orders/OrdersTable'
-import { orders } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
 
 export function OrdersPage() {
+  const { orders } = useProductStore()
+
   return (
-    <>
-      <AdminTitle title="Orders & delivery" detail="The same status language appears in customer tracking and admin operations." />
+    <div className="flex flex-col gap-6 pb-12">
+      <AdminTitle
+        title="Orders & Shipping Logistics"
+        detail="Track real-time order status, customer delivery locations, payment references, and net markup revenue."
+      />
       <OrdersTable orders={orders} />
-    </>
+    </div>
   )
 }

@@ -164,16 +164,32 @@ export function SearchPage() {
         {/* Main Grid: Sidebar Left + Results Right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Filters Sidebar */}
-          <aside className="hidden lg:block lg:col-span-3 space-y-6">
+          <aside
+            className={`lg:col-span-3 space-y-6 ${
+              mobileFilterOpen
+                ? 'fixed inset-0 z-50 bg-white p-6 overflow-y-auto block'
+                : 'hidden lg:block'
+            }`}
+          >
             <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-2xs space-y-6">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <h3 className="text-sm font-extrabold text-[#12203D]">Filters</h3>
-                <button
-                  onClick={handleClearAll}
-                  className="text-xs font-bold text-[#2F5FE3] hover:underline"
-                >
-                  Clear all
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleClearAll}
+                    className="text-xs font-bold text-[#2F5FE3] hover:underline"
+                  >
+                    Clear all
+                  </button>
+                  {mobileFilterOpen && (
+                    <button
+                      onClick={() => setMobileFilterOpen(false)}
+                      className="text-gray-500 hover:text-black p-1 lg:hidden"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Categories */}

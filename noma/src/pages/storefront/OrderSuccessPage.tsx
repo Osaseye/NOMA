@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle, Package } from 'lucide-react'
+import { HiArrowRight, HiCheckCircle, HiCube } from 'react-icons/hi2'
 import { Link } from 'react-router-dom'
 import { brand } from '../../constants/brand'
 
@@ -14,7 +14,7 @@ export function OrderSuccessPage() {
           <div className="relative mb-6">
             <div className="absolute inset-0 animate-ping rounded-full bg-[#10B981]/20" />
             <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#E8F5EB]">
-              <CheckCircle size={48} className="text-[#10B981]" strokeWidth={2.5} />
+              <HiCheckCircle size={48} className="text-[#10B981]" />
             </div>
           </div>
 
@@ -28,7 +28,7 @@ export function OrderSuccessPage() {
           <div className="mb-10 w-full rounded-2xl bg-[#F7F8FA] p-5 border border-black/5 text-left">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
-                <Package size={20} className="text-[#2F5FE3]" strokeWidth={2} />
+                <HiCube size={20} className="text-[#2F5FE3]" />
               </div>
               <div>
                 <span className="block text-[11px] font-bold uppercase tracking-wider text-[#12203D]/50">Order Number</span>
@@ -51,7 +51,7 @@ export function OrderSuccessPage() {
               to="/catalog"
               className="flex h-14 items-center justify-center gap-2 rounded-2xl border-2 border-black/5 bg-transparent text-[15px] font-bold text-[#12203D] transition-all hover:bg-[#F7F8FA] active:scale-[0.98]"
             >
-              Continue Shopping <ArrowRight size={16} strokeWidth={2.5} />
+              Continue Shopping <HiArrowRight size={16} />
             </Link>
           </div>
 

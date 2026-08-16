@@ -1,16 +1,27 @@
 import { useParams } from 'react-router-dom'
 import { AdminTitle } from '../../components/admin/AdminTitle'
 import { OrderDetailPanels } from '../../features/orders/OrderDetailPanels'
-import { orders } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
 
 export function OrderDetailPage() {
   const { orderId } = useParams()
+  const { orders } = useProductStore()
+
   const order = orders.find((item) => item.id === orderId) ?? orders[0]
 
   return (
-    <>
-      <AdminTitle title={`Order ${order.id}`} detail="Payment, delivery, and supplier reconciliation for this order." />
-      <OrderDetailPanels order={order} />
-    </>
+    <div className="flex flex-col gap-6">
+      <AdminTitle
+        title={`Fulfillment & Reconciliation: Order ${order?.id}`}
+        detail="Manage customer delivery status, supplier invoice reconciliation, and profit markup breakdown."
+      />
+      {order ? (
+        <OrderDetailPanels order={order} />
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">
+          Order not found.
+        </div>
+      )}
+    </div>
   )
 }

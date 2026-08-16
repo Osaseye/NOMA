@@ -8,7 +8,7 @@ type CartState = {
 }
 
 export const useCartStore = create<CartState>((set) => ({
-  items: { p1: 1, p3: 1 },
+  items: {},
   addItem: (productId) =>
     set((state) => ({
       items: { ...state.items, [productId]: (state.items[productId] ?? 0) + 1 },

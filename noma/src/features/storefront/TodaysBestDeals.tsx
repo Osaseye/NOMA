@@ -1,45 +1,11 @@
-// TodaysBestDeals.tsx
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ImagePlaceholder } from '../../components/ui/ImagePlaceholder'
 import { formatNaira } from '../../utils/pricing'
 import { FaShoppingBag } from 'react-icons/fa'
-import { HiOutlineClock } from 'react-icons/hi2'
-
-const deals = [
-  {
-    id: 'd1',
-    name: 'Sumec Firman 2.5KVA Generator',
-    originalPrice: 380000,
-    dealPrice: 320000,
-    slug: 'sumec-firman-generator',
-    discount: '-15%',
-  },
-  {
-    id: 'd2',
-    name: 'Xiaomi Smart Air Fryer 5L',
-    originalPrice: 120000,
-    dealPrice: 95000,
-    slug: 'xiaomi-smart-air-fryer',
-    discount: '-20%',
-  },
-  {
-    id: 'd3',
-    name: 'Nonstick Cookware Set 12-Piece',
-    originalPrice: 88000,
-    dealPrice: 72000,
-    slug: 'non-stick-cookware-set',
-    discount: '-18%',
-  },
-  {
-    id: 'd4',
-    name: 'Hisense 2-Door Refrigerator',
-    originalPrice: 410000,
-    dealPrice: 350000,
-    slug: 'hisense-2-door-fridge',
-    discount: '-14%',
-  },
-]
+import { HiOutlineClock, HiTag } from 'react-icons/hi2'
+import { useProductStore } from '../../store/productStore'
+import { useAdminStore } from '../../store/adminStore'
+import { useCartStore } from '../../store/cartStore'
 
 function useCountdown() {
   const getTimeLeft = () => {
@@ -62,10 +28,17 @@ function useCountdown() {
 
 export function TodaysBestDeals() {
   const { h, m, s } = useCountdown()
+  const { products } = useProductStore()
+  const { settings } = useAdminStore()
+  const addItem = useCartStore((state) => state.addItem)
+
+  // Filter deal products selected in Admin Site Settings
+  const dealProducts = products.filter((p) => settings.todaysDealsProductIds.includes(p.id))
+  const displayDeals = dealProducts.length > 0 ? dealProducts : products.slice(0, 4)
 
   return (
-    <section className="bg-[#F7F8FA] py-10 md:py-14 border-t border-black/5">
-      <div className="w-full px-4 md:px-8 lg:px-12">
+    <section className="bg-[#F7F8FA] py-10 md:py-14 border-t border-black/5 font-['Outfit',sans-serif]">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
         {/* Header Block */}
         <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -78,10 +51,10 @@ export function TodaysBestDeals() {
                 LIMITED QUANTITY OFFERS
               </span>
             </div>
-            <h2 className="font-['Outfit'] text-2xl font-black tracking-tight text-[#12203D] md:text-[32px]">
+            <h2 className="text-2xl font-black tracking-tight text-[#12203D] md:text-[32px]">
               Today's Best Deals
             </h2>
-            <p className="mt-0.5 text-xs font-medium text-[#12203D]/60 md:text-sm">
+            <p className="mt-0.5 text-xs font-medium text-[#526484] md:text-sm">
               Hand-picked discounts on essential home electronics & appliances
             </p>
           </div>
@@ -108,57 +81,85 @@ export function TodaysBestDeals() {
           </div>
         </div>
 
-        {/* Deals Cards Grid */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-5">
-          {deals.map((deal) => (
+        {/* Deals Cards Grid or Empty State */}
+        {displayDeals.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-red-200 bg-white p-12 text-center flex flex-col items-center justify-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600 mb-1">
+              <HiTag size={28} />
+            </div>
+            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-black uppercase text-red-700 tracking-wider">
+              Flash Deals Coming Soon
+            </span>
+            <h3 className="font-bold text-base text-[#12203D]">No Flash Deals Active Right Now</h3>
+            <p className="text-xs text-slate-500 max-w-md">
+              Special daily deal price drops are being scheduled by the store team. Check back soon for discount offers!
+            </p>
             <Link
-              key={deal.id}
-              to={`/product/${deal.slug}`}
-              className="group relative flex flex-col justify-between rounded-3xl border border-black/5 bg-white p-4 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.12)] md:p-5"
+              to="/catalog"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#2F5FE3] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#254ec4]"
             >
-              {/* Discount Tag - Red Accent */}
-              <div className="absolute top-3 left-3 z-10 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-black text-white uppercase tracking-wider shadow-xs">
-                {deal.discount}
-              </div>
-
-              {/* Placeholder image */}
-              <div className="mb-4 pt-4">
-                <ImagePlaceholder
-                  label="Deal Product"
-                  variant="skeleton"
-                  aspectRatio="aspect-square"
-                  className="rounded-2xl"
-                />
-              </div>
-
-              {/* Details */}
-              <div className="flex flex-col gap-2">
-                <span className="line-clamp-2 text-xs font-bold leading-snug text-[#12203D] md:text-[14px]">
-                  {deal.name}
-                </span>
-
-                <div className="flex items-end justify-between gap-2 mt-1">
-                  <div className="flex flex-col">
-                    <span className="text-[15px] font-black text-[#12203D] md:text-base">
-                      {formatNaira(deal.dealPrice)}
-                    </span>
-                    <span className="text-xs font-medium text-[#12203D]/40 line-through">
-                      {formatNaira(deal.originalPrice)}
-                    </span>
-                  </div>
-
-                  <button
-                    aria-label={`Add ${deal.name} to cart`}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EEF4FF] text-[#2F5FE3] transition-colors hover:bg-red-600 hover:text-white md:h-9 md:w-9"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <FaShoppingBag className="text-xs" />
-                  </button>
-                </div>
-              </div>
+              Browse Full Product Catalog
             </Link>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-5">
+            {displayDeals.map((deal) => (
+              <Link
+                key={deal.id}
+                to={`/product/${deal.slug}`}
+                className="group relative flex flex-col justify-between rounded-3xl border border-black/5 bg-white p-4 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md md:p-5"
+              >
+                {/* Discount Tag */}
+                {deal.discountBadge && (
+                  <div className="absolute top-3 left-3 z-10 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-black text-white uppercase tracking-wider shadow-xs">
+                    {deal.discountBadge}
+                  </div>
+                )}
+
+                {/* Product Image */}
+                <div className="mb-4 h-36 w-full rounded-2xl bg-slate-50 border p-2 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={deal.image}
+                    alt={deal.name}
+                    className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
+                  />
+                </div>
+
+                {/* Details */}
+                <div className="flex flex-col gap-2">
+                  <span className="line-clamp-2 text-xs font-bold leading-snug text-[#12203D] md:text-[14px]">
+                    {deal.name}
+                  </span>
+
+                  <div className="flex items-end justify-between gap-2 mt-1">
+                    <div className="flex flex-col">
+                      <span className="text-[15px] font-black text-[#12203D] md:text-base">
+                        {formatNaira(deal.finalPrice)}
+                      </span>
+                      {deal.basePrice > deal.finalPrice && (
+                        <span className="text-xs font-medium text-[#12203D]/40 line-through">
+                          {formatNaira(deal.basePrice)}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      aria-label={`Add ${deal.name} to cart`}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EEF4FF] text-[#2F5FE3] transition-colors hover:bg-red-600 hover:text-white"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        addItem(deal)
+                      }}
+                    >
+                      <FaShoppingBag className="text-xs" />
+                    </button>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

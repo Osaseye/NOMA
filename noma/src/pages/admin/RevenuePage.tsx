@@ -1,12 +1,30 @@
 import { RevenueAreaChart } from '../../components/admin/RevenueChart'
 import { AdminTitle } from '../../components/admin/AdminTitle'
-import { Card } from '../../design-system/components/Card'
+import { KpiCard } from '../../design-system/components/KpiCard'
+import { useProductStore } from '../../store/productStore'
+import { formatNaira, monthlySummary } from '../../utils/pricing'
 
 export function RevenuePage() {
+  const { orders } = useProductStore()
+  const summary = monthlySummary(orders)
+
   return (
-    <>
-      <AdminTitle title="Revenue tracking" detail="Sales volume, average order value, and category demand." />
-      <Card className="chart-card"><RevenueAreaChart /></Card>
-    </>
+    <div className="flex flex-col gap-8 pb-12">
+      <AdminTitle
+        title="Gross Sales & Revenue Analytics"
+        detail="Monitor customer sales volume, average order values, and category revenue performance."
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <KpiCard label="Gross Store Sales" value={formatNaira(summary.totalSales)} tone="emerald" subtitle="All processed payments" />
+        <KpiCard label="Average Order Value" value={formatNaira(Math.round(summary.totalSales / (orders.length || 1)))} tone="blue" subtitle="Per completed checkout" />
+        <KpiCard label="Total Orders Processed" value={`${orders.length} Orders`} tone="gold" subtitle="Fulfilled this month" />
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
+        <h2 className="font-['Outfit'] font-black text-base text-slate-900">Gross Sales Trajectory (Naira)</h2>
+        <RevenueAreaChart />
+      </div>
+    </div>
   )
 }
