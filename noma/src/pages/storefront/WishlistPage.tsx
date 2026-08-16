@@ -10,7 +10,7 @@ import {
   HiBell,
   HiStar,
   HiSparkles,
-  HiUserCheck,
+  HiUser,
 } from 'react-icons/hi2'
 import { toast } from 'sonner'
 import { useProductStore } from '../../store/productStore'
@@ -86,7 +86,7 @@ export function WishlistPage() {
           <div className="mb-6 rounded-2xl bg-gradient-to-r from-[#12203D] to-[#2F5FE3] p-4 text-white shadow-md flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white backdrop-blur-xs">
-                <HiUserCheck size={22} />
+                <HiUser size={22} />
               </div>
               <div>
                 <h3 className="text-sm font-extrabold flex items-center gap-2">
