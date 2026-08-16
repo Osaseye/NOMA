@@ -69,13 +69,6 @@ export function AccountPage() {
     toast.success('Account created successfully! Welcome to NOMA.')
   }
 
-  const handleDemoLogin = () => {
-    login({ name: 'Adebayo Ogunlesi', email: 'adebayo@example.com', phone: '08012345678' })
-    setName('Adebayo Ogunlesi')
-    setEmail('adebayo@example.com')
-    setPhone('08012345678')
-    toast.success('Signed in as Demo User (Adebayo Ogunlesi)')
-  }
 
   const handleLogout = () => {
     logout()

@@ -8,7 +8,6 @@ import {
   HiTruck,
   HiArrowPath,
   HiDocumentText,
-  HiQuestionMarkCircle,
 } from 'react-icons/hi2'
 import { brand } from '../../constants/brand'
 

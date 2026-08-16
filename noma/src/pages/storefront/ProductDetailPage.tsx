@@ -32,7 +32,7 @@ export function ProductDetailPage() {
   }
 
   const handleAddToCart = () => {
-    addItem(product)
+    addItem(product.id)
     toast.success('Added to cart!', {
       description: product.name,
       duration: 3000,

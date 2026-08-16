@@ -176,7 +176,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                 <label className="text-[11px] font-bold uppercase text-slate-600">Category</label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => setCategory(e.target.value as CategoryId)}
                   className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 bg-white"
                 >
                   {categories.map((c) => (

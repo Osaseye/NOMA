@@ -115,7 +115,7 @@ export function TrendingNow() {
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      addItem(product)
+                      addItem(product.id)
                     }}
                   >
                     <FaShoppingBag className="text-xs" />

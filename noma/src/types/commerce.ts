@@ -11,7 +11,7 @@ export type CategoryId =
   | 'general'
   | 'clothing'
 
-export type OrderStatus = 'placed' | 'packed' | 'dispatched' | 'delivered'
+export type OrderStatus = 'placed' | 'processing' | 'packed' | 'dispatched' | 'delivered' | 'cancelled'
 
 export type ProductReview = {
   id: string

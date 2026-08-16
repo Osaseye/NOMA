@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { brand } from '../../constants/brand'
 
-const footerLinks = {
+const footerLinks: Record<string, { label: string; href: string; external?: boolean }[]> = {
   shop: [
     { label: 'Electronics', href: '/category/electronics' },
     { label: 'Kitchen', href: '/category/kitchen' },

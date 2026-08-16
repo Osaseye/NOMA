@@ -9,7 +9,6 @@ import {
   HiShare,
   HiBell,
   HiStar,
-  HiSparkles,
   HiUser,
 } from 'react-icons/hi2'
 import { toast } from 'sonner'
@@ -22,7 +21,7 @@ export function WishlistPage() {
   const [searchParams] = useSearchParams()
   const addItem = useCartStore((s) => s.addItem)
   const { products } = useProductStore()
-  const { wishlistProductIds, toggleWishlist, user } = useUserStore()
+  const { wishlistProductIds, toggleWishlist, profile } = useUserStore()
 
   // Check if viewing a shared wishlist via URL query parameters (e.g. /wishlist?shared=true&items=p1,p2&owner=Segun)
   const isSharedMode = searchParams.get('shared') === 'true' || searchParams.has('items')
@@ -49,7 +48,7 @@ export function WishlistPage() {
 
   const handleShareWishlist = () => {
     if (wishlistedProducts.length === 0) return
-    const ownerName = user?.name ? user.name.split(' ')[0] : 'Segun'
+    const ownerName = profile?.name ? profile.name.split(' ')[0] : 'Segun'
     const itemIdsStr = wishlistedProducts.map((p) => p.id).join(',')
     const shareableUrl = `${window.location.origin}/wishlist?shared=true&owner=${encodeURIComponent(
       ownerName

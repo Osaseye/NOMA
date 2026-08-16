@@ -149,7 +149,7 @@ export function TodaysBestDeals() {
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        addItem(deal)
+                        addItem(deal.id)
                       }}
                     >
                       <FaShoppingBag className="text-xs" />

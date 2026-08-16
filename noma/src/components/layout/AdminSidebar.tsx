@@ -66,7 +66,7 @@ const navGroups: NavGroup[] = [
 ]
 
 export function AdminSidebar() {
-  const { logout, operatorUser } = useAdminStore()
+  const { logout } = useAdminStore()
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)

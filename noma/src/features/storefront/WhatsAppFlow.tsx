@@ -3,8 +3,6 @@ import {
   HiCheckCircle,
   HiShoppingBag,
   HiTruck,
-  HiShieldCheck,
-  HiArrowRight,
   HiPaperAirplane,
 } from 'react-icons/hi2'
 import { brand } from '../../constants/brand'
