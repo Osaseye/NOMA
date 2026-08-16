@@ -13,9 +13,11 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
   const statusBadges: Record<OrderStatus, { bg: string; text: string }> = {
     placed: { bg: 'bg-amber-100', text: 'text-amber-800' },
+    processing: { bg: 'bg-sky-100', text: 'text-sky-800' },
     packed: { bg: 'bg-blue-100', text: 'text-blue-800' },
     dispatched: { bg: 'bg-indigo-100', text: 'text-indigo-800' },
     delivered: { bg: 'bg-emerald-100', text: 'text-emerald-800' },
+    cancelled: { bg: 'bg-red-100', text: 'text-red-800' },
   }
 
   return (

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HiSparkles, HiCheckCircle, HiArrowLeft, HiPhoto, HiPlus, HiTrash, HiArrowUpTray } from 'react-icons/hi2'
-import type { Product } from '../../types/commerce'
+import type { Product, CategoryId } from '../../types/commerce'
 import { formatNaira, getMarkupAmount } from '../../utils/pricing'
 import { useProductStore } from '../../store/productStore'
 
