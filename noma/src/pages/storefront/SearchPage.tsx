@@ -20,7 +20,7 @@ export function SearchPage() {
   const [searchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
 
-  const { products } = useProductStore()
+  const { products, categories } = useProductStore()
   const addItem = useCartStore((s) => s.addItem)
   const { toggleWishlist, isInWishlist } = useUserStore()
 
@@ -34,27 +34,67 @@ export function SearchPage() {
   const [sortBy, setSortBy] = useState('relevance')
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
 
+  // Dynamic Categories with live product counts
+  const dynamicCategories = useMemo(() => {
+    return categories
+      .map((cat) => {
+        const count = products.filter(
+          (p) =>
+            p.category?.toLowerCase() === cat.id?.toLowerCase() ||
+            p.category?.toLowerCase() === cat.label?.toLowerCase()
+        ).length
+        return {
+          id: cat.id,
+          label: cat.label,
+          count,
+        }
+      })
+      .filter((cat) => cat.count > 0)
+  }, [categories, products])
+
+  // Dynamic Brands extracted from live products
+  const dynamicBrands = useMemo(() => {
+    const brandSet = new Set<string>()
+    products.forEach((p) => {
+      if (p.brand && p.brand.trim() !== '') {
+        brandSet.add(p.brand.trim())
+      }
+    })
+    const list = Array.from(brandSet)
+    if (brandSearch.trim()) {
+      return list.filter((b) => b.toLowerCase().includes(brandSearch.toLowerCase()))
+    }
+    return list
+  }, [products, brandSearch])
+
   // Live Real-Time Filtering matching search bar input
   const searchResults = useMemo(() => {
     return products.filter((p) => {
-      // Query match (name, description, category, or specs)
+      // Query match (name, description, category, brand, or specs)
       const q = query.toLowerCase().trim()
       const matchQuery =
         !q ||
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
+        (p.brand && p.brand.toLowerCase().includes(q)) ||
+        (p.subCategory && p.subCategory.toLowerCase().includes(q)) ||
         (p.description && p.description.toLowerCase().includes(q))
 
       if (!matchQuery) return false
 
       // Category filter
-      if (selectedCategory && p.category.toLowerCase() !== selectedCategory.toLowerCase()) {
-        return false
+      if (selectedCategory) {
+        const catMatch =
+          p.category.toLowerCase() === selectedCategory.toLowerCase() ||
+          p.subCategory?.toLowerCase() === selectedCategory.toLowerCase()
+        if (!catMatch) return false
       }
 
       // Brand filter
       if (selectedBrands.length > 0) {
-        const brandMatch = selectedBrands.some((b) => p.name.toLowerCase().includes(b.toLowerCase()))
+        const brandMatch = selectedBrands.some(
+          (b) => p.brand?.toLowerCase() === b.toLowerCase() || p.name.toLowerCase().includes(b.toLowerCase())
+        )
         if (!brandMatch) return false
       }
 
@@ -164,89 +204,61 @@ export function SearchPage() {
                 </div>
               </div>
 
-              {/* Categories */}
-              <div className="space-y-2.5">
-                <h4 className="text-xs font-bold text-[#12203D]">Categories</h4>
-                <div className="space-y-1.5 text-xs font-medium text-gray-600">
-                  <label className="flex items-center justify-between cursor-pointer hover:text-[#2F5FE3]">
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategory === 'Kitchen Appliances'}
-                        onChange={() =>
-                          setSelectedCategory((prev) =>
-                            prev === 'Kitchen Appliances' ? null : 'Kitchen Appliances',
-                          )
-                        }
-                        className="rounded accent-[#2F5FE3]"
-                      />
-                      <span>Kitchen Appliances</span>
-                    </span>
-                    <span className="text-[10px] text-gray-400">(24)</span>
-                  </label>
-                  <label className="flex items-center justify-between cursor-pointer hover:text-[#2F5FE3]">
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategory === 'Home Appliances'}
-                        onChange={() =>
-                          setSelectedCategory((prev) =>
-                            prev === 'Home Appliances' ? null : 'Home Appliances',
-                          )
-                        }
-                        className="rounded accent-[#2F5FE3]"
-                      />
-                      <span>Home Appliances</span>
-                    </span>
-                    <span className="text-[10px] text-gray-400">(3)</span>
-                  </label>
-                  <label className="flex items-center justify-between cursor-pointer hover:text-[#2F5FE3]">
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategory === 'Electronics'}
-                        onChange={() =>
-                          setSelectedCategory((prev) =>
-                            prev === 'Electronics' ? null : 'Electronics',
-                          )
-                        }
-                        className="rounded accent-[#2F5FE3]"
-                      />
-                      <span>Electronics</span>
-                    </span>
-                    <span className="text-[10px] text-gray-400">(1)</span>
-                  </label>
+              {/* Dynamic Categories */}
+              {dynamicCategories.length > 0 && (
+                <div className="space-y-2.5">
+                  <h4 className="text-xs font-bold text-[#12203D]">Categories</h4>
+                  <div className="space-y-1.5 text-xs font-medium text-gray-600">
+                    {dynamicCategories.map((cat) => (
+                      <label key={cat.id} className="flex items-center justify-between cursor-pointer hover:text-[#2F5FE3]">
+                        <span className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategory === cat.id}
+                            onChange={() =>
+                              setSelectedCategory((prev) => (prev === cat.id ? null : cat.id))
+                            }
+                            className="rounded accent-[#2F5FE3]"
+                          />
+                          <span>{cat.label}</span>
+                        </span>
+                        <span className="text-[10px] text-gray-400">({cat.count})</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Brand Filter */}
-              <div className="space-y-2.5 border-t border-gray-100 pt-4">
-                <h4 className="text-xs font-bold text-[#12203D]">Brand</h4>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={brandSearch}
-                    onChange={(e) => setBrandSearch(e.target.value)}
-                    placeholder="Search brand"
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50/70 pl-8 pr-3 py-1.5 text-xs outline-none focus:border-[#2F5FE3]"
-                  />
-                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                </div>
+              {/* Dynamic Brand Filter */}
+              {dynamicBrands.length > 0 && (
+                <div className="space-y-2.5 border-t border-gray-100 pt-4">
+                  <h4 className="text-xs font-bold text-[#12203D]">Brand</h4>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={brandSearch}
+                      onChange={(e) => setBrandSearch(e.target.value)}
+                      placeholder="Search brand"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50/70 pl-8 pr-3 py-1.5 text-xs outline-none focus:border-[#2F5FE3]"
+                    />
+                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  </div>
 
-                <div className="space-y-1.5 text-xs font-medium text-gray-600 max-h-40 overflow-y-auto">
-                  {['Binatone', 'Philips', 'Ninja', 'Kenwood', 'Moulinex'].map((b) => (
-                    <label key={b} className="flex items-center gap-2 cursor-pointer hover:text-[#2F5FE3]">
-                      <input
-                        type="checkbox"
-                        checked={selectedBrands.includes(b)}
-                        onChange={() => toggleBrand(b)}
-                        className="rounded accent-[#2F5FE3]"
-                      />
-                      <span>{b}</span>
-                    </label>
-                  ))}
+                  <div className="space-y-1.5 text-xs font-medium text-gray-600 max-h-40 overflow-y-auto">
+                    {dynamicBrands.map((b) => (
+                      <label key={b} className="flex items-center gap-2 cursor-pointer hover:text-[#2F5FE3]">
+                        <input
+                          type="checkbox"
+                          checked={selectedBrands.includes(b)}
+                          onChange={() => toggleBrand(b)}
+                          className="rounded accent-[#2F5FE3]"
+                        />
+                        <span>{b}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Price Range */}
               <div className="space-y-2.5 border-t border-gray-100 pt-4">

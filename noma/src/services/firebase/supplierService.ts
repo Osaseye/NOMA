@@ -78,13 +78,12 @@ export const supplierService = {
           })
           callback(list)
         },
-        (error) => {
-          console.warn('Firestore suppliers listener notice:', error?.message || error)
+        (_error) => {
+          // Fallback silently to initialSuppliers on public storefront
           callback(initialSuppliers)
         }
       )
-    } catch (e) {
-      console.warn('Firestore suppliers catch notice:', e)
+    } catch (_e) {
       callback(initialSuppliers)
       return () => {}
     }

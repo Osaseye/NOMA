@@ -20,6 +20,7 @@ import { ImagePlaceholder } from '../ui/ImagePlaceholder'
 import { useCartStore } from '../../store/cartStore'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
+import { InstallAppBanner } from '../pwa/InstallAppBanner'
 
 export function StoreHeader() {
   const navigate = useNavigate()
@@ -59,9 +60,9 @@ export function StoreHeader() {
     return { products: matchedProducts, categories: matchedCategories }
   }, [searchQuery, products, categories])
 
-  // Close dropdowns when clicking outside
+  // Handle outside click to close search dropdown
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    const handleClickOutside = (event: MouseEvent) => {
       if (
         searchContainerRef.current &&
         !searchContainerRef.current.contains(event.target as Node)
@@ -86,9 +87,6 @@ export function StoreHeader() {
     } else {
       document.body.style.overflow = ''
     }
-    return () => {
-      document.body.style.overflow = ''
-    }
   }, [mobileMenuOpen])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -100,7 +98,9 @@ export function StoreHeader() {
   }
 
   return (
-    <header className="sticky top-0 left-0 w-full z-50 bg-white border-b border-gray-100/70 shadow-2xs">
+    <>
+      <InstallAppBanner />
+      <header className="absolute md:sticky top-0 left-0 w-full z-50 bg-white border-b border-gray-100/70 shadow-2xs">
       {/* Main Navigation Container */}
       <div className="max-w-7xl mx-auto px-4 py-3 md:px-8 md:py-4">
         {/* Desktop & Mobile Main Row */}
@@ -585,5 +585,6 @@ export function StoreHeader() {
         </div>
       )}
     </header>
-  )
+  </>
+)
 }
