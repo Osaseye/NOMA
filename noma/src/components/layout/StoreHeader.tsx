@@ -100,7 +100,7 @@ export function StoreHeader() {
   return (
     <>
       <InstallAppBanner />
-      <header className="absolute md:sticky top-0 left-0 w-full z-50 bg-white border-b border-gray-100/70 shadow-2xs">
+      <header className="relative md:sticky top-0 left-0 w-full z-50 bg-white border-b border-gray-100/70 shadow-2xs">
       {/* Main Navigation Container */}
       <div className="max-w-7xl mx-auto px-4 py-3 md:px-8 md:py-4">
         {/* Desktop & Mobile Main Row */}

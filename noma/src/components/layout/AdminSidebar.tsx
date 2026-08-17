@@ -94,7 +94,7 @@ export function AdminSidebar() {
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <Link to="/admin" className="flex items-center gap-2.5 group">
             <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-white p-1 shadow-sm group-hover:scale-105 transition-transform">
-              <img src="/icon.PNG" alt="Noma Logo" className="h-6 w-6 object-contain" />
+              <img src="/icon.png" alt="Noma Logo" className="h-6 w-6 object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="font-['Outfit'] text-xs font-black tracking-tight text-white flex items-center gap-1">
