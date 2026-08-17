@@ -14,8 +14,6 @@ import {
   HiXMark,
   HiTag,
   HiStar,
-  HiChevronDown,
-  HiSparkles,
 } from 'react-icons/hi2'
 import { FiMenu, FiX } from 'react-icons/fi'
 import { ImagePlaceholder } from '../ui/ImagePlaceholder'
@@ -32,8 +30,6 @@ export function StoreHeader() {
     0,
   )
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
-  const categoryDropdownRef = useRef<HTMLDivElement>(null)
 
   // Character-by-character search state
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,12 +68,6 @@ export function StoreHeader() {
       ) {
         setIsDropdownOpen(false)
       }
-      if (
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setCategoryDropdownOpen(false)
-      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -87,7 +77,6 @@ export function StoreHeader() {
   useEffect(() => {
     setMobileMenuOpen(false)
     setIsDropdownOpen(false)
-    setCategoryDropdownOpen(false)
   }, [location.pathname])
 
   // Prevent background scroll when mobile menu is open

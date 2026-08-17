@@ -34,6 +34,8 @@ export type Product = {
   category: CategoryId
   subCategory?: string
   subcategory?: string
+  supplierId?: string
+  supplierName?: string
   finalPrice: number
   basePrice: number
   stockQty: number
@@ -46,6 +48,18 @@ export type Product = {
   bulky?: boolean
   description: string
   specs: string[]
+}
+
+export type Supplier = {
+  id: string
+  name: string
+  contactPerson: string
+  phone: string
+  email?: string
+  address?: string
+  paymentTerms?: string
+  notes?: string
+  createdAt?: string
 }
 
 export type SubCategory = {

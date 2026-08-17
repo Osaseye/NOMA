@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, googleProvider, db } from '../../lib/firebase'
-import type { DeliveryAddress, UserProfile } from '../../store/userStore'
+import type { DeliveryAddress } from '../../store/userStore'
 
 export interface UserDoc {
   uid: string

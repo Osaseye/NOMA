@@ -36,7 +36,7 @@ const publicPageOptions = [
 ]
 
 export function SettingsPage() {
-  const { settings, updateSettings, addHeroBanner, updateHeroBanner, deleteHeroBanner, toggleDealProduct, toggleTrendingProduct } = useAdminStore()
+  const { settings, updateSettings, addHeroBanner, deleteHeroBanner, toggleDealProduct, toggleTrendingProduct } = useAdminStore()
   const { products } = useProductStore()
 
   const [activeTab, setActiveTab] = useState<'banners' | 'deals' | 'trending' | 'announcement' | 'storage'>('banners')
