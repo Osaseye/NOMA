@@ -11,16 +11,16 @@ import {
   Star,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { products } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
 import { useCartStore } from '../../store/cartStore'
 import { useUserStore } from '../../store/userStore'
 import { formatNaira } from '../../utils/pricing'
 
 export function SearchPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const initialQuery = searchParams.get('q') || 'blender'
-  const [query, setQuery] = useState(initialQuery)
+  const [searchParams] = useSearchParams()
+  const query = searchParams.get('q') || ''
 
+  const { products } = useProductStore()
   const addItem = useCartStore((s) => s.addItem)
   const { toggleWishlist, isInWishlist } = useUserStore()
 
@@ -28,9 +28,9 @@ export function SearchPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [brandSearch, setBrandSearch] = useState('')
-  const [minPrice, setMinPrice] = useState<number | ''>(5000)
-  const [maxPrice, setMaxPrice] = useState<number | ''>(150000)
-  const [inStockOnly, setInStockOnly] = useState(true)
+  const [minPrice, setMinPrice] = useState<number | ''>(0)
+  const [maxPrice, setMaxPrice] = useState<number | ''>(500000)
+  const [inStockOnly, setInStockOnly] = useState(false)
   const [sortBy, setSortBy] = useState('relevance')
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
 
@@ -67,18 +67,13 @@ export function SearchPage() {
 
       return true
     })
-  }, [query, selectedCategory, selectedBrands, minPrice, maxPrice, inStockOnly])
-
-  const handleQueryChange = (newQ: string) => {
-    setQuery(newQ)
-    setSearchParams({ q: newQ }, { replace: true })
-  }
+  }, [products, query, selectedCategory, selectedBrands, minPrice, maxPrice, inStockOnly])
 
   const handleClearAll = () => {
     setSelectedCategory(null)
     setSelectedBrands([])
-    setMinPrice(5000)
-    setMaxPrice(150000)
+    setMinPrice(0)
+    setMaxPrice(500000)
     setInStockOnly(false)
   }
 
@@ -92,7 +87,7 @@ export function SearchPage() {
     <div className="min-h-screen bg-[#F8F9FB] font-['Outfit',sans-serif] text-[#12203D] selection:bg-[#2F5FE3] selection:text-white pb-24 pt-3 md:pt-5">
       <div className="mx-auto w-full max-w-[1440px] px-4 md:px-8 lg:px-12">
         {/* Search Header Banner */}
-        <div className="mb-6 space-y-3">
+        <div className="mb-6 space-y-1">
           <nav className="flex items-center gap-2 text-xs font-medium text-gray-500">
             <Link to="/" className="hover:text-[#2F5FE3] transition-colors">
               Home
@@ -103,32 +98,9 @@ export function SearchPage() {
             </span>
           </nav>
 
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#12203D]">Search Results</h1>
-
-          {/* Interactive Search Bar Input */}
-          <div className="relative max-w-2xl">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => handleQueryChange(e.target.value)}
-              placeholder="Search for products, brands, categories..."
-              className="w-full rounded-2xl border border-gray-200 bg-white pl-4 pr-24 py-3.5 text-sm font-semibold text-[#12203D] shadow-xs outline-none focus:border-[#2F5FE3] focus:ring-4 focus:ring-[#2F5FE3]/10 transition-all"
-            />
-            {query && (
-              <button
-                onClick={() => handleQueryChange('')}
-                className="absolute right-14 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-              >
-                <X size={18} />
-              </button>
-            )}
-            <button
-              onClick={() => setSearchParams({ q: query })}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-[#2F5FE3] p-2.5 text-white hover:bg-[#254ec4] transition-colors"
-            >
-              <Search size={18} />
-            </button>
-          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#12203D] sm:text-3xl">
+            Search Results {query ? `for "${query}"` : ''}
+          </h1>
         </div>
 
         {/* Results Info & Sort Bar */}

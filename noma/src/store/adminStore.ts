@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { settingsService, initialSiteSettings } from '../services/firebase/settingsService'
+
+let settingsUnsubscribe: (() => void) | null = null
 
 export interface HeroBanner {
   id: string
@@ -10,6 +13,8 @@ export interface HeroBanner {
   targetUrl: string
   active: boolean
 }
+
+export type StorageProviderType = 'firebase' | 'cloudinary' | 'cloudflare_r2'
 
 export interface SiteSettings {
   allProductsBannerImage?: string
@@ -22,12 +27,18 @@ export interface SiteSettings {
   supportPhone: string
   supportEmail: string
   whatsappNumber: string
+  storageProvider?: StorageProviderType
+  cloudinaryCloudName?: string
+  cloudinaryUploadPreset?: string
+  cloudflareBucketUrl?: string
 }
 
 interface AdminState {
   isLoggedIn: boolean
   operatorUser: { name: string; email: string; role: string } | null
   settings: SiteSettings
+
+  initSettingsListener: () => () => void
   login: (email: string) => void
   logout: () => void
   updateSettings: (newSettings: Partial<SiteSettings>) => void
@@ -39,100 +50,131 @@ interface AdminState {
   clearAllAdminSettings: () => void
 }
 
-const initialSettings: SiteSettings = {
-  allProductsBannerImage: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&w=1000&q=80',
-  heroBanners: [],
-  todaysDealsProductIds: [],
-  todaysDealsEndTimestamp: Date.now() + 86400000 * 2,
-  trendingProductIds: [],
-  announcementText: '⚡ WELCOME TO NOMA STORES - CLEAN BACKEND INTEGRATION MODE ACTIVE',
-  announcementActive: true,
-  supportPhone: '0803 000 NOMA',
-  supportEmail: 'support@noma.ng',
-  whatsappNumber: '2348030006662',
-}
-
 export const useAdminStore = create<AdminState>()(
   persist(
-    (set) => ({
-      isLoggedIn: true,
-      operatorUser: {
-        name: 'Chief Operator',
-        email: 'operator@noma.ng',
-        role: 'Master Admin',
+    (set, get) => ({
+      isLoggedIn: false,
+      operatorUser: null,
+      settings: initialSiteSettings,
+
+      initSettingsListener: () => {
+        if (settingsUnsubscribe) {
+          return settingsUnsubscribe
+        }
+
+        const unsub = settingsService.subscribeSiteSettings((liveSettings) => {
+          set({ settings: liveSettings })
+        })
+
+        settingsUnsubscribe = () => {
+          unsub()
+          settingsUnsubscribe = null
+        }
+
+        return settingsUnsubscribe
       },
-      settings: initialSettings,
+
       login: (email: string) =>
         set({
           isLoggedIn: true,
-          operatorUser: { name: 'Chief Operator', email, role: 'Master Admin' },
+          operatorUser: { name: 'Master Admin', email, role: 'Master Admin' },
         }),
+
       logout: () => set({ isLoggedIn: false, operatorUser: null }),
-      updateSettings: (newSettings) =>
+
+      updateSettings: (newSettings) => {
         set((state) => ({
           settings: { ...state.settings, ...newSettings },
-        })),
-      addHeroBanner: (banner) =>
+        }))
+        settingsService.updateSiteSettings(newSettings).catch((err) => {
+          console.error('Failed to sync siteSettings to Firestore:', err)
+        })
+      },
+
+      addHeroBanner: (banner) => {
+        const newBanner = { ...banner, id: `banner-${Date.now()}` }
+        const updatedBanners = [...get().settings.heroBanners, newBanner]
+
         set((state) => ({
-          settings: {
-            ...state.settings,
-            heroBanners: [
-              ...state.settings.heroBanners,
-              { ...banner, id: `banner-${Date.now()}` },
-            ],
-          },
-        })),
-      updateHeroBanner: (id, banner) =>
+          settings: { ...state.settings, heroBanners: updatedBanners },
+        }))
+        settingsService.updateSiteSettings({ heroBanners: updatedBanners }).catch((err) => {
+          console.error('Failed to add hero banner to Firestore:', err)
+        })
+      },
+
+      updateHeroBanner: (id, banner) => {
+        const updatedBanners = get().settings.heroBanners.map((b) =>
+          b.id === id ? { ...b, ...banner } : b
+        )
         set((state) => ({
-          settings: {
-            ...state.settings,
-            heroBanners: state.settings.heroBanners.map((b) =>
-              b.id === id ? { ...b, ...banner } : b
-            ),
-          },
-        })),
-      deleteHeroBanner: (id) =>
+          settings: { ...state.settings, heroBanners: updatedBanners },
+        }))
+        settingsService.updateSiteSettings({ heroBanners: updatedBanners }).catch((err) => {
+          console.error('Failed to update hero banner in Firestore:', err)
+        })
+      },
+
+      deleteHeroBanner: (id) => {
+        const updatedBanners = get().settings.heroBanners.filter((b) => b.id !== id)
         set((state) => ({
-          settings: {
-            ...state.settings,
-            heroBanners: state.settings.heroBanners.filter((b) => b.id !== id),
-          },
-        })),
-      toggleDealProduct: (productId) =>
-        set((state) => {
-          const exists = state.settings.todaysDealsProductIds.includes(productId)
-          const updated = exists
-            ? state.settings.todaysDealsProductIds.filter((id) => id !== productId)
-            : [...state.settings.todaysDealsProductIds, productId]
-          return {
-            settings: { ...state.settings, todaysDealsProductIds: updated },
-          }
-        }),
-      toggleTrendingProduct: (productId) =>
-        set((state) => {
-          const exists = state.settings.trendingProductIds.includes(productId)
-          const updated = exists
-            ? state.settings.trendingProductIds.filter((id) => id !== productId)
-            : [...state.settings.trendingProductIds, productId]
-          return {
-            settings: { ...state.settings, trendingProductIds: updated },
-          }
-        }),
-      clearAllAdminSettings: () =>
-        set({
-          settings: {
-            allProductsBannerImage: '',
-            heroBanners: [],
-            todaysDealsProductIds: [],
-            todaysDealsEndTimestamp: Date.now(),
-            trendingProductIds: [],
-            announcementText: '',
-            announcementActive: false,
-            supportPhone: '',
-            supportEmail: '',
-            whatsappNumber: '',
-          },
-        }),
+          settings: { ...state.settings, heroBanners: updatedBanners },
+        }))
+        settingsService.updateSiteSettings({ heroBanners: updatedBanners }).catch((err) => {
+          console.error('Failed to delete hero banner in Firestore:', err)
+        })
+      },
+
+      toggleDealProduct: (productId) => {
+        const exists = get().settings.todaysDealsProductIds.includes(productId)
+        const updated = exists
+          ? get().settings.todaysDealsProductIds.filter((id) => id !== productId)
+          : [...get().settings.todaysDealsProductIds, productId]
+
+        set((state) => ({
+          settings: { ...state.settings, todaysDealsProductIds: updated },
+        }))
+        settingsService.updateSiteSettings({ todaysDealsProductIds: updated }).catch((err) => {
+          console.error('Failed to toggle deal product in Firestore:', err)
+        })
+      },
+
+      toggleTrendingProduct: (productId) => {
+        const exists = get().settings.trendingProductIds.includes(productId)
+        const updated = exists
+          ? get().settings.trendingProductIds.filter((id) => id !== productId)
+          : [...get().settings.trendingProductIds, productId]
+
+        set((state) => ({
+          settings: { ...state.settings, trendingProductIds: updated },
+        }))
+        settingsService.updateSiteSettings({ trendingProductIds: updated }).catch((err) => {
+          console.error('Failed to toggle trending product in Firestore:', err)
+        })
+      },
+
+      clearAllAdminSettings: () => {
+        const emptySettings: SiteSettings = {
+          allProductsBannerImage: '',
+          heroBanners: [],
+          todaysDealsProductIds: [],
+          todaysDealsEndTimestamp: Date.now(),
+          trendingProductIds: [],
+          announcementText: '',
+          announcementActive: false,
+          supportPhone: '',
+          supportEmail: '',
+          whatsappNumber: '',
+          storageProvider: 'firebase',
+          cloudinaryCloudName: '',
+          cloudinaryUploadPreset: '',
+          cloudflareBucketUrl: '',
+        }
+        set({ settings: emptySettings })
+        settingsService.updateSiteSettings(emptySettings).catch((err) => {
+          console.error('Failed to clear admin settings in Firestore:', err)
+        })
+      },
     }),
     {
       name: 'noma_admin_store_v3',

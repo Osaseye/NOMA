@@ -1,17 +1,10 @@
 import { Link } from 'react-router-dom'
 import { brand } from '../../constants/brand'
+import { useProductStore } from '../../store/productStore'
 
 const footerLinks: Record<string, { label: string; href: string; external?: boolean }[]> = {
-  shop: [
-    { label: 'Electronics', href: '/category/electronics' },
-    { label: 'Kitchen', href: '/category/kitchen' },
-    { label: 'Appliances', href: '/category/appliances' },
-    { label: 'Phones & Tablets', href: '/category/phones' },
-    { label: 'Clothing & Fashion', href: '/category/clothing' },
-    { label: 'Home Essentials', href: '/category/home-essentials' },
-  ],
   help: [
-    { label: 'Track My Order', href: '/track-order' },
+    { label: 'Track My Order', href: '/orders' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Returns & Refunds', href: '/returns' },
     { label: 'Contact Us', href: '/contact' },
@@ -26,6 +19,8 @@ const footerLinks: Record<string, { label: string; href: string; external?: bool
 }
 
 export function StoreFooter() {
+  const { categories } = useProductStore()
+
   return (
     <footer className="bg-[#F9F9F6] text-[#12203D]">
       <div className="w-full">
@@ -39,13 +34,19 @@ export function StoreFooter() {
               <div className="p-8 md:p-10 lg:p-12">
                 <h3 className="mb-6 text-[12px] font-bold uppercase tracking-widest text-[#12203D]">SHOP</h3>
                 <ul className="flex flex-col gap-3">
-                  {footerLinks.shop.map((link) => (
-                    <li key={link.href}>
-                      <Link to={link.href} className="text-[14px] font-medium text-[#12203D]/70 transition-colors hover:text-[#12203D]">
-                        {link.label}
-                      </Link>
+                  {categories.length > 0 ? (
+                    categories.map((cat) => (
+                      <li key={cat.id}>
+                        <Link to={`/category/${cat.id}`} className="text-[14px] font-medium text-[#12203D]/70 transition-colors hover:text-[#12203D]">
+                          {cat.label}
+                        </Link>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-[13px] font-medium text-[#12203D]/40 italic">
+                      No categories available yet
                     </li>
-                  ))}
+                  )}
                 </ul>
               </div>
 
@@ -111,11 +112,11 @@ export function StoreFooter() {
 
         {/* Big Text Section */}
         <div className="border-t border-[#12203D]/10">
-          <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-8 p-8 md:flex-row md:gap-12 md:p-10 lg:p-12">
+          <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-6 p-6 md:flex-row md:gap-12 md:p-10 lg:p-12 text-center md:text-left">
             <Link to="/" className="shrink-0">
-              <img src="/logo.PNG" alt="Noma" className="h-16 w-32 object-contain" />
+              <img src="/logo.PNG" alt="Noma" className="h-14 w-28 md:h-16 md:w-32 object-contain" />
             </Link>
-            <div className="font-['Outfit'] text-[4rem] font-black leading-none tracking-tight text-[#12203D] md:text-[6rem] lg:text-[8rem]">
+            <div className="font-['Outfit'] whitespace-nowrap text-[2.2rem] xs:text-[2.8rem] sm:text-[4rem] md:text-[6rem] lg:text-[8rem] font-black leading-none tracking-tight text-[#12203D]">
               SINCE 2026
             </div>
           </div>

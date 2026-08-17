@@ -32,6 +32,8 @@ export type Product = {
   slug: string
   name: string
   category: CategoryId
+  subCategory?: string
+  subcategory?: string
   finalPrice: number
   basePrice: number
   stockQty: number
@@ -46,12 +48,22 @@ export type Product = {
   specs: string[]
 }
 
+export type SubCategory = {
+  id: string
+  label: string
+  parentId: string
+  image?: string
+  ageGroup?: 'Adults' | 'Children' | 'Babies' | 'All Ages'
+  genderTarget?: 'Men' | 'Women' | 'Unisex' | 'Boys' | 'Girls'
+}
+
 export type Category = {
   id: CategoryId | string
   label: string
   defaultMarkupPercent: number
   merchandisingLine: string
   image?: string
+  subcategories?: SubCategory[]
 }
 
 export type CartLine = {

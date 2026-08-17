@@ -1,12 +1,29 @@
+import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { PageLoader } from '../components/ui/PageLoader'
 import { router } from '../routes/router'
+import { useProductStore } from '../store/productStore'
+import { useAdminStore } from '../store/adminStore'
+import { seedService } from '../services/firebase/seedService'
 
 const queryClient = new QueryClient()
 
 export default function App() {
+  useEffect(() => {
+    // Ensure default categories exist if database is fresh
+    seedService.ensureDefaultCategoriesExist()
+
+    const unsubProducts = useProductStore.getState().initFirebaseListeners()
+    const unsubSettings = useAdminStore.getState().initSettingsListener()
+
+    return () => {
+      unsubProducts()
+      unsubSettings()
+    }
+  }, [])
+
   return (
     <QueryClientProvider client={queryClient}>
       <PageLoader />

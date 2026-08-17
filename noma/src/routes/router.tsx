@@ -12,11 +12,14 @@ import { ProductDetailPage } from '../pages/storefront/ProductDetailPage'
 import { SearchPage } from '../pages/storefront/SearchPage'
 import { StaticInfoPage } from '../pages/storefront/StaticInfoPage'
 import { WhatsAppOrderPage } from '../pages/storefront/WhatsAppOrderPage'
+
 import { CategoriesPage } from '../pages/admin/CategoriesPage'
 import { CustomersPage } from '../pages/admin/CustomersPage'
 import { DashboardPage } from '../pages/admin/DashboardPage'
 import { InventoryPage } from '../pages/admin/InventoryPage'
 import { LoginPage } from '../pages/admin/LoginPage'
+import { AdminRegisterPage } from '../pages/admin/AdminRegisterPage'
+import { AdminProtectedRoute } from '../components/auth/AdminProtectedRoute'
 import { OrderDetailPage } from '../pages/admin/OrderDetailPage'
 import { OrdersPage } from '../pages/admin/OrdersPage'
 import { ProductEditorPage } from '../pages/admin/ProductEditorPage'
@@ -61,25 +64,31 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '/admin/login', element: <LoginPage /> },
+  { path: '/admin/register', element: <AdminRegisterPage /> },
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: <AdminProtectedRoute />,
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'orders', element: <OrdersPage /> },
-      { path: 'orders/:orderId', element: <OrderDetailPage /> },
-      { path: 'products', element: <ProductsPage /> },
-      { path: 'products/new', element: <ProductEditorPage /> },
-      { path: 'products/:productId/edit', element: <ProductEditorPage /> },
-      { path: 'inventory', element: <InventoryPage /> },
-      { path: 'categories', element: <CategoriesPage /> },
-      { path: 'customers', element: <CustomersPage /> },
-      { path: 'revenue', element: <RevenuePage /> },
-      { path: 'profit', element: <ProfitPage /> },
-      { path: 'suppliers', element: <SuppliersPage /> },
-      { path: 'reports', element: <ReportsPage /> },
-      { path: 'reviews', element: <ReviewsPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: 'orders', element: <OrdersPage /> },
+          { path: 'orders/:orderId', element: <OrderDetailPage /> },
+          { path: 'products', element: <ProductsPage /> },
+          { path: 'products/new', element: <ProductEditorPage /> },
+          { path: 'products/:productId/edit', element: <ProductEditorPage /> },
+          { path: 'inventory', element: <InventoryPage /> },
+          { path: 'categories', element: <CategoriesPage /> },
+          { path: 'customers', element: <CustomersPage /> },
+          { path: 'revenue', element: <RevenuePage /> },
+          { path: 'profit', element: <ProfitPage /> },
+          { path: 'suppliers', element: <SuppliersPage /> },
+          { path: 'reports', element: <ReportsPage /> },
+          { path: 'reviews', element: <ReviewsPage /> },
+          { path: 'settings', element: <SettingsPage /> },
+        ],
+      },
     ],
   },
 ])

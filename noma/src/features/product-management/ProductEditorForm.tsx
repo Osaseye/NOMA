@@ -4,6 +4,9 @@ import { HiSparkles, HiCheckCircle, HiArrowLeft, HiPhoto, HiPlus, HiTrash, HiArr
 import type { Product, CategoryId } from '../../types/commerce'
 import { formatNaira, getMarkupAmount } from '../../utils/pricing'
 import { useProductStore } from '../../store/productStore'
+import { storageService } from '../../services/firebase/storageService'
+import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 export function ProductEditorForm({ product }: { product?: Product }) {
   const navigate = useNavigate()
@@ -12,7 +15,8 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   const isEditing = Boolean(product?.id)
 
   const [name, setName] = useState(product?.name || '')
-  const [category, setCategory] = useState(product?.category || 'electronics')
+  const [category, setCategory] = useState(product?.category || (categories[0]?.id as CategoryId) || 'electronics')
+  const [subCategory, setSubCategory] = useState(product?.subCategory || product?.subcategory || '')
   const [brand, setBrand] = useState(product?.brand || 'Noma')
   const [basePrice, setBasePrice] = useState(product?.basePrice || 100000)
   const [finalPrice, setFinalPrice] = useState(product?.finalPrice || 120000)
@@ -26,37 +30,55 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   const [specs, setSpecs] = useState<string[]>(product?.specs || ['High durability build', '1 Year warranty'])
   const [newSpec, setNewSpec] = useState('')
   const [successMsg, setSuccessMsg] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+
+  // Subcategories for current selected category
+  const selectedCategoryObj = categories.find((c) => c.id === category)
+  const availableSubCategories = selectedCategoryObj?.subcategories || []
 
   // Markup calculation
   const markupAmount = getMarkupAmount(finalPrice, basePrice)
   const markupPercent = basePrice > 0 ? Math.round(((finalPrice - basePrice) / basePrice) * 100) : 0
 
-  // File Upload Handlers
-  const handleMainImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // File Upload Handlers via storageService
+  const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result as string
-        setImage(result)
-        if (!detailImages.includes(result)) {
-          setDetailImages((prev) => [result, ...prev])
+      setUploadingImage(true)
+      const toastId = toast.loading('Uploading product image...')
+      try {
+        const downloadUrl = await storageService.uploadImage(file, 'products')
+        setImage(downloadUrl)
+        if (!detailImages.includes(downloadUrl)) {
+          setDetailImages((prev) => [downloadUrl, ...prev])
         }
+        toast.success('Product image uploaded!', { id: toastId })
+      } catch (err: any) {
+        console.error('Failed to upload product image:', err)
+        toast.error(err?.message || 'Failed to upload product image', { id: toastId })
+      } finally {
+        setUploadingImage(false)
       }
-      reader.readAsDataURL(file)
     }
   }
 
-  const handleDetailGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDetailGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
-      Array.from(files).forEach((file) => {
-        const reader = new FileReader()
-        reader.onload = () => {
-          setDetailImages((prev) => [...prev, reader.result as string])
+    if (files && files.length > 0) {
+      setUploadingImage(true)
+      const toastId = toast.loading('Uploading gallery images...')
+      try {
+        for (const file of Array.from(files)) {
+          const downloadUrl = await storageService.uploadImage(file, 'products')
+          setDetailImages((prev) => [...prev, downloadUrl])
         }
-        reader.readAsDataURL(file)
-      })
+        toast.success('Gallery images uploaded!', { id: toastId })
+      } catch (err: any) {
+        console.error('Failed to upload gallery images:', err)
+        toast.error(err?.message || 'Failed to upload gallery images', { id: toastId })
+      } finally {
+        setUploadingImage(false)
+      }
     }
   }
 
@@ -80,6 +102,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
       updateProduct(product.id, {
         name,
         category,
+        subCategory,
         brand,
         basePrice: Number(basePrice),
         finalPrice: Number(finalPrice),
@@ -91,11 +114,13 @@ export function ProductEditorForm({ product }: { product?: Product }) {
         description,
         specs,
       })
+      toast.success('Product updated live on storefront!')
     } else {
       addProduct({
         name,
         slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         category,
+        subCategory,
         brand,
         basePrice: Number(basePrice),
         finalPrice: Number(finalPrice),
@@ -109,6 +134,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
         description,
         specs,
       })
+      toast.success(`Product "${name}" published live on storefront!`)
     }
     setSuccessMsg(true)
     setTimeout(() => {
@@ -118,10 +144,10 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-8 pb-12">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-8 pb-12 font-['Outfit',sans-serif]">
       {successMsg && (
         <div className="flex items-center gap-2 rounded-xl bg-emerald-100 p-4 text-xs font-bold text-emerald-800 shadow-md">
-          <HiCheckCircle size={20} /> Product saved successfully! Redirecting to catalog...
+          <HiCheckCircle size={20} /> Product saved & published live! Redirecting to catalog...
         </div>
       )}
 
@@ -143,7 +169,8 @@ export function ProductEditorForm({ product }: { product?: Product }) {
           </button>
           <button
             type="submit"
-            className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 transition-all"
+            disabled={uploadingImage}
+            className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50"
           >
             {isEditing ? 'Save & Update Product' : 'Create Product Card'}
           </button>
@@ -160,7 +187,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
             </h3>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase text-slate-600">Product Title</label>
+              <label className="text-[11px] font-bold uppercase text-slate-600">Product Title *</label>
               <input
                 type="text"
                 required
@@ -171,12 +198,16 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase text-slate-600">Category</label>
+                <label className="text-[11px] font-bold uppercase text-slate-600">Main Category *</label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as CategoryId)}
+                  onChange={(e) => {
+                    const newCat = e.target.value as CategoryId
+                    setCategory(newCat)
+                    setSubCategory('')
+                  }}
                   className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 bg-white"
                 >
                   {categories.map((c) => (
@@ -188,13 +219,39 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               </div>
 
               <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold uppercase text-slate-600">Sub Category</label>
+                {availableSubCategories.length > 0 ? (
+                  <select
+                    value={subCategory}
+                    onChange={(e) => setSubCategory(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 bg-white"
+                  >
+                    <option value="">-- Select Subcategory --</option>
+                    {availableSubCategories.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.label} {sub.ageGroup ? `(${sub.ageGroup})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={subCategory}
+                    onChange={(e) => setSubCategory(e.target.value)}
+                    placeholder="e.g. Women's Shoes, Mountain Bikes"
+                    className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  />
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-bold uppercase text-slate-600">Brand Name</label>
                 <input
                   type="text"
                   required
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
-                  placeholder="e.g. Samsung, LG, Binatone"
+                  placeholder="e.g. Samsung, LG, Noma"
                   className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
                 />
               </div>
@@ -234,161 +291,103 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase text-slate-600">Storefront Customer Price (₦)</label>
+                <label className="text-[11px] font-bold uppercase text-slate-600">Customer Final Retail Price (₦)</label>
                 <input
                   type="number"
                   required
                   value={finalPrice}
                   onChange={(e) => setFinalPrice(Number(e.target.value))}
-                  className="w-full rounded-xl border border-slate-300 p-3 text-xs font-black text-slate-900 outline-none focus:border-emerald-500"
+                  className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-emerald-700 outline-none focus:border-emerald-500"
                 />
               </div>
             </div>
 
-            {/* Profit Margin Box */}
-            <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-200 flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase text-emerald-800">Net Markup Earned Per Sale</span>
-                <span className="font-['Outfit'] font-black text-lg text-emerald-900">{formatNaira(markupAmount)}</span>
+            <div className="flex items-center justify-between rounded-xl bg-emerald-50 p-4 border border-emerald-200">
+              <div>
+                <span className="text-xs font-bold text-slate-700">Calculated Markup Profit:</span>
+                <span className="ml-2 text-sm font-black text-emerald-800">{formatNaira(markupAmount)}</span>
               </div>
-              <span className="rounded-full bg-emerald-200 px-3 py-1 text-xs font-black text-emerald-900">
+              <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-black text-white">
                 +{markupPercent}% Margin
               </span>
             </div>
           </div>
-
-          {/* Technical Specs List */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3">
-              Technical Specifications (Displayed on Details Page)
-            </h3>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newSpec}
-                onChange={(e) => setNewSpec(e.target.value)}
-                placeholder="e.g. 55-inch 4K OLED Display"
-                className="flex-1 rounded-xl border border-slate-300 p-2.5 text-xs font-bold"
-              />
-              <button
-                type="button"
-                onClick={handleAddSpec}
-                className="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-800"
-              >
-                <HiPlus size={16} /> Add Spec
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2 pt-2">
-              {specs.map((spec, i) => (
-                <span
-                  key={i}
-                  className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800 border border-slate-200"
-                >
-                  {spec}
-                  <button type="button" onClick={() => handleRemoveSpec(i)} className="text-rose-500 hover:text-rose-700">
-                    <HiTrash size={14} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Right Col: Image File Uploads & Badges */}
+        {/* Right Col: Media & Badges */}
         <div className="flex flex-col gap-6">
-          {/* Main Card Image File Upload */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-              <HiPhoto size={18} className="text-emerald-600" /> Main Card Image (Upload File)
-            </h3>
-
-            <div className="h-52 w-full rounded-xl bg-slate-50 border p-3 flex items-center justify-center overflow-hidden">
-              <img src={image} alt="Preview" className="max-h-full max-w-full object-contain" />
-            </div>
-
-            {/* File Uploader */}
-            <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-400 bg-emerald-50/50 p-3 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100/60 transition-colors">
-              <HiArrowUpTray size={18} /> Upload Main Product Image File
-              <input type="file" accept="image/*" onChange={handleMainImageUpload} className="hidden" />
-            </label>
-          </div>
-
-          {/* Product Detail Page Additional Gallery Uploads */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-              <HiPhoto size={18} className="text-emerald-600" /> Detail Page Gallery Images
-            </h3>
-
-            <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-xs font-bold text-slate-700 cursor-pointer hover:bg-slate-100">
-              <HiPlus size={18} /> Upload Additional Gallery Images
-              <input type="file" accept="image/*" multiple onChange={handleDetailGalleryUpload} className="hidden" />
-            </label>
-
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              {detailImages.map((imgUrl, i) => (
-                <div key={i} className="relative h-20 w-full rounded-lg bg-slate-50 border p-1 overflow-hidden">
-                  <img src={imgUrl} alt={`Gallery ${i}`} className="h-full w-full object-contain" />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveGalleryImage(i)}
-                    className="absolute top-1 right-1 rounded-full bg-rose-600 p-1 text-white hover:bg-rose-700"
-                  >
-                    <HiTrash size={10} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Stock & Badges */}
+          {/* Main Image Uploader */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3">
-              Stock & Badging
+              Main Product Image
             </h3>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase text-slate-600">Stock Quantity</label>
+            <div className="relative h-48 w-full overflow-hidden rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+              <img src={image} alt="Product Main" className="h-full w-full object-contain p-2" />
+            </div>
+
+            <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-500 bg-emerald-50/50 p-3 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100/60">
+              {uploadingImage ? (
+                <>
+                  <Loader2 size={16} className="animate-spin text-emerald-600" />
+                  <span>Uploading Image File...</span>
+                </>
+              ) : (
+                <>
+                  <HiArrowUpTray size={16} /> Upload Image File to Storage
+                  <input type="file" accept="image/*" disabled={uploadingImage} onChange={handleMainImageUpload} className="hidden" />
+                </>
+              )}
+            </label>
+
+            <div>
+              <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Or Image Web URL</label>
+              <input
+                type="text"
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="https://..."
+                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900"
+              />
+            </div>
+          </div>
+
+          {/* Inventory & Badge */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3">
+              Stock & Badges
+            </h3>
+
+            <div>
+              <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">Stock Quantity Available</label>
               <input
                 type="number"
                 required
                 value={stockQty}
                 onChange={(e) => setStockQty(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900"
+                className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase text-slate-600">Storefront Card Badge</label>
+            <div>
+              <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">Store Badge Tag</label>
               <input
                 type="text"
                 value={badge}
                 onChange={(e) => setBadge(e.target.value)}
-                placeholder="e.g. Best seller, Popular"
-                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900"
+                placeholder="e.g. Best Seller, New Arrival"
+                className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase text-slate-600">Discount Badge (-%)</label>
-              <input
-                type="text"
-                value={discountBadge}
-                onChange={(e) => setDiscountBadge(e.target.value)}
-                placeholder="e.g. -15%"
-                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900"
-              />
-            </div>
-
-            <label className="flex items-center gap-2 pt-2 text-xs font-bold text-slate-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer pt-2">
               <input
                 type="checkbox"
                 checked={bulky}
                 onChange={(e) => setBulky(e.target.checked)}
                 className="rounded text-emerald-600"
               />
-              Bulky Item (Heavy Delivery Freight)
+              Bulky Freight Item (Requires Special Delivery)
             </label>
           </div>
         </div>

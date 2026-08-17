@@ -18,11 +18,11 @@ export function WhyNoma() {
           </p>
         </div>
 
-        {/* Custom Asymmetric Layout */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Mobile Horizontal Swipe / Desktop Grid */}
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 scrollbar-none pb-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:overflow-visible lg:pb-0">
           
           {/* Main Hero Card (Left - 5 Cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between rounded-3xl bg-[#12203D] p-7 md:p-9 text-white shadow-xl relative overflow-hidden">
+          <div className="w-[88%] sm:w-[70%] lg:w-auto shrink-0 snap-center lg:col-span-5 flex flex-col justify-between rounded-3xl bg-[#12203D] p-7 md:p-9 text-white shadow-xl relative overflow-hidden">
             {/* Background design glow */}
             <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-[#2F5FE3]/20 blur-3xl" />
             <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-red-600/10 blur-3xl" />
@@ -57,7 +57,7 @@ export function WhyNoma() {
           </div>
 
           {/* Right Column: 3 Numbered Feature Blocks (7 Cols) */}
-          <div className="lg:col-span-7 flex flex-col gap-4">
+          <div className="w-[88%] sm:w-[70%] lg:w-auto shrink-0 snap-center lg:col-span-7 flex flex-col gap-4">
             
             {/* Feature 1 */}
             <div className="group flex items-start gap-4 md:gap-6 rounded-3xl border border-black/5 bg-white p-5 md:p-6 shadow-xs transition-all duration-300 hover:border-[#2F5FE3]/30 hover:shadow-md">
