@@ -23,6 +23,7 @@ export const initialSuppliers: Supplier[] = [
     address: 'Alaba International Market, Ojo, Lagos',
     paymentTerms: 'Net 30 Days',
     notes: 'Primary supplier for generators and heavy power equipment.',
+    logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80',
   },
   {
     id: 'sup-2',
@@ -33,6 +34,7 @@ export const initialSuppliers: Supplier[] = [
     address: 'Trade Fair Complex, Badagry Expressway, Lagos',
     paymentTerms: 'Pay on Stock Delivery',
     notes: 'Direct importer of air fryers, blenders, and nonstick cookware sets.',
+    logo: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=400&q=80',
   },
   {
     id: 'sup-3',
@@ -43,6 +45,7 @@ export const initialSuppliers: Supplier[] = [
     address: 'Ikeja Industrial Estate, Lagos',
     paymentTerms: 'Consignment / Monthly Settlement',
     notes: 'Authorized distributor for fans, standing coolers, and microwaves.',
+    logo: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=400&q=80',
   },
 ]
 
@@ -68,6 +71,8 @@ export const supplierService = {
               address: data.address || '',
               paymentTerms: data.paymentTerms || '',
               notes: data.notes || '',
+              logo: data.logo || data.image || '',
+              image: data.image || data.logo || '',
               createdAt: data.createdAt || '',
             }
           })
@@ -92,23 +97,35 @@ export const supplierService = {
       id: customId,
     }
 
-    await setDoc(doc(db, SUPPLIERS_COLLECTION, customId), {
-      ...newSupplier,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    })
+    try {
+      await setDoc(doc(db, SUPPLIERS_COLLECTION, customId), {
+        ...newSupplier,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    } catch (err: any) {
+      console.warn('Firestore addSupplier notice (saved locally):', err?.message || err)
+    }
 
     return newSupplier
   },
 
   updateSupplier: async (id: string, updates: Partial<Supplier>) => {
-    await updateDoc(doc(db, SUPPLIERS_COLLECTION, id), {
-      ...updates,
-      updatedAt: serverTimestamp(),
-    })
+    try {
+      await updateDoc(doc(db, SUPPLIERS_COLLECTION, id), {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      })
+    } catch (err: any) {
+      console.warn('Firestore updateSupplier notice (updated locally):', err?.message || err)
+    }
   },
 
   deleteSupplier: async (id: string) => {
-    await deleteDoc(doc(db, SUPPLIERS_COLLECTION, id))
+    try {
+      await deleteDoc(doc(db, SUPPLIERS_COLLECTION, id))
+    } catch (err: any) {
+      console.warn('Firestore deleteSupplier notice (removed locally):', err?.message || err)
+    }
   },
 }

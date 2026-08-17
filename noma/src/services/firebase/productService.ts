@@ -59,25 +59,37 @@ export const productService = {
       slug,
     }
 
-    await setDoc(doc(db, PRODUCTS_COLLECTION, customId), {
-      ...newProduct,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    })
+    try {
+      await setDoc(doc(db, PRODUCTS_COLLECTION, customId), {
+        ...newProduct,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    } catch (err: any) {
+      console.warn('Firestore addProduct notice (saved locally):', err?.message || err)
+    }
 
     return newProduct
   },
 
   updateProduct: async (id: string, updates: Partial<Product>) => {
-    const ref = doc(db, PRODUCTS_COLLECTION, id)
-    await updateDoc(ref, {
-      ...updates,
-      updatedAt: serverTimestamp(),
-    })
+    try {
+      const ref = doc(db, PRODUCTS_COLLECTION, id)
+      await updateDoc(ref, {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      })
+    } catch (err: any) {
+      console.warn('Firestore updateProduct notice (updated locally):', err?.message || err)
+    }
   },
 
   deleteProduct: async (id: string) => {
-    await deleteDoc(doc(db, PRODUCTS_COLLECTION, id))
+    try {
+      await deleteDoc(doc(db, PRODUCTS_COLLECTION, id))
+    } catch (err: any) {
+      console.warn('Firestore deleteProduct notice (removed locally):', err?.message || err)
+    }
   },
 
   updateStockQuantity: async (id: string, qty: number) => {

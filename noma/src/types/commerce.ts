@@ -59,6 +59,8 @@ export type Supplier = {
   address?: string
   paymentTerms?: string
   notes?: string
+  logo?: string
+  image?: string
   createdAt?: string
 }
 

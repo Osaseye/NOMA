@@ -12,10 +12,15 @@ import {
   HiCheckCircle,
   HiXMark,
   HiMagnifyingGlass,
+  HiExclamationTriangle,
+  HiArrowUpTray,
+  HiPhoto,
 } from 'react-icons/hi2'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSupplierStore } from '../../store/supplierStore'
 import { useProductStore } from '../../store/productStore'
+import { storageService } from '../../services/firebase/storageService'
 import { formatNaira } from '../../utils/pricing'
 import type { Supplier } from '../../types/commerce'
 
@@ -26,6 +31,7 @@ export function SuppliersPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
+  const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null)
 
   // Form states
   const [name, setName] = useState('')
@@ -35,6 +41,8 @@ export function SuppliersPage() {
   const [address, setAddress] = useState('')
   const [paymentTerms, setPaymentTerms] = useState('Net 30 Days')
   const [notes, setNotes] = useState('')
+  const [logo, setLogo] = useState('')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   const openAddModal = () => {
     setEditingSupplier(null)
@@ -45,6 +53,7 @@ export function SuppliersPage() {
     setAddress('')
     setPaymentTerms('Net 30 Days')
     setNotes('')
+    setLogo('')
     setModalOpen(true)
   }
 
@@ -57,7 +66,26 @@ export function SuppliersPage() {
     setAddress(supplier.address || '')
     setPaymentTerms(supplier.paymentTerms || 'Net 30 Days')
     setNotes(supplier.notes || '')
+    setLogo(supplier.logo || supplier.image || '')
     setModalOpen(true)
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setUploadingLogo(true)
+      const toastId = toast.loading('Uploading supplier logo...')
+      try {
+        const downloadUrl = await storageService.uploadImage(file, 'suppliers')
+        setLogo(downloadUrl)
+        toast.success('Supplier logo uploaded!', { id: toastId })
+      } catch (err: any) {
+        console.error('Failed to upload supplier logo:', err)
+        toast.error(err?.message || 'Failed to upload supplier logo', { id: toastId })
+      } finally {
+        setUploadingLogo(false)
+      }
+    }
   }
 
   const handleSaveSupplier = async (e: React.FormEvent) => {
@@ -77,6 +105,8 @@ export function SuppliersPage() {
           address: address.trim(),
           paymentTerms: paymentTerms.trim(),
           notes: notes.trim(),
+          logo,
+          image: logo,
         })
         toast.success(`Supplier "${name}" updated!`)
       } else {
@@ -88,6 +118,8 @@ export function SuppliersPage() {
           address: address.trim(),
           paymentTerms: paymentTerms.trim(),
           notes: notes.trim(),
+          logo,
+          image: logo,
         })
         toast.success(`Supplier "${name}" created!`)
       }
@@ -97,10 +129,15 @@ export function SuppliersPage() {
     }
   }
 
-  const handleDelete = async (id: string, supplierName: string) => {
-    if (confirm(`Are you sure you want to remove supplier "${supplierName}"?`)) {
-      await deleteSupplier(id)
-      toast.success(`Supplier "${supplierName}" removed.`)
+  const confirmDeleteSupplier = async () => {
+    if (!deletingSupplier) return
+    const targetName = deletingSupplier.name
+    try {
+      await deleteSupplier(deletingSupplier.id)
+      setDeletingSupplier(null)
+      toast.success(`Supplier "${targetName}" removed from ledger.`)
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete supplier.')
     }
   }
 
@@ -140,7 +177,7 @@ export function SuppliersPage() {
             <HiBuildingOffice2 className="text-emerald-600" /> Suppliers & Payables Ledger
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage your product sourcing partners, track inventory base costs, and monitor amounts owed to suppliers.
+            Manage your product sourcing partners, upload brand logos, track inventory base costs, and monitor amounts owed.
           </p>
         </div>
         <button
@@ -214,17 +251,33 @@ export function SuppliersPage() {
             className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-xs transition-all hover:shadow-md"
           >
             <div>
-              {/* Header */}
-              <div className="flex items-start justify-between border-b border-slate-100 pb-3 mb-4">
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 line-clamp-1">
-                    {supplier.name}
-                  </h3>
-                  <span className="text-xs font-semibold text-emerald-700">
-                    Contact: {supplier.contactPerson}
-                  </span>
+              {/* Header with Supplier Logo */}
+              <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
+                    {supplier.logo || supplier.image ? (
+                      <img
+                        src={supplier.logo || supplier.image}
+                        alt={supplier.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-emerald-700 font-extrabold text-sm">
+                        {supplier.name.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 line-clamp-1">
+                      {supplier.name}
+                    </h3>
+                    <span className="text-xs font-semibold text-emerald-700">
+                      Contact: {supplier.contactPerson}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => openEditModal(supplier)}
                     className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -233,7 +286,7 @@ export function SuppliersPage() {
                     <HiPencilSquare size={17} />
                   </button>
                   <button
-                    onClick={() => handleDelete(supplier.id, supplier.name)}
+                    onClick={() => setDeletingSupplier(supplier)}
                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Delete Supplier"
                   >
@@ -291,11 +344,11 @@ export function SuppliersPage() {
 
       {/* Add / Edit Supplier Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl z-10 animate-in zoom-in-95 duration-200 my-8">
             <div className="flex items-center justify-between border-b pb-3 mb-4">
               <h3 className="text-base font-extrabold text-slate-900">
-                {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
+                {editingSupplier ? 'Edit Supplier Details' : 'Add New Supplier Record'}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -306,6 +359,41 @@ export function SuppliersPage() {
             </div>
 
             <form onSubmit={handleSaveSupplier} className="flex flex-col gap-4">
+              {/* Supplier Logo Upload */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-bold uppercase text-slate-600">Supplier Logo / Brand Image</label>
+                <div className="flex items-center gap-3">
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
+                    {logo ? (
+                      <img src={logo} alt="Logo Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <HiPhoto size={24} className="text-slate-400" />
+                    )}
+                  </div>
+
+                  <label className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-500 bg-emerald-50/50 p-3 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100/60 transition-colors">
+                    {uploadingLogo ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin text-emerald-600" />
+                        <span>Uploading Logo...</span>
+                      </>
+                    ) : (
+                      <>
+                        <HiArrowUpTray size={16} /> Upload Logo Image
+                        <input type="file" accept="image/*" disabled={uploadingLogo} onChange={handleLogoUpload} className="hidden" />
+                      </>
+                    )}
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  value={logo}
+                  onChange={(e) => setLogo(e.target.value)}
+                  placeholder="Or paste Logo Image Web URL (https://...)"
+                  className="w-full rounded-xl border border-slate-300 p-2 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                />
+              </div>
+
               <div>
                 <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
                   Supplier / Company Name *
@@ -412,12 +500,48 @@ export function SuppliersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-extrabold uppercase text-white shadow-md hover:bg-emerald-700"
+                  disabled={uploadingLogo}
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-extrabold uppercase text-white shadow-md hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  <HiCheckCircle size={16} /> Save Supplier
+                  <HiCheckCircle size={16} /> Save Supplier Record
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal Popup */}
+      {deletingSupplier && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl z-10 text-center animate-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-600 mb-4">
+              <HiExclamationTriangle size={28} />
+            </div>
+
+            <h3 className="text-lg font-extrabold text-slate-900">
+              Delete Supplier Record?
+            </h3>
+            <p className="text-xs font-semibold text-slate-500 mt-2">
+              Are you sure you want to remove <strong className="text-slate-800">{deletingSupplier.name}</strong> from your supplier ledger? This action cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeletingSupplier(null)}
+                className="flex-1 rounded-xl border border-slate-300 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteSupplier}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-red-700 transition-all"
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
