@@ -42,12 +42,15 @@ export type Product = {
   rating: number
   reviewsCount?: number
   image: string
+  images?: string[]
   badge: string
   discountBadge?: string
   brand?: string
   bulky?: boolean
   description: string
   specs: string[]
+  whatsInTheBox?: string[]
+  keyFeatures?: string[]
 }
 
 export type Supplier = {

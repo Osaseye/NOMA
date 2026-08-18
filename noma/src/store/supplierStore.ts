@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Supplier } from '../types/commerce'
-import { supplierService, initialSuppliers } from '../services/firebase/supplierService'
+import { supplierService } from '../services/firebase/supplierService'
 
 let supplierUnsubscribe: (() => void) | null = null
 
@@ -18,7 +18,7 @@ interface SupplierState {
 export const useSupplierStore = create<SupplierState>()(
   persist(
     (set) => ({
-      suppliers: initialSuppliers,
+      suppliers: [],
 
       initSupplierListener: () => {
         if (!supplierUnsubscribe) {

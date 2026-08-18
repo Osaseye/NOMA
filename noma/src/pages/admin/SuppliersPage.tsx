@@ -244,103 +244,127 @@ export function SuppliersPage() {
       </div>
 
       {/* Suppliers Grid / Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredStats.map(({ supplier, sourcedProducts, totalUnits, totalOwedBaseCost }) => (
-          <div
-            key={supplier.id}
-            className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-xs transition-all hover:shadow-md"
-          >
-            <div>
-              {/* Header with Supplier Logo */}
-              <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
-                    {supplier.logo || supplier.image ? (
-                      <img
-                        src={supplier.logo || supplier.image}
-                        alt={supplier.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-emerald-700 font-extrabold text-sm">
-                        {supplier.name.substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-base font-extrabold text-slate-900 line-clamp-1">
-                      {supplier.name}
-                    </h3>
-                    <span className="text-xs font-semibold text-emerald-700">
-                      Contact: {supplier.contactPerson}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => openEditModal(supplier)}
-                    className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                    title="Edit Supplier"
-                  >
-                    <HiPencilSquare size={17} />
-                  </button>
-                  <button
-                    onClick={() => setDeletingSupplier(supplier)}
-                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Delete Supplier"
-                  >
-                    <HiTrash size={17} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div className="flex flex-col gap-2 text-xs text-slate-600 mb-4">
-                <div className="flex items-center gap-2">
-                  <HiPhone size={14} className="text-slate-400 shrink-0" />
-                  <span className="font-bold text-slate-800">{supplier.phone}</span>
-                </div>
-                {supplier.email && (
-                  <div className="flex items-center gap-2">
-                    <HiEnvelope size={14} className="text-slate-400 shrink-0" />
-                    <span>{supplier.email}</span>
-                  </div>
-                )}
-                {supplier.address && (
-                  <div className="flex items-center gap-2">
-                    <HiMapPin size={14} className="text-slate-400 shrink-0" />
-                    <span className="line-clamp-1">{supplier.address}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Payment Terms & Notes */}
-              {supplier.paymentTerms && (
-                <div className="mb-4 rounded-xl bg-slate-50 p-2.5 text-[11px] text-slate-600 border border-slate-100">
-                  <span className="font-bold text-slate-800 block">Terms: {supplier.paymentTerms}</span>
-                  {supplier.notes && <p className="mt-0.5 text-slate-500 italic line-clamp-2">{supplier.notes}</p>}
-                </div>
-              )}
-            </div>
-
-            {/* Payables Summary Box */}
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex items-center justify-between mt-2">
-              <div>
-                <span className="text-[10px] font-extrabold uppercase text-emerald-800 tracking-wider">
-                  Total Sourcing Cost ({totalUnits} units)
-                </span>
-                <h4 className="text-base font-black text-emerald-950 mt-0.5">
-                  {formatNaira(totalOwedBaseCost)}
-                </h4>
-              </div>
-              <span className="text-xs font-bold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-emerald-200">
-                {sourcedProducts.length} Products
-              </span>
-            </div>
+      {filteredStats.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center flex flex-col items-center justify-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+            <HiBuildingOffice2 size={28} />
           </div>
-        ))}
-      </div>
+          <h3 className="text-base font-extrabold text-slate-900">
+            {searchQuery ? 'No suppliers matching your search' : 'No suppliers registered yet'}
+          </h3>
+          <p className="text-xs text-slate-500 max-w-sm">
+            {searchQuery
+              ? 'Try searching with a different supplier name or contact person.'
+              : 'Add your vendor and supplier partners to track inventory sourcing costs and payables.'}
+          </p>
+          {!searchQuery && (
+            <button
+              onClick={openAddModal}
+              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition-all"
+            >
+              <HiPlus size={16} /> Add First Supplier
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStats.map(({ supplier, sourcedProducts, totalUnits, totalOwedBaseCost }) => (
+            <div
+              key={supplier.id}
+              className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-xs transition-all hover:shadow-md"
+            >
+              <div>
+                {/* Header with Supplier Logo */}
+                <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
+                      {supplier.logo || supplier.image ? (
+                        <img
+                          src={supplier.logo || supplier.image}
+                          alt={supplier.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-emerald-700 font-extrabold text-sm">
+                          {supplier.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 line-clamp-1">
+                        {supplier.name}
+                      </h3>
+                      <span className="text-xs font-semibold text-emerald-700">
+                        Contact: {supplier.contactPerson}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => openEditModal(supplier)}
+                      className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                      title="Edit Supplier"
+                    >
+                      <HiPencilSquare size={17} />
+                    </button>
+                    <button
+                      onClick={() => setDeletingSupplier(supplier)}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete Supplier"
+                    >
+                      <HiTrash size={17} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="flex flex-col gap-2 text-xs text-slate-600 mb-4">
+                  <div className="flex items-center gap-2">
+                    <HiPhone size={14} className="text-slate-400 shrink-0" />
+                    <span className="font-bold text-slate-800">{supplier.phone}</span>
+                  </div>
+                  {supplier.email && (
+                    <div className="flex items-center gap-2">
+                      <HiEnvelope size={14} className="text-slate-400 shrink-0" />
+                      <span>{supplier.email}</span>
+                    </div>
+                  )}
+                  {supplier.address && (
+                    <div className="flex items-center gap-2">
+                      <HiMapPin size={14} className="text-slate-400 shrink-0" />
+                      <span className="line-clamp-1">{supplier.address}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment Terms & Notes */}
+                {supplier.paymentTerms && (
+                  <div className="mb-4 rounded-xl bg-slate-50 p-2.5 text-[11px] text-slate-600 border border-slate-100">
+                    <span className="font-bold text-slate-800 block">Terms: {supplier.paymentTerms}</span>
+                    {supplier.notes && <p className="mt-0.5 text-slate-500 italic line-clamp-2">{supplier.notes}</p>}
+                  </div>
+                )}
+              </div>
+
+              {/* Payables Summary Box */}
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex items-center justify-between mt-2">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase text-emerald-800 tracking-wider">
+                    Total Sourcing Cost ({totalUnits} units)
+                  </span>
+                  <h4 className="text-base font-black text-emerald-950 mt-0.5">
+                    {formatNaira(totalOwedBaseCost)}
+                  </h4>
+                </div>
+                <span className="text-xs font-bold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-emerald-200">
+                  {sourcedProducts.length} Products
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Add / Edit Supplier Modal */}
       {modalOpen && (

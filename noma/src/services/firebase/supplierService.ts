@@ -56,10 +56,6 @@ export const supplierService = {
       return onSnapshot(
         q,
         (snapshot) => {
-          if (snapshot.empty) {
-            callback(initialSuppliers)
-            return
-          }
           const list: Supplier[] = snapshot.docs.map((docSnap) => {
             const data = docSnap.data()
             return {
@@ -78,13 +74,14 @@ export const supplierService = {
           })
           callback(list)
         },
-        (_error) => {
-          // Fallback silently to initialSuppliers on public storefront
-          callback(initialSuppliers)
+        (error) => {
+          console.error('Error listening to Firestore suppliers:', error)
+          callback([])
         }
       )
-    } catch (_e) {
-      callback(initialSuppliers)
+    } catch (e) {
+      console.error('Error subscribing to suppliers:', e)
+      callback([])
       return () => {}
     }
   },
