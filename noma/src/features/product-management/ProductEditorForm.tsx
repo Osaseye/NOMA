@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   HiSparkles,
@@ -20,6 +20,7 @@ import { Loader2 } from 'lucide-react'
 
 export function ProductEditorForm({ product }: { product?: Product }) {
   const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { addProduct, updateProduct, categories } = useProductStore()
   const { suppliers } = useSupplierStore()
 
@@ -574,26 +575,36 @@ export function ProductEditorForm({ product }: { product?: Product }) {
             </div>
 
             {/* Upload Multiple Files Button */}
-            <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-500 bg-emerald-50/50 p-3.5 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100/60 transition-colors text-center">
+            <div
+              onClick={() => {
+                if (!uploadingImage) {
+                  fileInputRef.current?.click()
+                }
+              }}
+              className="relative flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-500 bg-emerald-50/60 p-4 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100/70 active:scale-[0.99] transition-all text-center select-none"
+            >
+              <input
+                ref={fileInputRef}
+                id="product-photo-upload"
+                type="file"
+                multiple
+                accept="image/*"
+                disabled={uploadingImage}
+                onChange={handleMultipleFilesUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
               {uploadingImage ? (
-                <>
-                  <Loader2 size={16} className="animate-spin text-emerald-600" />
+                <div className="flex items-center gap-2">
+                  <Loader2 size={18} className="animate-spin text-emerald-600" />
                   <span>Uploading Images to Storage...</span>
-                </>
+                </div>
               ) : (
-                <>
-                  <HiArrowUpTray size={16} /> Upload Multiple Photos
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    disabled={uploadingImage}
-                    onChange={handleMultipleFilesUpload}
-                    className="hidden"
-                  />
-                </>
+                <div className="flex items-center gap-2 pointer-events-none">
+                  <HiArrowUpTray size={18} className="text-emerald-700" />
+                  <span>Upload Multiple Photos</span>
+                </div>
               )}
-            </label>
+            </div>
 
             {/* Add Image by Web URL */}
             <div className="flex gap-2">
@@ -607,7 +618,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               <button
                 type="button"
                 onClick={handleAddImageUrl}
-                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-900"
+                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-900 active:scale-95 transition-all"
               >
                 Add URL
               </button>
@@ -629,23 +640,29 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                     >
                       <img src={img} alt={`Thumb ${idx}`} className="h-full w-full object-contain" />
                       
-                      {/* Actions overlay */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                      {/* Actions overlay: visible on hover on desktop, always visible on mobile/touch */}
+                      <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
                         {idx !== 0 && (
                           <button
                             type="button"
-                            onClick={() => handleSetPrimaryImage(idx)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSetPrimaryImage(idx)
+                            }}
                             title="Set as Primary Cover"
-                            className="p-1 rounded-md bg-white text-amber-500 hover:bg-amber-50"
+                            className="p-1.5 rounded-lg bg-white text-amber-500 shadow hover:bg-amber-50 active:scale-95"
                           >
                             <HiStar size={14} />
                           </button>
                         )}
                         <button
                           type="button"
-                          onClick={() => handleRemoveImage(idx)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveImage(idx)
+                          }}
                           title="Remove Photo"
-                          className="p-1 rounded-md bg-white text-red-600 hover:bg-red-50"
+                          className="p-1.5 rounded-lg bg-white text-red-600 shadow hover:bg-red-50 active:scale-95"
                         >
                           <HiTrash size={14} />
                         </button>
