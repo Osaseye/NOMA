@@ -124,22 +124,25 @@ export function ProductEditorForm({ product }: { product?: Product }) {
 
   // Multi-file upload handler
   const handleMultipleFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const fileList = e.target.files
+    if (!fileList || fileList.length === 0) return
+
+    // Immediately copy files to array and reset target so selecting the same file again works
+    const files = Array.from(fileList)
+    e.target.value = ''
 
     setUploadingImage(true)
     const toastId = toast.loading(`Uploading ${files.length} product image(s)...`)
     try {
-      const uploadPromises = Array.from(files).map((file) => storageService.uploadImage(file, 'products'))
+      const uploadPromises = files.map((file) => storageService.uploadImage(file, 'products'))
       const downloadUrls = await Promise.all(uploadPromises)
       setImages((prev) => [...prev, ...downloadUrls])
-      toast.success(`${downloadUrls.length} image(s) uploaded successfully!`, { id: toastId })
+      toast.success(`${downloadUrls.length} image(s) added to product gallery!`, { id: toastId })
     } catch (err: any) {
       console.error('Failed to upload images:', err)
-      toast.error(err?.message || 'Failed to upload images', { id: toastId })
+      toast.error(err?.message || 'Failed to upload image(s)', { id: toastId })
     } finally {
       setUploadingImage(false)
-      e.target.value = ''
     }
   }
 
@@ -574,37 +577,37 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               )}
             </div>
 
+            {/* Hidden native file input */}
+            <input
+              ref={fileInputRef}
+              id="product-photo-upload"
+              type="file"
+              multiple
+              accept="image/*"
+              disabled={uploadingImage}
+              onChange={handleMultipleFilesUpload}
+              className="hidden"
+            />
+
             {/* Upload Multiple Files Button */}
-            <div
-              onClick={() => {
-                if (!uploadingImage) {
-                  fileInputRef.current?.click()
-                }
-              }}
-              className="relative flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-500 bg-emerald-50/60 p-4 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100/70 active:scale-[0.99] transition-all text-center select-none"
+            <button
+              type="button"
+              disabled={uploadingImage}
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-500 bg-emerald-50/70 p-4 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100 active:scale-[0.99] transition-all text-center select-none disabled:opacity-60"
             >
-              <input
-                ref={fileInputRef}
-                id="product-photo-upload"
-                type="file"
-                multiple
-                accept="image/*"
-                disabled={uploadingImage}
-                onChange={handleMultipleFilesUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
               {uploadingImage ? (
                 <div className="flex items-center gap-2">
                   <Loader2 size={18} className="animate-spin text-emerald-600" />
                   <span>Uploading Images to Storage...</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 pointer-events-none">
+                <div className="flex items-center gap-2">
                   <HiArrowUpTray size={18} className="text-emerald-700" />
-                  <span>Upload Multiple Photos</span>
+                  <span>Upload Photos from Device</span>
                 </div>
               )}
-            </div>
+            </button>
 
             {/* Add Image by Web URL */}
             <div className="flex gap-2">
