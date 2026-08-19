@@ -25,7 +25,7 @@ export function CartPage() {
   const { items, addItem, removeItem } = useCartStore()
   const { products } = useProductStore()
   
-  const [deliveryLocation, setDeliveryLocation] = useState('Ibadan, Oyo State')
+  const [deliveryLocation, setDeliveryLocation] = useState('Nigeria')
   const [changingLocation, setChangingLocation] = useState(false)
   const [promoCode, setPromoCode] = useState('')
   const [showPromoInput, setShowPromoInput] = useState(false)

@@ -85,45 +85,45 @@ export function ReviewsPage() {
         detail="Moderate customer product ratings, approve pending customer reviews, or curate verified feedback to boost store conversion."
       />
 
-      {/* Top Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+      {/* Top Metrics Row - 2 Column Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
             <span>Total Reviews</span>
-            <HiChatBubbleBottomCenterText size={20} className="text-blue-600" />
+            <HiChatBubbleBottomCenterText size={18} className="text-blue-600 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-slate-900">{totalCount}</div>
-          <span className="text-[10px] font-semibold text-slate-400">Across all catalog products</span>
+          <div className="text-xl sm:text-2xl font-black text-slate-900">{totalCount}</div>
+          <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400 block truncate">Catalog products</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
-            <span>Approved & Published</span>
-            <HiCheckCircle size={20} className="text-emerald-600" />
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span>Published</span>
+            <HiCheckCircle size={18} className="text-emerald-600 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-emerald-700">{approvedCount}</div>
-          <span className="text-[10px] font-semibold text-slate-400">Live on storefront detail pages</span>
+          <div className="text-xl sm:text-2xl font-black text-emerald-700">{approvedCount}</div>
+          <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400 block truncate">Live on store</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
-            <span>Pending Moderation</span>
-            <HiFunnel size={20} className="text-amber-500" />
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span>Pending</span>
+            <HiFunnel size={18} className="text-amber-500 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-amber-600">{pendingCount}</div>
-          <span className="text-[10px] font-semibold text-slate-400">Awaiting operator review</span>
+          <div className="text-xl sm:text-2xl font-black text-amber-600">{pendingCount}</div>
+          <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400 block truncate">Needs review</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
-            <span>Average Store Rating</span>
-            <HiStar size={20} className="text-amber-400" />
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span>Satisfaction</span>
+            <HiStar size={18} className="text-amber-400 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-slate-900 flex items-center gap-1">
+          <div className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-1">
             <span>{avgScore}</span>
             <span className="text-xs text-amber-500">★</span>
           </div>
-          <span className="text-[10px] font-semibold text-slate-400">5-star customer satisfaction score</span>
+          <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400 block truncate">5-star rating</span>
         </div>
       </div>
 
@@ -285,7 +285,7 @@ export function ReviewsPage() {
         </form>
       )}
 
-      {/* Reviews Cards List or Empty State */}
+      {/* Reviews Cards List or Empty State - 2 Column Format */}
       {filteredReviews.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center flex flex-col items-center justify-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 mb-1">
@@ -303,31 +303,31 @@ export function ReviewsPage() {
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredReviews.map((rev) => {
             const productMatch = products.find((p) => p.id === rev.productId)
             return (
               <div
                 key={rev.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-300 transition-all"
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 transition-all"
               >
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <span className="font-black text-slate-900">{rev.author}</span>
                     {rev.verifiedPurchase && (
                       <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-extrabold uppercase">
-                        Verified Buyer
+                        Verified
                       </span>
                     )}
                     <span className="text-slate-400">•</span>
                     <span className="text-slate-500 font-bold">{rev.date}</span>
-                    <span className="text-slate-400">•</span>
-                    <span className="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5 text-[10px] font-bold">
-                      Target: {productMatch?.name || rev.productName || rev.productId}
-                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <span className="inline-block rounded-lg bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-bold truncate max-w-full">
+                    Target: {productMatch?.name || rev.productName || rev.productId}
+                  </span>
+
+                  <div className="flex items-center gap-2 pt-1">
                     <div className="flex items-center gap-0.5 text-amber-400">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <HiStar
@@ -337,16 +337,16 @@ export function ReviewsPage() {
                         />
                       ))}
                     </div>
-                    {rev.title && <h5 className="text-xs font-extrabold text-slate-900">{rev.title}</h5>}
+                    {rev.title && <h5 className="text-xs font-extrabold text-slate-900 truncate">{rev.title}</h5>}
                   </div>
 
-                  <p className="text-xs text-slate-600 font-medium leading-relaxed">{rev.comment}</p>
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed line-clamp-3">{rev.comment}</p>
                 </div>
 
                 {/* Status Badge & Moderator Actions */}
-                <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                <div className="flex items-center justify-between gap-2 border-t pt-3 border-slate-100">
                   <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${
+                    className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
                       rev.status === 'approved'
                         ? 'bg-emerald-100 text-emerald-800'
                         : rev.status === 'pending'
@@ -361,24 +361,24 @@ export function ReviewsPage() {
                     {rev.status !== 'approved' && (
                       <button
                         onClick={() => updateReviewStatus(rev.id, 'approved')}
-                        className="flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-colors"
+                        className="flex items-center gap-1 rounded-xl bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-colors"
                       >
-                        <HiCheckCircle size={14} /> Approve
+                        <HiCheckCircle size={13} /> Approve
                       </button>
                     )}
                     {rev.status !== 'rejected' && (
                       <button
                         onClick={() => updateReviewStatus(rev.id, 'rejected')}
-                        className="flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors"
+                        className="flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200 transition-colors"
                       >
-                        <HiXCircle size={14} /> Hide
+                        <HiXCircle size={13} /> Hide
                       </button>
                     )}
                     <button
                       onClick={() => deleteReview(rev.id)}
-                      className="rounded-xl border border-rose-200 bg-rose-50 p-1.5 text-rose-600 hover:bg-rose-600 hover:text-white transition-colors"
+                      className="rounded-xl border border-rose-200 bg-rose-50 p-1 text-rose-600 hover:bg-rose-600 hover:text-white transition-colors"
                     >
-                      <HiTrash size={14} />
+                      <HiTrash size={13} />
                     </button>
                   </div>
                 </div>

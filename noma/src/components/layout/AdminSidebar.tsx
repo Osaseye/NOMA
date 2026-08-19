@@ -14,7 +14,6 @@ import {
   HiWrenchScrewdriver,
   HiSparkles,
   HiChevronDown,
-  HiBars3,
   HiXMark,
   HiChatBubbleBottomCenterText,
 } from 'react-icons/hi2'
@@ -65,11 +64,20 @@ const navGroups: NavGroup[] = [
   },
 ]
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  mobileOpen: controlledMobileOpen,
+  setMobileOpen: controlledSetMobileOpen,
+}: {
+  mobileOpen?: boolean
+  setMobileOpen?: (open: boolean) => void
+} = {}) {
   const { logout } = useAdminStore()
   const navigate = useNavigate()
   const location = useLocation()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false)
+
+  const mobileOpen = controlledMobileOpen !== undefined ? controlledMobileOpen : internalMobileOpen
+  const setMobileOpen = controlledSetMobileOpen || setInternalMobileOpen
 
   // Track expanded groups (all open by default in compact mode)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
@@ -88,13 +96,20 @@ export function AdminSidebar() {
   }
 
   const sidebarContent = (
-    <div className="flex h-full flex-col justify-between p-3.5 text-white overflow-hidden">
+    <div className="flex h-full flex-col justify-between p-3.5 text-white overflow-hidden font-['Outfit',sans-serif]">
       <div className="flex flex-col gap-3 overflow-hidden">
         {/* Brand Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <Link to="/admin" className="flex items-center gap-2.5 group">
+          <Link to="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 group">
             <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-white p-1 shadow-sm group-hover:scale-105 transition-transform">
-              <img src="/icon.png" alt="Noma Logo" className="h-6 w-6 object-contain" />
+              <img
+                src="/icon.png"
+                alt="Noma Logo"
+                className="h-6 w-6 object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/fav.png'
+                }}
+              />
             </div>
             <div className="flex flex-col">
               <span className="font-['Outfit'] text-xs font-black tracking-tight text-white flex items-center gap-1">
@@ -197,28 +212,14 @@ export function AdminSidebar() {
         {sidebarContent}
       </aside>
 
-      {/* Mobile Top Header Toggle */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between bg-slate-900 p-3 border-b border-slate-800 text-white">
-        <div className="flex items-center gap-2">
-          <img src="/icon.PNG" alt="Noma Logo" className="h-6 w-6 rounded bg-white p-0.5" />
-          <span className="font-['Outfit'] font-black text-xs text-white">NOMA ADMIN</span>
-        </div>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="rounded-lg bg-white/10 p-1.5 text-white hover:bg-white/20"
-        >
-          <HiBars3 size={18} />
-        </button>
-      </div>
-
       {/* Mobile Drawer Overlay */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-50 flex animate-in fade-in duration-200">
           <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative w-64 max-w-full bg-slate-900 h-full shadow-2xl z-10">
+          <div className="relative w-64 max-w-[85vw] bg-slate-900 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-300">
             {sidebarContent}
           </div>
         </div>

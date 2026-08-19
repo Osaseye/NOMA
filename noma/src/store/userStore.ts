@@ -33,27 +33,27 @@ interface UserState {
 }
 
 const initialAddress: DeliveryAddress = {
-  fullName: 'Adebayo Ogunlesi',
-  phone: '08012345678',
-  email: 'adebayo@example.com',
-  state: 'Oyo',
-  city: 'Ibadan',
-  neighborhood: 'Bodija',
-  address: '14 Favos Building, Bodija Main Road',
-  additionalInfo: 'Opposite First Bank',
+  fullName: '',
+  phone: '',
+  email: '',
+  state: '',
+  city: '',
+  neighborhood: '',
+  address: '',
+  additionalInfo: '',
 }
 
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       profile: {
-        name: 'Adebayo Ogunlesi',
-        email: 'adebayo@example.com',
-        phone: '08012345678',
+        name: '',
+        email: '',
+        phone: '',
         isGuest: true,
         defaultAddress: initialAddress,
       },
-      wishlistProductIds: ['c1', 'c2'],
+      wishlistProductIds: [],
       updateProfile: (updates) =>
         set((state) => ({
           profile: { ...state.profile, ...updates },

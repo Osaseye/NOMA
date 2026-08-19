@@ -15,10 +15,11 @@ export function RevenuePage() {
         detail="Monitor customer sales volume, average order values, and category revenue performance."
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard label="Gross Store Sales" value={formatNaira(summary.totalSales)} tone="emerald" subtitle="All processed payments" />
         <KpiCard label="Average Order Value" value={formatNaira(Math.round(summary.totalSales / (orders.length || 1)))} tone="blue" subtitle="Per completed checkout" />
-        <KpiCard label="Total Orders Processed" value={`${orders.length} Orders`} tone="gold" subtitle="Fulfilled this month" />
+        <KpiCard label="Total Orders" value={`${orders.length} Orders`} tone="gold" subtitle="Fulfilled this month" />
+        <KpiCard label="Net Store Margin" value={formatNaira(summary.markupEarned)} tone="ink" subtitle="Operator markup profit" />
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">

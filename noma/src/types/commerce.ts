@@ -27,6 +27,11 @@ export type ProductReview = {
   status: 'approved' | 'pending' | 'rejected'
 }
 
+export type ProductSizeVariant = {
+  size: string
+  stockQty: number
+}
+
 export type Product = {
   id: string
   slug: string
@@ -51,6 +56,7 @@ export type Product = {
   specs: string[]
   whatsInTheBox?: string[]
   keyFeatures?: string[]
+  sizes?: ProductSizeVariant[]
 }
 
 export type Supplier = {

@@ -1,5 +1,4 @@
-// CheckoutPage.tsx - Replicating checkout.png 100%
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ShieldCheck,
@@ -10,51 +9,37 @@ import {
   Clock,
   RotateCcw,
   Headphones,
+  ShoppingBag,
+  ArrowLeft,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { products } from '../../mock/commerce'
+import { useProductStore } from '../../store/productStore'
 import { useCartStore } from '../../store/cartStore'
 import { useUserStore } from '../../store/userStore'
 import { formatNaira } from '../../utils/pricing'
 
-// Sample items matching checkout.png design
-const sampleCheckoutProducts = [
-  {
-    id: 'c1',
-    name: 'Samsung 55" 4K UHD Smart TV',
-    image: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=600&q=80',
-    finalPrice: 185000,
-    subSpecs: '55 inch | 4K UHD | Smart TV',
-  },
-  {
-    id: 'c2',
-    name: 'Samsung Soundbar HW-T400',
-    image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=600&q=80',
-    finalPrice: 65000,
-    subSpecs: '2.1 Channel | 150W',
-  },
-  {
-    id: 'c3',
-    name: 'LG XBOOM RN5 Party Speaker',
-    image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80',
-    finalPrice: 120000,
-    subSpecs: '500W | Bluetooth | USB',
-  },
+const nigerianStates = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT - Abuja', 'Gombe',
+  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
+  'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
+  'Taraba', 'Yobe', 'Zamfara'
 ]
 
 export function CheckoutPage() {
   const navigate = useNavigate()
   const { items, clearCart } = useCartStore()
+  const { products } = useProductStore()
   const { profile, updateDefaultAddress } = useUserStore()
 
-  // Form Fields Pre-filled from User Profile / Default Address
-  const [fullName, setFullName] = useState(profile.defaultAddress.fullName || profile.name)
-  const [phoneNumber, setPhoneNumber] = useState(profile.defaultAddress.phone || profile.phone)
-  const [emailAddress, setEmailAddress] = useState(profile.defaultAddress.email || profile.email)
-  const [state, setState] = useState(profile.defaultAddress.state || 'Oyo')
-  const [city, setCity] = useState(profile.defaultAddress.city || 'Ibadan')
-  const [neighborhood, setNeighborhood] = useState(profile.defaultAddress.neighborhood || 'Bodija')
-  const [address, setAddress] = useState(profile.defaultAddress.address || '14 Favos Building, Bodija Main Road')
+  // Form Fields Pre-filled ONLY from User Profile / Saved Address (no dummy defaults)
+  const [fullName, setFullName] = useState(profile.defaultAddress.fullName || profile.name || '')
+  const [phoneNumber, setPhoneNumber] = useState(profile.defaultAddress.phone || profile.phone || '')
+  const [emailAddress, setEmailAddress] = useState(profile.defaultAddress.email || profile.email || '')
+  const [state, setState] = useState(profile.defaultAddress.state || '')
+  const [city, setCity] = useState(profile.defaultAddress.city || '')
+  const [neighborhood, setNeighborhood] = useState(profile.defaultAddress.neighborhood || '')
+  const [address, setAddress] = useState(profile.defaultAddress.address || '')
   const [additionalInfo, setAdditionalInfo] = useState(profile.defaultAddress.additionalInfo || '')
   const [saveAddress, setSaveAddress] = useState(true)
 
@@ -68,41 +53,58 @@ export function CheckoutPage() {
   const [expiry, setExpiry] = useState('')
   const [cvv, setCvv] = useState('')
 
-  // Map Cart Items or Fallback Sample Items
-  const storeCartProducts = products.filter((p) => items[p.id])
-  const checkoutItems =
-    storeCartProducts.length > 0
-      ? storeCartProducts.map((p) => ({
-          id: p.id,
-          name: p.name,
-          image: p.image,
-          finalPrice: p.finalPrice,
-          subSpecs: `${p.category} | Premium`,
-          qty: items[p.id],
-        }))
-      : sampleCheckoutProducts.map((p) => ({
-          ...p,
-          qty: 1,
-        }))
+  // Map Cart Items directly from Live Products Store
+  const checkoutItems = useMemo(() => {
+    return products
+      .filter((p) => items[p.id] && items[p.id] > 0)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        image: p.image || (Array.isArray(p.images) && p.images[0]) || '',
+        finalPrice: p.finalPrice,
+        subSpecs: p.brand ? `${p.brand} • ${p.category}` : p.category,
+        qty: items[p.id],
+      }))
+  }, [products, items])
 
   const itemCount = checkoutItems.reduce((sum, i) => sum + i.qty, 0)
   const subtotal = checkoutItems.reduce((sum, i) => sum + i.finalPrice * i.qty, 0)
   const shippingFee = deliveryMethod === 'standard' ? 3500 : 6000
   const grandTotal = subtotal + shippingFee
 
-  // Locate me action
+  // Geolocation handler using real browser API
   const handleUseCurrentLocation = () => {
-    toast.info('Fetching current GPS location...')
-    setTimeout(() => {
-      setCity('Ibadan')
-      setNeighborhood('Dugbe Commercial Area')
-      setAddress('Plot 12 Dugbe Bypass')
-      toast.success('Location set to Dugbe, Ibadan!')
-    }, 1000)
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.')
+      return
+    }
+
+    toast.info('Requesting device location...')
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        toast.success(`GPS coordinates captured (${latitude.toFixed(3)}, ${longitude.toFixed(3)}). Please enter your street and city.`)
+      },
+      (error) => {
+        console.warn('Geolocation error:', error)
+        toast.error('Unable to retrieve location. Please fill in your address manually.')
+      },
+      { timeout: 10000 }
+    )
   }
 
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (checkoutItems.length === 0) {
+      toast.error('Your cart is empty. Please add products before checking out.')
+      return
+    }
+
+    if (!fullName.trim() || !phoneNumber.trim() || !state || !city.trim() || !address.trim()) {
+      toast.error('Please complete all required delivery fields.')
+      return
+    }
 
     if (saveAddress) {
       updateDefaultAddress({
@@ -119,6 +121,28 @@ export function CheckoutPage() {
 
     clearCart()
     navigate('/order-success')
+  }
+
+  if (checkoutItems.length === 0) {
+    return (
+      <div className="min-h-[75vh] flex items-center justify-center bg-[#F8F9FB] font-['Outfit',sans-serif] px-4 py-16">
+        <div className="max-w-md w-full rounded-3xl border border-gray-100 bg-white p-8 text-center shadow-xs space-y-5">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-[#2F5FE3]">
+            <ShoppingBag size={32} />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-extrabold text-[#12203D]">Your Cart is Empty</h2>
+            <p className="text-xs text-gray-500">You don't have any items ready for checkout yet.</p>
+          </div>
+          <Link
+            to="/catalog"
+            className="inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-[#2F5FE3] py-3.5 text-xs font-bold text-white shadow hover:bg-[#254ec4] transition-all"
+          >
+            <ArrowLeft size={16} /> Explore Catalog
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -237,13 +261,15 @@ export function CheckoutPage() {
                 <select
                   value={state}
                   onChange={(e) => setState(e.target.value)}
+                  required
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/60 px-3.5 py-2.5 font-medium text-[#12203D] outline-none focus:border-[#2F5FE3] focus:bg-white transition-all"
                 >
-                  <option value="Oyo">Oyo State</option>
-                  <option value="Lagos">Lagos State</option>
-                  <option value="Abuja">Abuja (FCT)</option>
-                  <option value="Ogun">Ogun State</option>
-                  <option value="Rivers">Rivers State</option>
+                  <option value="">-- Select State --</option>
+                  {nigerianStates.map((st) => (
+                    <option key={st} value={st}>
+                      {st} State
+                    </option>
+                  ))}
                 </select>
               </div>
 

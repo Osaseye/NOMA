@@ -8,6 +8,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  Share2,
   ShieldCheck,
   Star,
   Truck,
@@ -36,9 +37,17 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1)
   const [selectedImgIndex, setSelectedImgIndex] = useState(0)
   const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'delivery' | 'reviews' | 'qa'>('overview')
+  const [selectedSize, setSelectedSize] = useState<string>('')
 
   // Product Reviews & Categories Store State
   const { reviews, addReview, products: allStoreProducts, categories } = useProductStore()
+
+  const activeSizeObj = useMemo(() => {
+    if (!product.sizes || product.sizes.length === 0 || !selectedSize) return null
+    return product.sizes.find((s) => s.size === selectedSize)
+  }, [product.sizes, selectedSize])
+
+  const maxAvailableStock = activeSizeObj ? activeSizeObj.stockQty : product.stockQty
 
   const displayCategory = useMemo(() => {
     const found = categories.find(
@@ -125,20 +134,39 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
     return list.length > 0 ? list : [product.image || 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1200&q=80']
   }, [product.image, product.images])
 
-  // Suggested / Related products from live store
+  // Suggested / Related products from live store - strictly same category only
   const relatedProducts = useMemo(() => {
-    const others = allStoreProducts.filter((p) => p.id !== product.id)
-    const sameCategory = others.filter((p) => p.category === product.category)
-    return (sameCategory.length > 0 ? sameCategory : others).slice(0, 5)
+    return allStoreProducts
+      .filter((p) => p.id !== product.id && p.category === product.category)
+      .slice(0, 8)
   }, [allStoreProducts, product.id, product.category])
 
   const savingsAmount = product.basePrice && product.basePrice > product.finalPrice
     ? product.basePrice - product.finalPrice
     : 0
 
+  const handleAddToCartWithValidation = () => {
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      toast.error('Please select a size before adding to cart.')
+      return
+    }
+    if (maxAvailableStock <= 0) {
+      toast.error('This size is currently out of stock.')
+      return
+    }
+    for (let i = 0; i < quantity; i++) {
+      onAddToCart()
+    }
+    toast.success(`Added ${product.name}${selectedSize ? ` (Size: ${selectedSize})` : ''} to cart!`)
+  }
+
   const handleBuyNow = () => {
-    if (product.stockQty <= 0) {
-      toast.error('This product is currently out of stock.')
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      toast.error('Please select a size before proceeding to checkout.')
+      return
+    }
+    if (maxAvailableStock <= 0) {
+      toast.error('This product/size is currently out of stock.')
       return
     }
     onAddToCart()
@@ -148,6 +176,37 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
   const handleToggleWishlist = () => {
     toggleWishlist(product.id)
     toast.success(!wishlisted ? 'Added to wishlist' : 'Removed from wishlist')
+  }
+
+  const handleShareProduct = async () => {
+    const currentUrl = window.location.href
+    const shareTitle = `${product.name} | NOMA Marketplace`
+    const shareText = `Check out ${product.name} on NOMA for ${formatNaira(product.finalPrice)}!`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: currentUrl,
+        })
+        return
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return
+        }
+      }
+    }
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(currentUrl)
+      toast.success('Product link copied to clipboard!', {
+        description: 'You can now share it directly on WhatsApp, Facebook, or SMS.',
+        duration: 3500,
+      })
+    } else {
+      toast.info(`Product Link: ${currentUrl}`)
+    }
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -246,14 +305,25 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                 </div>
               )}
 
-              {/* Wishlist Button */}
-              <button
-                onClick={handleToggleWishlist}
-                className="absolute right-4 top-4 z-10 rounded-full border border-gray-200 bg-white/90 p-2.5 text-gray-500 shadow-2xs hover:bg-white hover:text-red-500 transition-colors"
-                aria-label="Save to Wishlist"
-              >
-                <Heart size={20} className={wishlisted ? 'fill-red-500 text-red-500' : ''} />
-              </button>
+              {/* Floating Action Buttons: Share & Wishlist */}
+              <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+                <button
+                  onClick={handleShareProduct}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-700 shadow-2xs backdrop-blur-xs hover:bg-white hover:text-[#2F5FE3] active:scale-95 transition-all"
+                  aria-label="Share Product"
+                  title="Share this product"
+                >
+                  <Share2 size={18} />
+                </button>
+                <button
+                  onClick={handleToggleWishlist}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-600 shadow-2xs backdrop-blur-xs hover:bg-white hover:text-red-500 active:scale-95 transition-all"
+                  aria-label="Save to Wishlist"
+                  title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                >
+                  <Heart size={18} className={wishlisted ? 'fill-red-500 text-red-500' : ''} />
+                </button>
+              </div>
 
               {/* Mobile Left / Right Quick Chevron Controls */}
               {galleryImages.length > 1 && (
@@ -396,6 +466,69 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
               </div>
             </div>
 
+            {/* Dynamic Size Variant Selector (Footwear, Clothing & Apparel) */}
+            {Array.isArray(product.sizes) && product.sizes.length > 0 && (
+              <div className="flex flex-col gap-2.5 rounded-2xl bg-white p-4 border border-gray-200 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#12203D] flex items-center gap-1">
+                    <span>Available Sizes</span>
+                    <span className="text-red-500">*</span>
+                  </span>
+                  {selectedSize ? (
+                    <span className="text-xs font-extrabold text-[#2F5FE3]">
+                      Selected: Size {selectedSize}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-amber-600">
+                      Please pick a size
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-0.5">
+                  {product.sizes.map((s) => {
+                    const isSelected = selectedSize === s.size
+                    const isOutOfStock = s.stockQty <= 0
+
+                    return (
+                      <button
+                        key={s.size}
+                        type="button"
+                        disabled={isOutOfStock}
+                        onClick={() => setSelectedSize(s.size)}
+                        className={`relative flex items-center justify-center min-w-[52px] px-3.5 py-2 rounded-xl border text-xs font-bold transition-all ${
+                          isSelected
+                            ? 'bg-[#2F5FE3] text-white border-[#2F5FE3] shadow-xs scale-105'
+                            : isOutOfStock
+                            ? 'bg-gray-50 text-gray-300 border-gray-200 cursor-not-allowed line-through'
+                            : 'bg-white text-[#12203D] border-gray-200 hover:border-[#2F5FE3] hover:bg-blue-50/40'
+                        }`}
+                      >
+                        <span>{s.size}</span>
+                        {isOutOfStock && (
+                          <span className="absolute -top-1.5 -right-1 rounded-md bg-gray-200 px-1 text-[8px] font-black text-gray-500">
+                            Sold Out
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {activeSizeObj && (
+                  <div className="text-[11px] font-semibold pt-1 flex items-center gap-1.5">
+                    {activeSizeObj.stockQty > 5 ? (
+                      <span className="text-emerald-600 font-bold">✓ Size {selectedSize} is in stock ({activeSizeObj.stockQty} available)</span>
+                    ) : activeSizeObj.stockQty > 0 ? (
+                      <span className="text-amber-600 font-bold">⚠️ Only {activeSizeObj.stockQty} left in Size {selectedSize}!</span>
+                    ) : (
+                      <span className="text-red-500 font-bold">✕ Size {selectedSize} is currently sold out</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Bulky Freight Item Notice Banner */}
             {product.bulky && (
               <div className="flex items-center gap-2.5 rounded-2xl bg-amber-50 border border-amber-200 p-3.5 text-xs font-bold text-amber-900">
@@ -411,15 +544,15 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                 <div className="flex items-center rounded-xl border border-gray-200 bg-white shadow-2xs">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={product.stockQty <= 0}
+                    disabled={maxAvailableStock <= 0}
                     className="p-2 text-gray-500 hover:text-[#12203D] disabled:opacity-40"
                   >
                     <Minus size={14} />
                   </button>
                   <span className="w-10 text-center text-xs font-bold text-[#12203D]">{quantity}</span>
                   <button
-                    onClick={() => setQuantity((q) => Math.min(product.stockQty || 1, q + 1))}
-                    disabled={product.stockQty <= 0 || quantity >= product.stockQty}
+                    onClick={() => setQuantity((q) => Math.min(maxAvailableStock || 1, q + 1))}
+                    disabled={maxAvailableStock <= 0 || quantity >= maxAvailableStock}
                     className="p-2 text-gray-500 hover:text-[#12203D] disabled:opacity-40"
                   >
                     <Plus size={14} />
@@ -430,17 +563,15 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
               {/* Main Action Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
                 <button
-                  disabled={product.stockQty <= 0}
-                  onClick={() => {
-                    for (let i = 0; i < quantity; i++) onAddToCart()
-                  }}
+                  disabled={maxAvailableStock <= 0}
+                  onClick={handleAddToCartWithValidation}
                   className="flex items-center justify-center gap-2 rounded-xl bg-[#2F5FE3] py-3.5 px-6 text-sm font-bold text-white shadow-xs hover:bg-[#254ec4] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <HiOutlineShoppingBag className="text-xl stroke-[1.8]" />
-                  <span>{product.stockQty <= 0 ? 'Out of Stock' : 'Add to Cart'}</span>
+                  <span>{maxAvailableStock <= 0 ? 'Out of Stock' : 'Add to Cart'}</span>
                 </button>
                 <button
-                  disabled={product.stockQty <= 0}
+                  disabled={maxAvailableStock <= 0}
                   onClick={handleBuyNow}
                   className="flex items-center justify-center gap-2 rounded-xl border-2 border-[#2F5FE3] bg-white py-3.5 px-6 text-sm font-bold text-[#2F5FE3] shadow-2xs hover:bg-blue-50/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -448,6 +579,15 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   <span>Buy Now</span>
                 </button>
               </div>
+
+              {/* Share with Friends Quick Action */}
+              <button
+                onClick={handleShareProduct}
+                className="mt-1 flex items-center justify-center gap-2 rounded-xl border border-gray-200/80 bg-gray-50/80 py-2.5 px-4 text-xs font-bold text-gray-700 hover:bg-blue-50/60 hover:border-blue-200 hover:text-[#2F5FE3] active:scale-[0.99] transition-all"
+              >
+                <Share2 size={15} className="text-[#2F5FE3]" />
+                <span>Share with Friends or on WhatsApp</span>
+              </button>
             </div>
 
             {/* 4 Trust Value Props Icons Row */}
@@ -897,7 +1037,11 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   className="group relative flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-3.5 shadow-2xs hover:border-gray-200 hover:shadow-md transition-all"
                 >
                   {/* Product Image */}
-                  <Link to={`/product/${relProduct.id}`} className="block relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50">
+                  <Link
+                    to={`/product/${relProduct.slug || relProduct.id}`}
+                    onClick={() => window.scrollTo(0, 0)}
+                    className="block relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50"
+                  >
                     {relProduct.discountBadge && (
                       <span className="absolute left-2 top-2 z-10 rounded bg-[#E53E3E] px-1.5 py-0.5 text-[9px] font-black text-white">
                         {relProduct.discountBadge}
@@ -916,7 +1060,8 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                       {relProduct.category}
                     </span>
                     <Link
-                      to={`/product/${relProduct.id}`}
+                      to={`/product/${relProduct.slug || relProduct.id}`}
+                      onClick={() => window.scrollTo(0, 0)}
                       className="text-xs font-bold text-[#12203D] hover:text-[#2F5FE3] line-clamp-2 transition-colors"
                     >
                       {relProduct.name}

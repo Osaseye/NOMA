@@ -18,163 +18,168 @@ export function CustomersTable({ customers }: { customers: Customer[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Account Type Summary Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Account Type Summary Metric Cards - 2 Column Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <button
           onClick={() => setFilterType('all')}
-          className={`rounded-2xl border p-5 text-left transition-all ${
+          className={`rounded-2xl border p-3.5 sm:p-5 text-left transition-all ${
             filterType === 'all'
-              ? 'border-slate-900 bg-slate-900 text-white shadow-md'
+              ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
               : 'border-slate-200 bg-white text-slate-900 hover:border-slate-300'
           }`}
         >
-          <span className="text-[10px] font-black uppercase tracking-wider opacity-70">Total Customers Directory</span>
-          <div className="mt-2 font-['Outfit'] font-black text-3xl">{customers.length}</div>
-          <span className="mt-1 block text-[11px] font-medium opacity-80">All shoppers processed</span>
+          <span className="text-[10px] font-black uppercase tracking-wider opacity-70">Total Customers</span>
+          <div className="mt-2 font-['Outfit'] font-black text-xl sm:text-3xl">{customers.length}</div>
+          <span className="mt-1 block text-[10px] font-medium opacity-80 truncate">All shoppers</span>
         </button>
 
         <button
           onClick={() => setFilterType('registered')}
-          className={`rounded-2xl border p-5 text-left transition-all ${
+          className={`rounded-2xl border p-3.5 sm:p-5 text-left transition-all ${
             filterType === 'registered'
-              ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
+              ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
               : 'border-slate-200 bg-white text-slate-900 hover:border-slate-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider opacity-70">Registered Account Users</span>
-            <HiUserPlus size={20} />
+            <span className="text-[10px] font-black uppercase tracking-wider opacity-70">Registered</span>
+            <HiUserPlus size={16} className="hidden sm:block" />
           </div>
-          <div className="mt-2 font-['Outfit'] font-black text-3xl">{registeredCustomers.length}</div>
-          <span className="mt-1 block text-[11px] font-medium opacity-80">Signed-up Noma accounts</span>
+          <div className="mt-2 font-['Outfit'] font-black text-xl sm:text-3xl">{registeredCustomers.length}</div>
+          <span className="mt-1 block text-[10px] font-medium opacity-80 truncate">Signed-up accounts</span>
         </button>
 
         <button
           onClick={() => setFilterType('guest')}
-          className={`rounded-2xl border p-5 text-left transition-all ${
+          className={`col-span-2 lg:col-span-1 rounded-2xl border p-3.5 sm:p-5 text-left transition-all ${
             filterType === 'guest'
-              ? 'border-amber-500 bg-amber-500 text-white shadow-md'
+              ? 'border-amber-500 bg-amber-500 text-white shadow-xs'
               : 'border-slate-200 bg-white text-slate-900 hover:border-slate-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider opacity-70">Guest Checkout Orders</span>
-            <HiUserMinus size={20} />
+            <span className="text-[10px] font-black uppercase tracking-wider opacity-70">Guest Checkouts</span>
+            <HiUserMinus size={16} className="hidden sm:block" />
           </div>
-          <div className="mt-2 font-['Outfit'] font-black text-3xl">{guestCustomers.length}</div>
-          <span className="mt-1 block text-[11px] font-medium opacity-80">One-time guest order users</span>
+          <div className="mt-2 font-['Outfit'] font-black text-xl sm:text-3xl">{guestCustomers.length}</div>
+          <span className="mt-1 block text-[10px] font-medium opacity-80 truncate">One-time guest users</span>
         </button>
       </div>
 
-      {/* Directory Table or Empty State */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 p-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setFilterType('all')}
-              className={`rounded-xl px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all ${
-                filterType === 'all' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              All ({customers.length})
-            </button>
-            <button
-              onClick={() => setFilterType('registered')}
-              className={`rounded-xl px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all ${
-                filterType === 'registered' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Registered Accounts ({registeredCustomers.length})
-            </button>
-            <button
-              onClick={() => setFilterType('guest')}
-              className={`rounded-xl px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all ${
-                filterType === 'guest' ? 'bg-amber-500 text-white' : 'text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Guest Checkout ({guestCustomers.length})
-            </button>
-          </div>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-1">
-              <HiUser size={28} />
-            </div>
-            <span className="font-bold text-sm text-slate-900">No Customer Records Found</span>
-            <span className="text-xs text-slate-400 max-w-sm">
-              Customer directory is scrubbed clean for backend API integration. Incoming shopper signups and checkouts will populate here.
-            </span>
-          </div>
-        ) : (
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 font-extrabold uppercase text-slate-500 text-[10px] tracking-wider">
-                <th className="p-4">Customer Name</th>
-                <th className="p-4">Account Type</th>
-                <th className="p-4">Phone Number</th>
-                <th className="p-4">Orders Count</th>
-                <th className="p-4">Lifetime Spend Value</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
-              {filtered.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-black ${
-                          c.isGuest ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'
-                        }`}
-                      >
-                        {c.name[0]}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-900">{c.name}</span>
-                        <span className="text-[10px] text-slate-400">{c.email || 'No email provided'}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    {c.isGuest ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase text-amber-800">
-                        <HiUserMinus size={13} /> Guest Checkout
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-800">
-                        <HiUserPlus size={13} /> Registered Account
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <span className="font-bold text-slate-700 flex items-center gap-1">
-                      <HiPhone size={13} className="text-slate-400" /> {c.phone}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase text-slate-700">
-                      <HiShoppingBag size={12} /> {c.orders} Orders
-                    </span>
-                  </td>
-                  <td className="p-4 font-black text-emerald-700">{formatNaira(c.lifetimeValue)}</td>
-                  <td className="p-4 text-right">
-                    <a
-                      href={`https://wa.me/${brand.whatsapp.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(c.name)},%20thank%20you%20for%20shopping%20with%20Noma!`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
-                    >
-                      <HiPhone size={13} /> Chat on WhatsApp
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setFilterType('all')}
+          className={`rounded-xl px-3.5 py-1.5 text-xs font-black uppercase tracking-wider transition-all ${
+            filterType === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          All ({customers.length})
+        </button>
+        <button
+          onClick={() => setFilterType('registered')}
+          className={`rounded-xl px-3.5 py-1.5 text-xs font-black uppercase tracking-wider transition-all ${
+            filterType === 'registered' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          Registered ({registeredCustomers.length})
+        </button>
+        <button
+          onClick={() => setFilterType('guest')}
+          className={`rounded-xl px-3.5 py-1.5 text-xs font-black uppercase tracking-wider transition-all ${
+            filterType === 'guest' ? 'bg-amber-500 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          Guest ({guestCustomers.length})
+        </button>
       </div>
+
+      {/* Directory 2-Column Cards Grid */}
+      {filtered.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center flex flex-col items-center justify-center gap-2 shadow-xs">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-1">
+            <HiUser size={28} />
+          </div>
+          <span className="font-bold text-sm text-slate-900">No Customer Records Found</span>
+          <span className="text-xs text-slate-400 max-w-sm">
+            Customer directory is scrubbed clean for backend API integration. Incoming shopper signups and checkouts will populate here.
+          </span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filtered.map((c) => (
+            <div
+              key={c.id}
+              className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-slate-300 hover:shadow-md"
+            >
+              <div className="flex flex-col gap-3">
+                {/* Header: Avatar, Name, Email, Badge */}
+                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-black ${
+                        c.isGuest ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'
+                      }`}
+                    >
+                      {c.name ? c.name[0].toUpperCase() : 'U'}
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1">{c.name}</h3>
+                      <span className="text-[11px] text-slate-400 truncate max-w-[180px]">
+                        {c.email || 'No email registered'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {c.isGuest ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[9px] font-black uppercase text-amber-800 shrink-0">
+                      <HiUserMinus size={11} /> Guest
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[9px] font-black uppercase text-emerald-800 shrink-0">
+                      <HiUserPlus size={11} /> Account
+                    </span>
+                  )}
+                </div>
+
+                {/* Info Stats */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Phone Number</span>
+                    <span className="font-bold text-slate-700 flex items-center gap-1 mt-0.5">
+                      <HiPhone size={12} className="text-slate-400 shrink-0" /> {c.phone}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Orders Completed</span>
+                    <span className="font-bold text-slate-700 flex items-center gap-1 mt-0.5">
+                      <HiShoppingBag size={12} className="text-slate-400 shrink-0" /> {c.orders} Orders
+                    </span>
+                  </div>
+                </div>
+
+                {/* Spend value pill */}
+                <div className="rounded-xl bg-slate-50/80 p-3 border border-slate-100 flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase text-slate-400">Lifetime Spend Value</span>
+                  <span className="text-base font-black text-emerald-700">{formatNaira(c.lifetimeValue)}</span>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="mt-4 pt-3 border-t border-slate-100">
+                <a
+                  href={`https://wa.me/${brand.whatsapp.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(c.name)},%20thank%20you%20for%20shopping%20with%20Noma!`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2 px-3 text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 active:scale-95 transition-all"
+                >
+                  <HiPhone size={13} /> Chat on WhatsApp
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

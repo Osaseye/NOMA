@@ -19,9 +19,9 @@ interface ProductStoreState {
   initFirebaseListeners: () => () => void
 
   // Product actions
-  addProduct: (product: Omit<Product, 'id'>) => Product
-  updateProduct: (id: string, updates: Partial<Product>) => void
-  deleteProduct: (id: string) => void
+  addProduct: (product: Omit<Product, 'id'>) => Promise<Product>
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<void>
+  deleteProduct: (id: string) => Promise<void>
   toggleStockStatus: (id: string) => void
   updateStockQuantity: (id: string, qty: number) => void
   setProducts: (products: Product[]) => void
@@ -93,7 +93,7 @@ export const useProductStore = create<ProductStoreState>()(
         return firebaseUnsubscribe
       },
 
-      addProduct: (productData) => {
+      addProduct: async (productData) => {
         const id = `p-${Date.now()}`
         const newProduct: Product = {
           ...productData,
@@ -102,30 +102,50 @@ export const useProductStore = create<ProductStoreState>()(
         }
         set((state) => ({ products: [newProduct, ...state.products] }))
 
-        // Sync with Firestore
-        productService.addProduct(productData).catch((err) => {
-          console.error('Failed to sync product to Firestore:', err)
-        })
-
-        return newProduct
+        try {
+          const created = await productService.addProduct(productData)
+          // Update the optimistic entry with final created object if needed
+          set((state) => ({
+            products: state.products.map((p) => (p.id === id ? created : p)),
+          }))
+          return created
+        } catch (err) {
+          // Rollback on failure
+          set((state) => ({ products: state.products.filter((p) => p.id !== id) }))
+          throw err
+        }
       },
 
-      updateProduct: (id, updates) => {
+      updateProduct: async (id, updates) => {
+        const original = get().products.find((p) => p.id === id)
         set((state) => ({
           products: state.products.map((p) => (p.id === id ? { ...p, ...updates } : p)),
         }))
-        productService.updateProduct(id, updates).catch((err) => {
-          console.error('Failed to update product in Firestore:', err)
-        })
+        try {
+          await productService.updateProduct(id, updates)
+        } catch (err) {
+          if (original) {
+            set((state) => ({
+              products: state.products.map((p) => (p.id === id ? original : p)),
+            }))
+          }
+          throw err
+        }
       },
 
-      deleteProduct: (id) => {
+      deleteProduct: async (id) => {
+        const original = get().products.find((p) => p.id === id)
         set((state) => ({
           products: state.products.filter((p) => p.id !== id),
         }))
-        productService.deleteProduct(id).catch((err) => {
-          console.error('Failed to delete product from Firestore:', err)
-        })
+        try {
+          await productService.deleteProduct(id)
+        } catch (err) {
+          if (original) {
+            set((state) => ({ products: [...state.products, original] }))
+          }
+          throw err
+        }
       },
 
       toggleStockStatus: (id) => {

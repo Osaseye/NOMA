@@ -14,6 +14,30 @@ import type { Product } from '../../types/commerce'
 
 const PRODUCTS_COLLECTION = 'products'
 
+function sanitizeForFirestore(obj: any): any {
+  if (obj === undefined || obj === null) {
+    return null
+  }
+  if (Array.isArray(obj)) {
+    return obj
+      .filter((item) => item !== undefined)
+      .map((item) => (typeof item === 'object' && item !== null ? sanitizeForFirestore(item) : item))
+  }
+  if (typeof obj === 'object' && !(obj instanceof Date)) {
+    const cleaned: Record<string, any> = {}
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = typeof value === 'object' && value !== null ? sanitizeForFirestore(value) : value
+      }
+    }
+    return cleaned
+  }
+  if (typeof obj === 'number' && isNaN(obj)) {
+    return 0
+  }
+  return obj
+}
+
 export const productService = {
   subscribeProducts: (callback: (products: Product[]) => void) => {
     const q = query(collection(db, PRODUCTS_COLLECTION), orderBy('name', 'asc'))
@@ -45,6 +69,7 @@ export const productService = {
             specs: Array.isArray(data.specs) ? data.specs : [],
             whatsInTheBox: Array.isArray(data.whatsInTheBox) ? data.whatsInTheBox : [],
             keyFeatures: Array.isArray(data.keyFeatures) ? data.keyFeatures : [],
+            sizes: Array.isArray(data.sizes) ? data.sizes : [],
           }
         })
         callback(productsList)
@@ -64,14 +89,17 @@ export const productService = {
       slug,
     }
 
+    const cleanedData = sanitizeForFirestore({
+      ...newProduct,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+
     try {
-      await setDoc(doc(db, PRODUCTS_COLLECTION, customId), {
-        ...newProduct,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      })
+      await setDoc(doc(db, PRODUCTS_COLLECTION, customId), cleanedData)
     } catch (err: any) {
-      console.warn('Firestore addProduct notice (saved locally):', err?.message || err)
+      console.error('Firestore addProduct error:', err?.message || err)
+      throw err
     }
 
     return newProduct
@@ -80,12 +108,14 @@ export const productService = {
   updateProduct: async (id: string, updates: Partial<Product>) => {
     try {
       const ref = doc(db, PRODUCTS_COLLECTION, id)
-      await updateDoc(ref, {
+      const cleanedData = sanitizeForFirestore({
         ...updates,
         updatedAt: serverTimestamp(),
       })
+      await updateDoc(ref, cleanedData)
     } catch (err: any) {
-      console.warn('Firestore updateProduct notice (updated locally):', err?.message || err)
+      console.error('Firestore updateProduct error:', err?.message || err)
+      throw err
     }
   },
 
@@ -93,7 +123,8 @@ export const productService = {
     try {
       await deleteDoc(doc(db, PRODUCTS_COLLECTION, id))
     } catch (err: any) {
-      console.warn('Firestore deleteProduct notice (removed locally):', err?.message || err)
+      console.error('Firestore deleteProduct error:', err?.message || err)
+      throw err
     }
   },
 

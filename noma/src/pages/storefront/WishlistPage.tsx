@@ -1,6 +1,7 @@
 // WishlistPage.tsx - Personal & Public Shareable Wishlist Support
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import {
   HiChevronRight,
   HiHeart,
@@ -39,6 +40,8 @@ export function WishlistPage() {
     return products.filter((p) => wishlistProductIds.includes(p.id))
   }, [isSharedMode, products, sharedItemIds, wishlistProductIds])
 
+  const wishlistedProducts = products.filter((p) => wishlistProductIds.includes(p.id))
+
   const handleMoveAllToCart = () => {
     displayedProducts.forEach((product) => {
       addItem(product.id)
@@ -46,28 +49,72 @@ export function WishlistPage() {
     toast.success(`Added all ${displayedProducts.length} items to your cart!`)
   }
 
-  const handleShareWishlist = () => {
-    if (wishlistedProducts.length === 0) return
-    const ownerName = profile?.name ? profile.name.split(' ')[0] : 'Segun'
+  const handleShareWishlist = async () => {
+    if (wishlistedProducts.length === 0) {
+      toast.info('Add some products to your wishlist before sharing!')
+      return
+    }
+    const ownerName = profile?.name ? profile.name.trim().split(' ')[0] : 'My'
     const itemIdsStr = wishlistedProducts.map((p) => p.id).join(',')
     const shareableUrl = `${window.location.origin}/wishlist?shared=true&owner=${encodeURIComponent(
-      ownerName
+      ownerName === 'My' ? 'Noma Shopper' : ownerName
     )}&items=${itemIdsStr}`
+
+    const shareTitle = `${ownerName === 'My' ? 'My' : `${ownerName}'s`} Wishlist on NOMA`
+    const shareText = `Check out the items on my NOMA wishlist (${wishlistedProducts.length} items)!`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareableUrl,
+        })
+        return
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return
+        }
+      }
+    }
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareableUrl)
       toast.success('Shareable wishlist link copied to clipboard!', {
         description: 'Anyone with this link can view your curated wishlist items.',
+        duration: 3500,
       })
     } else {
       toast.info(`Wishlist URL: ${shareableUrl}`)
     }
   }
 
-  const wishlistedProducts = products.filter((p) => wishlistProductIds.includes(p.id))
+  const pageTitle = isSharedMode
+    ? `${sharedOwnerName}'s Curated Wishlist | NOMA Nigeria`
+    : 'My Wishlist | NOMA Marketplace'
+  const metaDescription = isSharedMode
+    ? `Explore ${displayedProducts.length} curated products chosen by ${sharedOwnerName} on NOMA. Fast nationwide delivery across Nigeria.`
+    : 'Manage your saved favorite products on NOMA Marketplace.'
+  const ogImage = displayedProducts[0]?.image || 'https://noma-africa.vercel.app/pwa-512x512.png'
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://noma-africa.vercel.app/wishlist'
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] font-['Outfit',sans-serif] text-[#12203D] selection:bg-[#2F5FE3] selection:text-white pb-24 pt-3 md:pt-5">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="title" content={pageTitle} />
+        <meta name="description" content={metaDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="NOMA Marketplace" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:url" content={currentUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={ogImage} />
+      </Helmet>
       <div className="mx-auto w-full max-w-[1440px] px-4 md:px-8 lg:px-12">
         {/* Breadcrumb Navigation */}
         <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-gray-500">

@@ -11,7 +11,8 @@ function mock<T>(data: T): Promise<T> {
 
 export const commerceService = {
   getProducts: () => mock(useProductStore.getState().products),
-  getProductBySlug: (slug: string | undefined) => mock(useProductStore.getState().products.find((p) => p.slug === slug)),
+  getProductBySlug: (slug: string | undefined) =>
+    mock(useProductStore.getState().products.find((p) => p.slug === slug || p.id === slug)),
   getProductsByCategory: (categoryId: CategoryId | string | undefined) =>
     mock(useProductStore.getState().products.filter((p) => p.category === categoryId)),
   searchProducts: (query: string) =>

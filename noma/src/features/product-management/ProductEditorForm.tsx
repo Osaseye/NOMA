@@ -10,7 +10,7 @@ import {
   HiPhoto,
   HiStar,
 } from 'react-icons/hi2'
-import type { Product, CategoryId } from '../../types/commerce'
+import type { Product, CategoryId, ProductSizeVariant } from '../../types/commerce'
 import { formatNaira, getMarkupAmount } from '../../utils/pricing'
 import { useProductStore } from '../../store/productStore'
 import { useSupplierStore } from '../../store/supplierStore'
@@ -56,6 +56,13 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   const [badge, setBadge] = useState(product?.badge ?? 'Best Seller')
   const [discountBadge, setDiscountBadge] = useState(product?.discountBadge || '')
   const [bulky, setBulky] = useState(product?.bulky || false)
+
+  // Sizing & Variant Inventory State
+  const [sizes, setSizes] = useState<ProductSizeVariant[]>(
+    Array.isArray(product?.sizes) ? product.sizes : []
+  )
+  const [customSizeInput, setCustomSizeInput] = useState('')
+  const [customSizeQty, setCustomSizeQty] = useState<number>(5)
 
   // Images state
   const initialImages = Array.isArray(product?.images) && product.images.length > 0
@@ -191,61 +198,128 @@ export function ProductEditorForm({ product }: { product?: Product }) {
     setKeyFeatures((prev) => prev.filter((_, i) => i !== idx))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Sizing & Variant Inventory Handlers
+  const handleAddPresetSizes = (presetList: string[]) => {
+    setSizes((prev) => {
+      const existingSizes = new Set(prev.map((s) => s.size))
+      const newItems = presetList
+        .filter((size) => !existingSizes.has(size))
+        .map((size) => ({ size, stockQty: 5 }))
+      const combined = [...prev, ...newItems]
+      const total = combined.reduce((sum, s) => sum + s.stockQty, 0)
+      setStockQty(total)
+      return combined
+    })
+    toast.success('Preset sizes added!')
+  }
+
+  const handleAddCustomSize = () => {
+    if (!customSizeInput.trim()) return
+    const sizeName = customSizeInput.trim().toUpperCase()
+    if (sizes.some((s) => s.size.toLowerCase() === sizeName.toLowerCase())) {
+      toast.error('This size already exists.')
+      return
+    }
+    const updated = [...sizes, { size: sizeName, stockQty: Math.max(0, Number(customSizeQty) || 0) }]
+    setSizes(updated)
+    setCustomSizeInput('')
+    setCustomSizeQty(5)
+    setStockQty(updated.reduce((sum, s) => sum + s.stockQty, 0))
+    toast.success(`Size "${sizeName}" added!`)
+  }
+
+  const handleUpdateSizeQty = (index: number, newQty: number) => {
+    setSizes((prev) => {
+      const copy = [...prev]
+      copy[index] = { ...copy[index], stockQty: Math.max(0, newQty) }
+      setStockQty(copy.reduce((sum, s) => sum + s.stockQty, 0))
+      return copy
+    })
+  }
+
+  const handleRemoveSize = (index: number) => {
+    setSizes((prev) => {
+      const updated = prev.filter((_, idx) => idx !== index)
+      if (updated.length > 0) {
+        setStockQty(updated.reduce((sum, s) => sum + s.stockQty, 0))
+      }
+      return updated
+    })
+  }
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
+
+    if (!name.trim()) {
+      toast.error('Product title is required.')
+      return
+    }
+
+    setIsSubmitting(true)
 
     const mainCoverImage = images[0] || 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1200&q=80'
 
     const payload = {
       name: name.trim(),
       category,
-      subCategory: subCategory.trim(),
-      supplierId,
-      supplierName,
-      brand: brand.trim(),
-      basePrice: Number(basePrice),
-      finalPrice: Number(finalPrice),
-      stockQty: Number(stockQty),
-      badge: badge.trim(),
-      discountBadge: discountBadge.trim(),
-      bulky,
+      subCategory: subCategory.trim() || '',
+      supplierId: supplierId || '',
+      supplierName: supplierName || '',
+      brand: brand.trim() || 'Noma',
+      basePrice: Number(basePrice) || 0,
+      finalPrice: Number(finalPrice) || 0,
+      stockQty: Number(stockQty) || 0,
+      badge: badge.trim() || '',
+      discountBadge: discountBadge.trim() || '',
+      bulky: Boolean(bulky),
       image: mainCoverImage,
       images: images.length > 0 ? images : [mainCoverImage],
-      description: description.trim(),
+      description: description.trim() || '',
       specs: keyFeatures,
       whatsInTheBox,
       keyFeatures,
+      sizes: Array.isArray(sizes) ? sizes : [],
     }
 
-    if (isEditing && product) {
-      updateProduct(product.id, payload)
-      toast.success('Product updated live on storefront!')
-    } else {
-      addProduct({
-        ...payload,
-        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        rating: 0,
-        reviewsCount: 0,
-      })
-      toast.success(`Product "${name}" published live on storefront!`)
-    }
+    try {
+      if (isEditing && product) {
+        await updateProduct(product.id, payload)
+        toast.success('Product updated live on storefront!')
+      } else {
+        await addProduct({
+          ...payload,
+          slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          rating: 0,
+          reviewsCount: 0,
+        })
+        toast.success(`Product "${name}" published live on storefront!`)
+      }
 
-    setSuccessMsg(true)
-    setTimeout(() => {
-      setSuccessMsg(false)
-      navigate('/admin/products')
-    }, 1200)
+      setSuccessMsg(true)
+      setTimeout(() => {
+        setSuccessMsg(false)
+        navigate('/admin/products')
+      }, 800)
+    } catch (err: any) {
+      console.error('Failed to save product to database:', err)
+      toast.error(`Error saving product: ${err?.message || 'Please check your connection and try again.'}`)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-8 pb-12 font-['Outfit',sans-serif]">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 md:gap-8 pb-12 font-['Outfit',sans-serif]">
       {successMsg && (
         <div className="flex items-center gap-2 rounded-xl bg-emerald-100 p-4 text-xs font-bold text-emerald-800 shadow-md">
           <HiCheckCircle size={20} /> Product saved & published live! Redirecting to catalog...
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <button
           type="button"
           onClick={() => navigate('/admin/products')}
@@ -253,20 +327,29 @@ export function ProductEditorForm({ product }: { product?: Product }) {
         >
           <HiArrowLeft size={16} /> Back to Products Catalog
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => navigate('/admin/products')}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+            className="flex-1 sm:flex-none rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={uploadingImage}
-            className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50"
+            disabled={uploadingImage || isSubmitting}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50"
           >
-            {isEditing ? 'Save & Update Product' : 'Create Product Card'}
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : isEditing ? (
+              'Save & Update Product'
+            ) : (
+              'Create Product Card'
+            )}
           </button>
         </div>
       </div>
@@ -548,6 +631,137 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               <p className="text-xs text-slate-400 italic">No key features added yet.</p>
             )}
           </div>
+
+          {/* Sizing & Variant Inventory Manager (Footwear & Apparel) */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                  <span>Available Sizes & Per-Size Stock</span>
+                  <span className="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-black text-purple-700">
+                    Footwear & Apparel
+                  </span>
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Configure dynamic selectable sizes (e.g. EU 40, 41, 42 or S, M, L) with dedicated stock quantity per size.
+                </p>
+              </div>
+              <span className="text-xs font-bold text-slate-500">{sizes.length} size(s)</span>
+            </div>
+
+            {/* Quick Preset Buttons */}
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-bold uppercase text-slate-500">Quick-Add Size Presets:</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAddPresetSizes(['38', '39', '40', '41', '42', '43', '44', '45', '46'])}
+                  className="rounded-xl border border-purple-200 bg-purple-50/70 px-3 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-100 transition-colors"
+                >
+                  👟 Shoe Sizes (EU 38 - 46)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddPresetSizes(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'])}
+                  className="rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  👕 Clothing Sizes (XS - 3XL)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddPresetSizes(['0-6M', '6-12M', '1-2Y', '2-3Y', '4-5Y'])}
+                  className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors"
+                >
+                  👶 Baby & Kids (0-6M - 4-5Y)
+                </button>
+                {sizes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSizes([])
+                      toast.info('All sizes cleared.')
+                    }}
+                    className="rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Custom Size Adder */}
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <input
+                type="text"
+                value={customSizeInput}
+                onChange={(e) => setCustomSizeInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddCustomSize()
+                  }
+                }}
+                placeholder="Custom Size (e.g. 47, One Size, 32W/30L)"
+                className="flex-1 rounded-xl border border-slate-300 p-2.5 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+              />
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-slate-500">Qty:</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={customSizeQty}
+                  onChange={(e) => setCustomSizeQty(Number(e.target.value))}
+                  className="w-16 rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 text-center outline-none focus:border-emerald-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddCustomSize}
+                className="flex items-center gap-1 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors"
+              >
+                <HiPlus size={15} /> Add
+              </button>
+            </div>
+
+            {/* Sizes List Table */}
+            {sizes.length > 0 ? (
+              <div className="flex flex-col gap-2 pt-2">
+                <span className="text-[10px] font-bold uppercase text-slate-500">Configured Sizes & Stock breakdown:</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {sizes.map((s, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 p-2.5 gap-2"
+                    >
+                      <span className="rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-extrabold text-[#12203D] shadow-2xs">
+                        Size {s.size}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-500">Units:</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={s.stockQty}
+                          onChange={(e) => handleUpdateSizeQty(idx, Number(e.target.value))}
+                          className="w-14 rounded-lg border border-slate-300 bg-white p-1 text-xs font-bold text-center text-slate-900 outline-none focus:border-emerald-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSize(idx)}
+                          className="text-slate-400 hover:text-red-600 p-1 transition-colors"
+                          title="Remove size"
+                        >
+                          <HiTrash size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">No sizes configured. Default single product stock quantity will apply.</p>
+            )}
+          </div>
         </div>
 
         {/* Right Col: Multi-Image Gallery Manager & Stock/Badges */}
@@ -740,6 +954,33 @@ export function ProductEditorForm({ product }: { product?: Product }) {
             </label>
           </div>
         </div>
+      </div>
+
+      {/* Mobile-Friendly Sticky Bottom Bar / Action Footer */}
+      <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white p-4 rounded-2xl shadow-sm">
+        <button
+          type="button"
+          onClick={() => navigate('/admin/products')}
+          className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={uploadingImage || isSubmitting}
+          className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              <span>Saving...</span>
+            </>
+          ) : isEditing ? (
+            'Save & Update Product'
+          ) : (
+            'Create Product Card'
+          )}
+        </button>
       </div>
     </form>
   )

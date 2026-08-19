@@ -188,45 +188,45 @@ export function SuppliersPage() {
         </button>
       </div>
 
-      {/* Overview Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex items-center justify-between">
+      {/* Overview Stat Cards - 2 Column Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
-              Total Active Suppliers
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
+              Active Suppliers
             </span>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">{suppliers.length}</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">{suppliers.length}</h3>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#2F5FE3]">
-            <HiBuildingOffice2 size={24} />
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#2F5FE3] shrink-0">
+            <HiBuildingOffice2 className="text-lg sm:text-2xl" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3.5 sm:p-5 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-extrabold uppercase text-emerald-800 tracking-wider">
-              Total Inventory Sourcing Cost
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-emerald-800 tracking-wider">
+              Sourcing Cost
             </span>
-            <h3 className="text-2xl font-black text-emerald-900 mt-1">
+            <h3 className="text-xl sm:text-2xl font-black text-emerald-900 mt-1 truncate max-w-[150px]">
               {formatNaira(totalPayableCostAcrossAll)}
             </h3>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-            <HiBanknotes size={24} />
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shrink-0">
+            <HiBanknotes className="text-lg sm:text-2xl" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex items-center justify-between">
+        <div className="col-span-2 lg:col-span-1 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
-              Total Products Linked
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
+              Products Linked
             </span>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
               {products.filter((p) => p.supplierId || p.supplierName).length} items
             </h3>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-            <HiCube size={24} />
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shrink-0">
+            <HiCube className="text-lg sm:text-2xl" />
           </div>
         </div>
       </div>
@@ -243,7 +243,7 @@ export function SuppliersPage() {
         />
       </div>
 
-      {/* Suppliers Grid / Cards */}
+      {/* Suppliers Grid / Cards - 2 Column Format */}
       {filteredStats.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center flex flex-col items-center justify-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
@@ -267,7 +267,7 @@ export function SuppliersPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {filteredStats.map(({ supplier, sourcedProducts, totalUnits, totalOwedBaseCost }) => (
             <div
               key={supplier.id}
