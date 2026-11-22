@@ -1,53 +1,57 @@
-// TrustStrip.tsx
 import {
-  HiOutlineTruck,
-  HiOutlineClock,
-  HiOutlineCreditCard,
-  HiOutlineArrowPath,
-  HiOutlineShieldCheck,
-} from 'react-icons/hi2'
+  ArrowsCounterClockwise,
+  Clock,
+  ShieldCheck,
+  Truck,
+  Wallet,
+} from '@phosphor-icons/react'
 
 const trustItems = [
   {
-    icon: HiOutlineTruck,
+    icon: Truck,
     title: 'Delivery Fee Upfront',
+    detail: 'Confirmed before payment',
   },
   {
-    icon: HiOutlineClock,
-    title: '2–5 Days Delivery',
+    icon: Clock,
+    title: '2-5 Days Delivery',
+    detail: 'Tracked nationwide dispatch',
   },
   {
-    icon: HiOutlineCreditCard,
-    title: 'Pay on Delivery (Selected Areas)',
+    icon: Wallet,
+    title: 'Pay on Delivery',
+    detail: 'Available in selected areas',
   },
   {
-    icon: HiOutlineArrowPath,
+    icon: ArrowsCounterClockwise,
     title: '30-Day Returns',
+    detail: 'Verified condition guarantee',
   },
   {
-    icon: HiOutlineShieldCheck,
+    icon: ShieldCheck,
     title: 'Secure Payments',
+    detail: 'Card, bank transfer & USSD',
   },
 ]
 
 export function TrustStrip() {
   return (
-    <section className="relative z-20 -mt-10 sm:-mt-12 md:-mt-14 lg:-mt-16 bg-transparent pb-8">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
-        <div className="rounded-2xl md:rounded-3xl bg-white border border-gray-100/90 shadow-[0_12px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 flex items-center justify-between gap-4 overflow-x-auto md:overflow-x-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {trustItems.map((item, index) => (
-            <div
-              key={item.title}
-              className={`flex shrink-0 items-center gap-3 ${
-                index !== trustItems.length - 1
-                  ? 'md:border-r md:border-gray-100 md:pr-4 lg:pr-6'
-                  : ''
-              }`}
-            >
-              <item.icon className="text-xl md:text-2xl text-[#2F5FE3] shrink-0 stroke-[1.8]" />
-              <span className="text-[12px] font-bold text-[#12203D] leading-tight whitespace-nowrap">
-                {item.title}
+    <section className="border-y border-[#E5E7EB] bg-white" aria-label="Store guarantees">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="grid grid-cols-2 divide-y divide-[#E5E7EB] sm:grid-cols-3 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
+          {trustItems.map((item) => (
+            <div key={item.title} className="flex items-center gap-3 px-3 py-4 sm:px-4">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] bg-[#EEF3FE] text-[#1049EB]">
+                <item.icon size={18} weight="regular" />
               </span>
+              <div className="min-w-0">
+                <span className="block truncate text-xs font-semibold text-[#0B1220]">
+                  {item.title}
+                </span>
+                <span className="block truncate text-[11px] text-[#5E6675]">
+                  {item.detail}
+                </span>
+              </div>
             </div>
           ))}
         </div>

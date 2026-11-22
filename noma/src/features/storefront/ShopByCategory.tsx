@@ -1,94 +1,150 @@
-import { ChevronRight, LayoutGrid } from 'lucide-react'
-import { HiOutlineSquares2X2 } from 'react-icons/hi2'
+import { ArrowRight, CaretRight, SquaresFour } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
+import { EmptyState } from '../../design-system/components/EmptyState'
 import { useProductStore } from '../../store/productStore'
+import type { Category } from '../../types/commerce'
+
+const CATEGORY_IMAGE_FALLBACKS: Record<string, string> = {
+  electronics: '/images/cat-electronics.png',
+  appliances: '/images/cat-appliances.png',
+  kitchen: '/images/cat-kitchen.png',
+  cooking: '/images/cat-kitchen.png',
+  phones: '/images/cat-phones.png',
+  power: '/images/cat-power.png',
+  solar: '/images/cat-power.png',
+  living: '/images/cat-living.png',
+  'home-essentials': '/images/cat-living.png',
+  general: '/images/cat-living.png',
+  bicycles: '/images/cat-living.png',
+  outdoor: '/images/cat-living.png',
+  clothing: '/images/cat-living.png',
+}
+
+function resolveCategoryImage(category: Category): string {
+  if (category.image && !category.image.includes('unsplash.com')) {
+    return category.image
+  }
+  return CATEGORY_IMAGE_FALLBACKS[category.id.toLowerCase()] || '/images/cat-living.png'
+}
+
+function getBentoColSpan(index: number, totalCategories: number): string {
+  if (index === 0) {
+    if (totalCategories === 1) return 'col-span-2 lg:col-span-7 min-h-[240px] lg:min-h-[340px]'
+    return 'col-span-2 lg:col-span-5 lg:row-span-2 min-h-[230px] lg:min-h-[380px]'
+  }
+  if (totalCategories === 2) {
+    return 'col-span-1 lg:col-span-7 min-h-[168px] lg:min-h-[182px]'
+  }
+  if (totalCategories === 3) {
+    return index === 1
+      ? 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
+      : 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
+  }
+  if (totalCategories === 4) {
+    if (index === 1) return 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
+    if (index === 2) return 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
+    return 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
+  }
+  // 5 categories
+  if (index === 1) return 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
+  if (index === 2) return 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
+  return 'col-span-1 lg:col-span-2 min-h-[168px] lg:min-h-[182px]'
+}
+
+function getBrowseTileSpan(totalCategories: number): string {
+  if (totalCategories === 1) return 'col-span-2 lg:col-span-5 min-h-[180px] lg:min-h-[340px]'
+  if (totalCategories === 2) return 'col-span-1 lg:col-span-7 min-h-[168px] lg:min-h-[182px]'
+  if (totalCategories === 3) return 'col-span-1 lg:col-span-7 min-h-[168px] lg:min-h-[182px]'
+  return 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
+}
 
 export function ShopByCategory() {
   const { categories } = useProductStore()
-
-  // Display at most 5 category cards, with the 6th card as "More Categories"
   const displayCategories = categories.slice(0, 5)
 
   return (
-    <section className="bg-[#F7F8FA] pb-10 pt-4 md:pb-14 font-['Outfit',sans-serif]">
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[#12203D] md:text-[28px]">
-              Shop by Category
-            </h2>
-            <p className="text-xs text-[#526484] mt-0.5">Explore our wide range of home & living products</p>
-          </div>
+    <section className="border-b border-[#E5E7EB] bg-white py-16">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
+        {/* Header (No eyebrow) */}
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold tracking-tight text-[#0B1220] md:text-[1.75rem]">
+            Shop by category
+          </h2>
           <Link
             to="/catalog"
-            className="flex items-center gap-1 text-xs font-bold text-[#2F5FE3] hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1049EB] hover:text-[#0D3BC2] hover:underline"
           >
-            View all categories <ChevronRight size={16} strokeWidth={2.5} />
+            <span>All categories</span>
+            <CaretRight size={14} weight="regular" />
           </Link>
         </div>
 
-        {/* Dynamic Category grid or Empty State */}
-        {categories.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-gray-300 bg-white p-12 text-center flex flex-col items-center justify-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-[#2F5FE3] mb-1">
-              <LayoutGrid size={28} />
-            </div>
-            <h3 className="font-bold text-base text-[#12203D]">No Categories Available Yet</h3>
-            <p className="text-xs text-slate-500 max-w-md">
-              Categories created in the Admin Portal will automatically appear here on the storefront.
-            </p>
-            <Link
-              to="/catalog"
-              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#2F5FE3] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#254ec4]"
-            >
-              Browse Full Product Catalog
-            </Link>
-          </div>
+        {/* Category Bento Mosaic */}
+        {displayCategories.length === 0 ? (
+          <EmptyState
+            icon={<SquaresFour size={24} weight="regular" />}
+            title="No categories available yet"
+            detail="Categories configured in the catalog will appear here automatically."
+            action={
+              <Link
+                to="/catalog"
+                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
+              >
+                Browse Full Catalog
+              </Link>
+            }
+          />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 md:gap-5">
-            {/* Render Top 5 Categories */}
-            {displayCategories.map((cat) => (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-12">
+            {displayCategories.map((cat, index) => (
               <Link
                 key={cat.id}
                 to={`/category/${cat.id}`}
                 aria-label={`Shop ${cat.label}`}
-                className="group relative flex h-40 sm:h-52 md:h-64 lg:h-72 w-full flex-col overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl bg-slate-900"
+                className={`group relative flex overflow-hidden rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] ${getBentoColSpan(
+                  index,
+                  displayCategories.length
+                )}`}
               >
-                {/* Prominent Full-Card Image */}
                 <img
-                  src={cat.image || 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=600&q=80'}
+                  src={resolveCategoryImage(cat)}
                   alt={cat.label}
-                  className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                  className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
                 />
-
-                {/* Dark Blur Overlay at the Bottom */}
-                <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end bg-gradient-to-t from-[#0d1629]/95 via-[#0d1629]/70 to-transparent p-3 sm:p-4 pt-6 sm:pt-10 backdrop-blur-[3px] transition-colors duration-300 group-hover:from-[#2F5FE3]/90 group-hover:via-[#12203D]/80">
-                  <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-white tracking-tight line-clamp-1 group-hover:translate-x-0.5 transition-transform">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220]/85 via-[#0B1220]/25 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                  <h3 className="line-clamp-1 text-sm font-bold tracking-tight text-white sm:text-base">
                     {cat.label}
                   </h3>
-                  <p className="mt-0.5 text-[10px] sm:text-[11px] font-medium text-blue-100/90 line-clamp-1">
-                    {cat.merchandisingLine || 'Shop quality items'}
+                  <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-white/80">
+                    {(cat.merchandisingLine || 'Curated home essentials').replace(/[—–]/g, '-')}
                   </p>
                 </div>
               </Link>
             ))}
 
-            {/* 6th Slot: "More Categories" Card leading to /catalog */}
+            {/* Dark Architectural Browse Full Catalog Tile */}
             <Link
               to="/catalog"
-              aria-label="Explore More Categories"
-              className="group relative flex h-40 sm:h-52 md:h-64 lg:h-72 w-full flex-col items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl bg-gradient-to-br from-[#12203D] via-[#1a2d54] to-[#2F5FE3] p-4 text-center text-white"
+              aria-label="Browse Full Catalog"
+              className={`group flex flex-col items-start justify-between rounded-[8px] border border-[#0B1220] bg-[#0B1220] p-5 text-white transition-colors hover:bg-[#1E293B] ${getBrowseTileSpan(
+                displayCategories.length
+              )}`}
             >
-              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md text-white mb-2 sm:mb-3 group-hover:scale-110 group-hover:bg-[#2F5FE3] transition-all duration-300 border border-white/20">
-                <HiOutlineSquares2X2 size={24} className="sm:text-2xl" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-white/15 bg-white/10 text-white">
+                <SquaresFour size={20} weight="regular" />
               </div>
-              <h3 className="text-xs sm:text-sm md:text-base font-extrabold text-white tracking-tight">
-                More Categories
-              </h3>
-              <span className="mt-1 flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-blue-200 group-hover:text-white transition-colors">
-                View Catalog <ChevronRight size={13} />
-              </span>
+
+              <div>
+                <h3 className="text-sm font-bold tracking-tight text-white sm:text-base">
+                  Browse Full Catalog
+                </h3>
+                <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-white/80 transition-colors group-hover:text-white">
+                  <span>View all items</span>
+                  <ArrowRight size={14} weight="regular" />
+                </span>
+              </div>
             </Link>
           </div>
         )}

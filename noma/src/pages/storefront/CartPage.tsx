@@ -1,396 +1,374 @@
-// CartPage.tsx - Scrubbed Clean & Dynamic
-import { useState, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import {
-  ChevronRight,
+  ArrowsCounterClockwise,
+  CaretRight,
+  Clock,
   Minus,
   Plus,
   ShieldCheck,
-  Trash2,
-  Truck,
-  Clock,
-  RotateCcw,
-  Lock,
-  Tag,
-  ArrowLeft,
   ShoppingBag,
-} from 'lucide-react'
+  Tag,
+  Trash,
+  Truck,
+} from '@phosphor-icons/react'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useCartStore } from '../../store/cartStore'
+import { OrderSummary } from '../../components/commerce/OrderSummary'
+import { ProductCard } from '../../components/commerce/ProductCard'
+import { EmptyState } from '../../design-system/components/EmptyState'
+import { toCartLineEntries, useCartStore } from '../../store/cartStore'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
 
+const PREVIEW_STATES = [
+  { label: 'Lagos', standardFee: 3500, eta: '1-2 business days' },
+  { label: 'Ogun', standardFee: 4500, eta: '2-3 business days' },
+  { label: 'Oyo', standardFee: 4500, eta: '2-3 business days' },
+  { label: 'FCT - Abuja', standardFee: 6000, eta: '2-4 business days' },
+  { label: 'Rivers', standardFee: 6000, eta: '2-4 business days' },
+  { label: 'Other Nigerian States', standardFee: 7500, eta: '3-5 business days' },
+]
+
 export function CartPage() {
   const navigate = useNavigate()
-  const { items, addItem, removeItem } = useCartStore()
+  const { items, setItemQuantity, removeLine } = useCartStore()
   const { products } = useProductStore()
-  
-  const [deliveryLocation, setDeliveryLocation] = useState('Nigeria')
+
+  const [previewState, setPreviewState] = useState('Lagos')
   const [changingLocation, setChangingLocation] = useState(false)
   const [promoCode, setPromoCode] = useState('')
   const [showPromoInput, setShowPromoInput] = useState(false)
 
-  // Map real store cart items dynamically (Scrubbed zero-dummy fallback)
+  const cartEntries = useMemo(() => toCartLineEntries(items), [items])
+
   const activeCartList = useMemo(() => {
-    return products
-      .filter((p) => items[p.id] && items[p.id] > 0)
-      .map((p) => ({
-        ...p,
-        subSpecs: `${p.category} | Receipt-Ready Support`,
-        qty: items[p.id],
-      }))
-  }, [products, items])
+    return cartEntries
+      .map((entry) => {
+        const product = products.find((p) => p.id === entry.productId)
+        if (!product) return null
+        return {
+          ...entry,
+          product,
+        }
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+  }, [cartEntries, products])
 
-  // Dynamic recommendations for items NOT in cart
   const recommendedProducts = useMemo(() => {
-    return products.filter((p) => !items[p.id]).slice(0, 5)
-  }, [products, items])
+    const inCartIds = new Set(activeCartList.map((entry) => entry.productId))
+    return products.filter((p) => !inCartIds.has(p.id)).slice(0, 4)
+  }, [products, activeCartList])
 
-  const itemCount = activeCartList.reduce((sum, item) => sum + item.qty, 0)
-  const subtotal = activeCartList.reduce((sum, item) => sum + item.finalPrice * item.qty, 0)
-  const deliveryFee = activeCartList.length > 0 ? 3500 : 0
-  const grandTotal = subtotal + deliveryFee
+  const itemCount = activeCartList.reduce((sum, entry) => sum + entry.quantity, 0)
+  const subtotal = activeCartList.reduce(
+    (sum, entry) => sum + entry.product.finalPrice * entry.quantity,
+    0
+  )
+  const hasBulkyItem = activeCartList.some((entry) => Boolean(entry.product.bulky))
 
-  const handleUpdateQuantity = (productId: string, delta: number) => {
-    if (delta > 0) {
-      addItem(productId)
-    } else {
-      removeItem(productId)
-    }
-  }
+  const selectedEstimate =
+    PREVIEW_STATES.find((s) => s.label === previewState) || PREVIEW_STATES[0]
+  const deliveryFee =
+    activeCartList.length > 0 ? selectedEstimate.standardFee + (hasBulkyItem ? 4000 : 0) : 0
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] font-['Outfit',sans-serif] text-[#12203D] selection:bg-[#2F5FE3] selection:text-white pb-24 pt-3 md:pt-5">
-      <div className="mx-auto w-full max-w-[1440px] px-4 md:px-8 lg:px-12">
-        {/* Breadcrumb Navigation */}
-        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-gray-500">
-          <Link to="/" className="hover:text-[#2F5FE3] transition-colors">
+    <div className="min-h-screen bg-[#F6F7F9] pb-24 pt-4 text-[#0B1220]">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
+        {/* Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-[#5E6675]">
+          <Link to="/" className="transition-colors hover:text-[#1049EB]">
             Home
           </Link>
-          <ChevronRight size={12} className="text-gray-400" />
-          <span className="font-bold text-[#12203D]">Cart</span>
+          <CaretRight size={12} weight="regular" />
+          <span className="font-semibold text-[#0B1220]">Cart</span>
         </nav>
 
-        {/* Page Title & Header Bar */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200/60 pb-5">
+        {/* Header */}
+        <div className="mb-8 flex flex-col justify-between gap-4 border-b border-[#E5E7EB] pb-5 md:flex-row md:items-end">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#12203D] sm:text-4xl">
-              Your Cart ({itemCount})
+            <h1 className="text-2xl font-bold tracking-tight text-[#0B1220] sm:text-3xl">
+              Your Cart (<span className="font-mono">{itemCount}</span>)
             </h1>
-            <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
-              Review your items and proceed to checkout
+            <p className="mt-1 text-xs text-[#5E6675] sm:text-sm">
+              Review selected items, sizes, and delivery estimate before checkout.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/70 px-4 py-2 text-xs font-bold text-[#2F5FE3]">
-            <ShieldCheck size={16} className="text-[#2F5FE3]" />
-            <span>Your data is safe and secure</span>
+          <div className="inline-flex items-center gap-2 rounded-[6px] border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs font-semibold text-[#0B1220]">
+            <ShieldCheck size={16} weight="fill" className="text-[#1049EB]" />
+            <span>Upfront pricing &amp; verified checkout</span>
           </div>
         </div>
 
-        {/* EMPTY CART STATE */}
         {activeCartList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white py-20 text-center px-4 mb-16 shadow-2xs">
-            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-[#2F5FE3]">
-              <ShoppingBag size={36} />
-            </div>
-            <h2 className="text-2xl font-extrabold text-[#12203D]">Your Shopping Cart is Empty</h2>
-            <p className="mt-2 mb-6 text-xs text-gray-500 max-w-md">
-              Looks like you haven't added any items to your cart yet. Explore our wholesale catalog to discover electronics, home appliances, and gadgets.
-            </p>
-            <Link
-              to="/catalog"
-              className="rounded-2xl bg-[#2F5FE3] px-8 py-3.5 text-xs font-bold text-white shadow-xs hover:bg-[#254ec4] transition-all"
-            >
-              Start Shopping
-            </Link>
+          <div className="mb-14">
+            <EmptyState
+              icon={<ShoppingBag size={24} weight="regular" />}
+              title="Your Shopping Cart is Empty"
+              detail="Explore the Noma catalog for verified electronics, kitchen hardware, and home appliances."
+              action={
+                <Link
+                  to="/catalog"
+                  className="inline-flex items-center justify-center rounded-[6px] bg-[#0B1220] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
+                >
+                  Start Shopping
+                </Link>
+              }
+            />
           </div>
         ) : (
-          /* Main 2-Column Grid Layout */
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start mb-16">
-            {/* Left Column: Cart Items List + Delivery Location Strip */}
-            <div className="lg:col-span-7 flex flex-col gap-6">
-              {/* White Container Card for Cart Items */}
-              <div className="rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 shadow-xs divide-y divide-gray-100">
-                {activeCartList.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-5 first:pt-0 last:pb-0"
-                  >
-                    {/* Left: Product Thumbnail & Meta */}
-                    <div className="flex items-center gap-4 flex-1">
-                      <Link
-                        to={`/product/${item.slug || item.id}`}
-                        className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-2"
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="h-full w-full object-contain"
-                        />
-                      </Link>
-
-                      <div className="flex flex-col gap-1">
+          <div className="mb-16 grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+            {/* Left 7 Cols: Line Items & Nigerian Delivery Preview */}
+            <div className="space-y-4 lg:col-span-7">
+              <div className="divide-y divide-[#E5E7EB] rounded-[8px] border border-[#E5E7EB] bg-white">
+                {activeCartList.map((entry) => {
+                  const { product, quantity, size, key } = entry
+                  return (
+                    <div
+                      key={key}
+                      className="flex flex-col justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5"
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-4">
                         <Link
-                          to={`/product/${item.slug || item.id}`}
-                          className="text-sm sm:text-base font-extrabold text-[#12203D] hover:text-[#2F5FE3] transition-colors leading-snug"
+                          to={`/product/${product.slug || product.id}`}
+                          className="h-20 w-20 shrink-0 overflow-hidden rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-2 sm:h-24 sm:w-24"
                         >
-                          {item.name}
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-full w-full object-contain"
+                          />
                         </Link>
-                        <span className="text-xs font-medium text-gray-400">
-                          {item.subSpecs}
-                        </span>
-                        <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 mt-0.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> In stock
-                        </span>
+
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <Link
+                            to={`/product/${product.slug || product.id}`}
+                            className="line-clamp-2 text-sm font-bold text-[#0B1220] transition-colors hover:text-[#1049EB] sm:text-base"
+                          >
+                            {product.name}
+                          </Link>
+
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="capitalize text-[#5E6675]">
+                              {product.brand || product.category.replace(/-/g, ' ')}
+                            </span>
+                            {size ? (
+                              <span className="rounded-[4px] border border-[#1049EB]/25 bg-[#EEF3FE] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#1049EB]">
+                                Size: {size}
+                              </span>
+                            ) : null}
+                            {product.bulky ? (
+                              <span className="rounded-[4px] border border-[#FDE68A] bg-[#FFFBEB] px-2 py-0.5 text-[10px] font-semibold text-[#B45309]">
+                                Heavy Freight
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#15803D]">
+                            <span className="h-1.5 w-1.5 rounded-[2px] bg-[#15803D]" />
+                            <span>In stock</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Controls & Line Price */}
+                      <div className="flex items-center justify-between gap-4 border-t border-[#E5E7EB] pt-3 sm:justify-end sm:border-t-0 sm:pt-0">
+                        <div className="hidden text-right md:block">
+                          <span className="font-mono text-xs text-[#5E6675]">
+                            {formatNaira(product.finalPrice)} each
+                          </span>
+                        </div>
+
+                        <div className="flex items-center rounded-[6px] border border-[#E5E7EB] bg-white">
+                          <button
+                            type="button"
+                            onClick={() => setItemQuantity(key, quantity - 1)}
+                            aria-label={`Decrease quantity for ${product.name}`}
+                            className="p-2 text-[#5E6675] hover:text-[#0B1220]"
+                          >
+                            <Minus size={13} weight="regular" />
+                          </button>
+                          <span className="w-8 text-center font-mono text-xs font-bold text-[#0B1220]">
+                            {quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setItemQuantity(key, quantity + 1)}
+                            aria-label={`Increase quantity for ${product.name}`}
+                            className="p-2 text-[#5E6675] hover:text-[#0B1220]"
+                          >
+                            <Plus size={13} weight="regular" />
+                          </button>
+                        </div>
+
+                        <strong className="min-w-[84px] text-right font-mono text-sm font-bold text-[#0B1220]">
+                          {formatNaira(product.finalPrice * quantity)}
+                        </strong>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeLine(key)
+                            toast.info(`Removed ${product.name} from cart`)
+                          }}
+                          aria-label={`Remove ${product.name}`}
+                          className="rounded-[6px] p-2 text-[#5E6675] transition-colors hover:bg-[#FEF2F2] hover:text-[#B91C1C]"
+                        >
+                          <Trash size={16} weight="regular" />
+                        </button>
                       </div>
                     </div>
+                  )
+                })}
+              </div>
 
-                    {/* Right: Price, Quantity Selector, Subtotal & Trash */}
-                    <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4 sm:gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                      {/* Unit Price (Desktop) */}
-                      <div className="hidden md:flex flex-col text-right">
-                        <span className="text-sm font-extrabold text-[#12203D]">
-                          {formatNaira(item.finalPrice)}
-                        </span>
-                      </div>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center rounded-xl border border-gray-200 bg-white shadow-2xs">
-                        <button
-                          onClick={() => handleUpdateQuantity(item.id, -1)}
-                          className="p-2 text-gray-500 hover:text-[#12203D] active:scale-95 transition-transform"
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="w-8 text-center text-xs font-extrabold text-[#12203D]">
-                          {item.qty}
-                        </span>
-                        <button
-                          onClick={() => handleUpdateQuantity(item.id, 1)}
-                          className="p-2 text-gray-500 hover:text-[#12203D] active:scale-95 transition-transform"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-
-                      {/* Total Price for line item */}
-                      <div className="flex flex-col text-right">
-                        <span className="text-sm sm:text-base font-extrabold text-[#12203D]">
-                          {formatNaira(item.finalPrice * item.qty)}
-                        </span>
-                      </div>
-
-                      {/* Delete Icon */}
-                      <button
-                        onClick={() => {
-                          for (let i = 0; i < item.qty; i++) removeItem(item.id)
-                          toast.info(`Removed ${item.name} from cart`)
-                        }}
-                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+              {/* Delivery Fee Preview Strip */}
+              <div className="rounded-[8px] border border-[#E5E7EB] bg-white p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 text-xs">
+                    <Truck size={18} weight="regular" className="text-[#1049EB]" />
+                    <div>
+                      <span className="font-semibold text-[#0B1220]">
+                        Estimated delivery to {previewState}:{' '}
+                      </span>
+                      <strong className="font-mono text-[#0B1220]">
+                        {formatNaira(deliveryFee)}
+                      </strong>
+                      <span className="ml-1.5 text-[#5E6675]">({selectedEstimate.eta})</span>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Delivery Location Strip */}
-              <div className="rounded-2xl border border-blue-100 bg-[#F0F4FF] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#12203D]">
-                  <Truck size={16} className="text-[#2F5FE3]" />
-                  <span>Deliver to {deliveryLocation}</span>
-                </div>
-                <button
-                  onClick={() => setChangingLocation(!changingLocation)}
-                  className="text-xs font-bold text-[#2F5FE3] hover:underline"
-                >
-                  Change location
-                </button>
-              </div>
-
-              {changingLocation && (
-                <div className="flex gap-2 p-3 rounded-2xl bg-white border border-gray-200">
-                  <input
-                    type="text"
-                    defaultValue={deliveryLocation}
-                    onChange={(e) => setDeliveryLocation(e.target.value)}
-                    placeholder="Enter city, state..."
-                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs outline-none focus:border-[#2F5FE3]"
-                  />
                   <button
-                    onClick={() => setChangingLocation(false)}
-                    className="rounded-xl bg-[#2F5FE3] px-4 py-2 text-xs font-bold text-white"
+                    type="button"
+                    onClick={() => setChangingLocation((prev) => !prev)}
+                    className="text-xs font-semibold text-[#1049EB] hover:underline"
                   >
-                    Save
+                    {changingLocation ? 'Done' : 'Change state'}
                   </button>
                 </div>
-              )}
+
+                {changingLocation ? (
+                  <div className="mt-3 flex items-center gap-2 border-t border-[#E5E7EB] pt-3">
+                    <label htmlFor="cart-preview-state" className="text-xs font-medium text-[#5E6675]">
+                      Destination:
+                    </label>
+                    <select
+                      id="cart-preview-state"
+                      value={previewState}
+                      onChange={(e) => {
+                        setPreviewState(e.target.value)
+                        setChangingLocation(false)
+                      }}
+                      className="flex-1 rounded-[6px] border border-[#D1D5DB] bg-white px-3 py-1.5 text-xs font-semibold text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
+                    >
+                      {PREVIEW_STATES.map((st) => (
+                        <option key={st.label} value={st.label}>
+                          {st.label} ({formatNaira(st.standardFee + (hasBulkyItem ? 4000 : 0))})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
-            {/* Right Column: Order Summary Card + Trust Values Card */}
-            <div className="lg:col-span-5 flex flex-col gap-5 sticky top-24">
-              {/* Order Summary Card */}
-              <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-xs space-y-4">
-                <h2 className="text-xl font-extrabold text-[#12203D]">Order Summary</h2>
+            {/* Right 5 Cols: Sticky OrderSummary & Reassurance */}
+            <div className="space-y-4 lg:sticky lg:top-24 lg:col-span-5">
+              <OrderSummary
+                subtotal={subtotal}
+                delivery={deliveryFee}
+                action="Proceed to Checkout"
+                onAction={() => navigate('/checkout')}
+                whatsappHref="/whatsapp-order"
+              />
 
-                <div className="space-y-3 text-xs">
-                  <div className="flex items-center justify-between text-gray-600 font-medium">
-                    <span>Subtotal ({itemCount} items)</span>
-                    <span className="font-extrabold text-[#12203D]">{formatNaira(subtotal)}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-gray-600 font-medium">
-                    <span>Delivery fee</span>
-                    <span className="font-extrabold text-[#12203D]">{formatNaira(deliveryFee)}</span>
-                  </div>
-
-                  {/* Promo Code Link / Input */}
-                  {!showPromoInput ? (
+              {/* Promo Code Option */}
+              <div className="rounded-[8px] border border-[#E5E7EB] bg-white p-4">
+                {!showPromoInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowPromoInput(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB] hover:underline"
+                  >
+                    <Tag size={14} weight="regular" />
+                    <span>Have a promo code?</span>
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Enter promo code"
+                      className="flex-1 rounded-[6px] border border-[#D1D5DB] bg-white px-3 py-1.5 font-mono text-xs uppercase text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
+                    />
                     <button
-                      onClick={() => setShowPromoInput(true)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-[#2F5FE3] hover:underline pt-1"
+                      type="button"
+                      onClick={() => {
+                        if (!promoCode.trim()) {
+                          toast.error('Enter a promo code first')
+                          return
+                        }
+                        toast.info('No active discount applies to this code.')
+                        setShowPromoInput(false)
+                      }}
+                      className="rounded-[6px] bg-[#0B1220] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#1E293B]"
                     >
-                      <Tag size={14} />
-                      <span>Have a promo code?</span>
+                      Apply
                     </button>
-                  ) : (
-                    <div className="flex gap-2 pt-1">
-                      <input
-                        type="text"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="Enter promo code"
-                        className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs outline-none uppercase"
-                      />
-                      <button
-                        onClick={() => {
-                          toast.success('Promo code applied!')
-                          setShowPromoInput(false)
-                        }}
-                        className="rounded-xl bg-[#12203D] px-3 py-1.5 text-xs font-bold text-white"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t border-gray-100 pt-4 space-y-1">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-base font-extrabold text-[#12203D]">Total</span>
-                    <span className="text-2xl sm:text-3xl font-extrabold text-[#12203D]">
-                      {formatNaira(grandTotal)}
-                    </span>
                   </div>
-                  <p className="text-[11px] font-medium text-gray-400">All prices are inclusive of taxes</p>
-                </div>
-
-                {/* Primary Action Buttons */}
-                <div className="space-y-3 pt-2">
-                  <button
-                    onClick={() => navigate('/checkout')}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2F5FE3] py-4 text-sm font-extrabold text-white shadow-xs hover:bg-[#254ec4] active:scale-[0.99] transition-all"
-                  >
-                    <Lock size={16} />
-                    <span>Proceed to Checkout</span>
-                  </button>
-
-                  <button
-                    onClick={() => navigate('/catalog')}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#2F5FE3] bg-white py-3.5 text-sm font-extrabold text-[#2F5FE3] shadow-2xs hover:bg-blue-50/50 active:scale-[0.99] transition-all"
-                  >
-                    <ArrowLeft size={16} />
-                    <span>Continue Shopping</span>
-                  </button>
-                </div>
+                )}
               </div>
 
-              {/* Trust Values Container Card */}
-              <div className="rounded-2xl border border-blue-100/60 bg-[#F6F8FD] p-5 space-y-3 text-xs font-medium text-gray-700">
-                <div className="flex items-center gap-3">
-                  <Truck size={16} className="text-[#2F5FE3] shrink-0" />
+              {/* Trust Reassurance */}
+              <div className="space-y-2.5 rounded-[8px] border border-[#E5E7EB] bg-white p-4 text-xs font-medium text-[#374151]">
+                <div className="flex items-center gap-2.5">
+                  <Truck size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
                   <span>Delivery fee confirmed before you pay</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Clock size={16} className="text-[#2F5FE3] shrink-0" />
-                  <span>2 – 5 business days delivery</span>
+                <div className="flex items-center gap-2.5">
+                  <Clock size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
+                  <span>2-5 business days tracked nationwide dispatch</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <RotateCcw size={16} className="text-[#2F5FE3] shrink-0" />
-                  <span>Easy 30-day returns</span>
+                <div className="flex items-center gap-2.5">
+                  <ArrowsCounterClockwise
+                    size={15}
+                    weight="regular"
+                    className="shrink-0 text-[#1049EB]"
+                  />
+                  <span>30-day return eligibility on verified condition</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <ShieldCheck size={16} className="text-[#2F5FE3] shrink-0" />
-                  <span>Pay safely with Noma</span>
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck size={15} weight="fill" className="shrink-0 text-[#1049EB]" />
+                  <span>Card, transfer, USSD &amp; Pay on Delivery supported</span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Dynamic Bottom Recommendations Section */}
-        {recommendedProducts.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-6 border-t border-gray-200/60 pt-8">
-              <h2 className="text-xl md:text-2xl font-extrabold text-[#12203D]">You might also like</h2>
-              <Link to="/catalog" className="text-xs font-bold text-[#2F5FE3] hover:underline">
-                View All Catalog →
+        {/* Recommendations */}
+        {recommendedProducts.length > 0 ? (
+          <div className="border-t border-[#E5E7EB] pt-10">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold tracking-tight text-[#0B1220] md:text-2xl">
+                You might also like
+              </h2>
+              <Link
+                to="/catalog"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#1049EB] hover:underline"
+              >
+                <span>View all</span>
+                <CaretRight size={14} weight="regular" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
               {recommendedProducts.map((rec) => (
-                <div
-                  key={rec.id}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-3.5 shadow-2xs hover:border-gray-200 hover:shadow-md transition-all"
-                >
-                  {/* Product Image */}
-                  <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50 p-2">
-                    <img
-                      src={rec.image}
-                      alt={rec.name}
-                      className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-
-                  {/* Details */}
-                  <div className="mt-3 flex flex-col gap-1">
-                    <h3 className="text-xs font-bold text-[#12203D] line-clamp-2">
-                      {rec.name}
-                    </h3>
-
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 mt-1">
-                      <span className="text-amber-400">★</span>
-                      <span className="font-bold text-[#12203D]">{rec.rating || 4.8}</span>
-                      <span>({rec.reviewsCount || 12})</span>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-sm font-extrabold text-[#12203D]">
-                        {formatNaira(rec.finalPrice)}
-                      </span>
-                      <button
-                        onClick={() => {
-                          addItem(rec.id)
-                          toast.success(`Added ${rec.name} to cart`)
-                        }}
-                        className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50/60 px-2.5 py-1 text-xs font-bold text-[#2F5FE3] hover:bg-[#2F5FE3] hover:text-white transition-colors"
-                      >
-                        <Plus size={12} strokeWidth={2.5} />
-                        <span>Add</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={rec.id} product={rec} />
               ))}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

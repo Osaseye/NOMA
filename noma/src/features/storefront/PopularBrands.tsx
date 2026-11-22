@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const brands = [
   { id: 'samsung', name: 'Samsung', initial: 'S' },
   { id: 'hisense', name: 'Hisense', initial: 'H' },
@@ -6,36 +8,33 @@ const brands = [
   { id: 'xiaomi', name: 'Xiaomi', initial: 'Mi' },
   { id: 'oraimo', name: 'Oraimo', initial: 'O' },
   { id: 'lg', name: 'LG', initial: 'LG' },
-  { id: 'haier', name: 'Haier', initial: 'H' },
+  { id: 'haier', name: 'Haier', initial: 'HT' },
   { id: 'panasonic', name: 'Panasonic', initial: 'P' },
   { id: 'philips', name: 'Philips', initial: 'Ph' },
 ]
 
 export function PopularBrands() {
   return (
-    <section className="bg-white py-10 md:py-14">
-      <div className="w-full px-4 md:px-8 lg:px-12">
-        {/* Header */}
-        <h2 className="mb-8 text-2xl font-bold tracking-tight text-[#12203D] md:text-[28px]">
+    <section className="border-b border-[#E5E7EB] bg-white py-14">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
+        <h2 className="mb-6 text-2xl font-bold tracking-tight text-[#0B1220] md:text-[1.75rem]">
           Shop by Brand
         </h2>
 
-        {/* Scrollable brand pills */}
-        <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-4 md:flex-wrap">
+        <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap">
           {brands.map((brand) => (
-            <a
+            <Link
               key={brand.id}
-              href={`/catalog?brand=${brand.id}`}
-              className="group flex shrink-0 items-center gap-3 rounded-2xl border border-black/5 bg-[#F7F8FA] px-5 py-3.5 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2F5FE3]/20 hover:bg-white hover:shadow-[0_4px_16px_-6px_rgba(47,95,227,0.12)]"
+              to={`/search?q=${encodeURIComponent(brand.name)}`}
+              className="group flex shrink-0 items-center gap-3 rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] px-4 py-3 transition-colors hover:border-[#1049EB]/40 hover:bg-white"
             >
-              {/* Brand logo placeholder — replace with <img> when logos are available */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[13px] font-extrabold text-[#2F5FE3]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white font-mono text-xs font-bold text-[#1049EB]">
                 {brand.initial}
               </div>
-              <span className="text-[14px] font-bold text-[#12203D] group-hover:text-[#2F5FE3]">
+              <span className="text-sm font-semibold text-[#0B1220] transition-colors group-hover:text-[#1049EB]">
                 {brand.name}
               </span>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

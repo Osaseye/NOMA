@@ -1,60 +1,100 @@
-import { HiArrowRight, HiCheckCircle, HiCube } from 'react-icons/hi2'
-import { Link } from 'react-router-dom'
+import { ArrowRight, CheckCircle, Package } from '@phosphor-icons/react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { brand } from '../../constants/brand'
+import type { Order } from '../../types/commerce'
+import { formatNaira } from '../../utils/pricing'
+
+interface OrderSuccessLocationState {
+  order?: Order
+}
 
 export function OrderSuccessPage() {
-  const orderId = `NMA-${Math.floor(Math.random() * 9000) + 1000}`
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const state = (location.state as OrderSuccessLocationState | null) || null
+  const savedOrder = state?.order
+  const queryId = searchParams.get('id')?.trim() || ''
+  const orderId = savedOrder?.id || queryId
+
+  const itemCount = savedOrder?.items
+    ? savedOrder.items.reduce((sum, item) => sum + item.quantity, 0)
+    : 0
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
-      <div className="w-full max-w-lg px-4 py-12 md:px-8">
-        <div className="flex flex-col items-center rounded-3xl bg-white p-8 text-center shadow-[0_8px_32px_-12px_rgba(0,0,0,0.1)] md:p-12">
-          
-          {/* Success Icon */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 animate-ping rounded-full bg-[#10B981]/20" />
-            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#E8F5EB]">
-              <HiCheckCircle size={48} className="text-[#10B981]" />
-            </div>
+    <div className="flex min-h-[75vh] items-center justify-center bg-[#F6F7F9] px-4 py-12">
+      <div className="w-full max-w-lg">
+        <div className="flex flex-col items-center rounded-[10px] border border-[#E5E7EB] bg-white p-7 text-center sm:p-10">
+          {/* Calm Semantic Confirmation Badge (zero animate-ping) */}
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[10px] border border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]">
+            <CheckCircle size={34} weight="fill" />
           </div>
 
-          <h1 className="mb-2 text-[28px] font-extrabold tracking-tight text-[#12203D]">
-            Order Confirmed!
+          <h1 className="text-2xl font-bold tracking-tight text-[#0B1220] sm:text-3xl">
+            Order Confirmed
           </h1>
-          <p className="mb-8 text-[15px] font-medium text-[#12203D]/60">
-            Thank you for shopping with {brand.name}. Your order has been successfully placed.
+          <p className="mt-2 max-w-[44ch] text-sm leading-[1.6] text-[#5E6675]">
+            Thank you for shopping with {brand.name}. Your order has been recorded and queued for processing.
           </p>
 
-          <div className="mb-10 w-full rounded-2xl bg-[#F7F8FA] p-5 border border-black/5 text-left">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
-                <HiCube size={20} className="text-[#2F5FE3]" />
+          {/* Receipt Card */}
+          <div className="my-7 w-full space-y-3 rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-5 text-left">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#1049EB]">
+                <Package size={20} weight="regular" />
               </div>
               <div>
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-[#12203D]/50">Order Number</span>
-                <span className="text-[17px] font-extrabold text-[#12203D]">{orderId}</span>
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#5E6675]">
+                  Order Reference
+                </span>
+                <span className="font-mono text-base font-bold text-[#0B1220]">
+                  {orderId || 'Pending Assignment'}
+                </span>
               </div>
             </div>
-            <p className="text-[13px] font-medium leading-relaxed text-[#12203D]/60">
-              We'll send you an email confirmation shortly. Our team is getting your items ready for delivery.
-            </p>
+
+            {savedOrder ? (
+              <div className="grid grid-cols-2 gap-3 border-t border-[#E5E7EB] pt-3 text-xs">
+                <div>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
+                    Order Total
+                  </span>
+                  <strong className="font-mono text-sm font-bold text-[#0B1220]">
+                    {formatNaira(savedOrder.total)}
+                  </strong>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
+                    {itemCount > 0 ? 'Items / Destination' : 'Destination'}
+                  </span>
+                  <strong className="block truncate font-semibold text-[#0B1220]">
+                    {itemCount > 0 ? `${itemCount} items - ` : ''}
+                    {savedOrder.deliveryArea || 'Nigeria'}
+                  </strong>
+                </div>
+              </div>
+            ) : (
+              <p className="border-t border-[#E5E7EB] pt-3 text-xs leading-relaxed text-[#5E6675]">
+                Keep your order reference handy to monitor dispatch updates from your tracking page.
+              </p>
+            )}
           </div>
 
-          <div className="flex w-full flex-col gap-3">
+          {/* Actions */}
+          <div className="flex w-full flex-col gap-2.5">
             <Link
-              to="/track-order"
-              className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#2F5FE3] text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(47,95,227,0.3)] transition-all hover:bg-[#2348C0] active:scale-[0.98]"
+              to={orderId ? `/track-order?id=${encodeURIComponent(orderId)}` : '/track-order'}
+              className="flex h-11 items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] text-sm font-semibold text-white transition-colors hover:bg-[#1049EB]"
             >
-              Track Your Order
+              <span>Track Your Order</span>
             </Link>
             <Link
               to="/catalog"
-              className="flex h-14 items-center justify-center gap-2 rounded-2xl border-2 border-black/5 bg-transparent text-[15px] font-bold text-[#12203D] transition-all hover:bg-[#F7F8FA] active:scale-[0.98]"
+              className="flex h-11 items-center justify-center gap-2 rounded-[6px] border border-[#E5E7EB] bg-white text-sm font-semibold text-[#0B1220] transition-colors hover:bg-[#F6F7F9]"
             >
-              Continue Shopping <HiArrowRight size={16} />
+              <span>Continue Shopping</span>
+              <ArrowRight size={15} weight="regular" />
             </Link>
           </div>
-
         </div>
       </div>
     </div>

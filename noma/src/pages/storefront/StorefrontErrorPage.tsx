@@ -1,52 +1,47 @@
+import { MapPinLine, WarningCircle } from '@phosphor-icons/react'
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom'
 import { StoreFooter } from '../../components/layout/StoreFooter'
 import { StoreHeader } from '../../components/layout/StoreHeader'
-import { AlertTriangle, MapPinOff } from 'lucide-react'
 
 export function StorefrontErrorPage() {
   const error = useRouteError()
-  
-  let title = "Oops! Something went wrong"
-  let message = "We're sorry, but an unexpected error occurred while loading this page. Our team has been notified."
-  let Icon = AlertTriangle
 
-  if (isRouteErrorResponse(error)) {
-    if (error.status === 404) {
-      title = "Page Not Found"
-      message = "The page you are looking for doesn't exist, has been removed, or is temporarily unavailable."
-      Icon = MapPinOff
-    }
-  }
+  const is404 = isRouteErrorResponse(error) && error.status === 404
+  const statusTag = isRouteErrorResponse(error) ? String(error.status) : 'ERROR'
+  const title = is404 ? 'Page Not Found' : 'Something went wrong'
+  const message = is404
+    ? "The page you requested doesn't exist, was moved, or is temporarily unavailable."
+    : 'An unexpected error occurred while loading this page. Try returning to the homepage or catalog.'
+
+  const Icon = is404 ? MapPinLine : WarningCircle
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F7F8FA] font-sans text-[#12203D]">
+    <div className="flex min-h-[100dvh] flex-col bg-white text-[#0B1220]">
       <StoreHeader />
-      
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-32 text-center md:px-8">
-        <div className="mb-8 flex h-28 w-28 items-center justify-center rounded-[2rem] bg-white shadow-[0_8px_32px_-12px_rgba(0,0,0,0.1)]">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#EEF2FF]">
-            <Icon size={40} className="text-[#2F5FE3]" strokeWidth={2} />
-          </div>
+
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-24 text-center md:px-8">
+        <span className="mb-4 rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] px-2.5 py-1 font-mono text-xs font-bold tracking-wider text-[#1049EB]">
+          {statusTag}
+        </span>
+
+        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-[10px] border border-[#E5E7EB] bg-[#F6F7F9] text-[#0B1220]">
+          <Icon size={28} weight="regular" />
         </div>
-        
-        <h1 className="mb-4 text-3xl font-extrabold tracking-tight text-[#12203D] md:text-5xl">
-          {title}
-        </h1>
-        
-        <p className="mb-10 max-w-md text-[15px] font-medium leading-relaxed text-[#12203D]/60 md:text-base">
-          {message}
-        </p>
-        
+
+        <h1 className="text-3xl font-bold tracking-tight text-[#0B1220] md:text-4xl">{title}</h1>
+
+        <p className="mt-3 mb-8 max-w-[46ch] text-sm leading-[1.6] text-[#5E6675]">{message}</p>
+
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             to="/"
-            className="flex h-14 items-center justify-center rounded-2xl bg-[#2F5FE3] px-8 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(47,95,227,0.3)] transition-all hover:-translate-y-0.5 hover:bg-[#2348C0] active:scale-[0.98]"
+            className="inline-flex h-11 items-center justify-center rounded-[6px] bg-[#0B1220] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#1049EB]"
           >
             Return to Homepage
           </Link>
           <Link
             to="/catalog"
-            className="flex h-14 items-center justify-center rounded-2xl border-2 border-black/5 bg-transparent px-8 text-[15px] font-bold text-[#12203D] transition-all hover:bg-white active:scale-[0.98]"
+            className="inline-flex h-11 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white px-6 text-sm font-semibold text-[#0B1220] transition-colors hover:bg-[#F6F7F9]"
           >
             Browse Catalog
           </Link>
