@@ -5,8 +5,10 @@ import { Toaster } from 'sonner'
 import { HelmetProvider } from 'react-helmet-async'
 import { PageLoader } from '../components/ui/PageLoader'
 import { router } from '../routes/router'
+import { authService } from '../services/firebase/authService'
 import { useProductStore } from '../store/productStore'
 import { useAdminStore } from '../store/adminStore'
+import { useUserStore } from '../store/userStore'
 
 const queryClient = new QueryClient()
 
@@ -14,10 +16,19 @@ export default function App() {
   useEffect(() => {
     const unsubProducts = useProductStore.getState().initFirebaseListeners()
     const unsubSettings = useAdminStore.getState().initSettingsListener()
+    const unsubAuth = authService.subscribeAuthState((authUser, userDoc) => {
+      useUserStore.getState().syncFromFirebaseUser(authUser, userDoc)
+      if (!authUser) {
+        useProductStore.getState().subscribeOrdersForUser(null)
+      } else if (!userDoc || userDoc.role !== 'admin') {
+        useProductStore.getState().subscribeOrdersForUser(authUser.uid)
+      }
+    })
 
     return () => {
       unsubProducts()
       unsubSettings()
+      unsubAuth()
     }
   }, [])
 
@@ -32,15 +43,18 @@ export default function App() {
           expand={false}
           toastOptions={{
             style: {
-              fontFamily: 'Outfit, Inter, sans-serif',
-              fontWeight: '700',
-              borderRadius: '16px',
-              border: '2px solid #12203D',
-              boxShadow: '4px 4px 0px 0px #12203D',
+              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+              fontSize: '13px',
+              fontWeight: '600',
+              color: '#0B1220',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '8px',
+              border: '1px solid #E5E7EB',
+              boxShadow: '0 8px 24px rgba(11, 18, 32, 0.08)',
             },
             classNames: {
-              title: 'text-[14px] font-black tracking-tight',
-              description: 'text-[12px] font-medium',
+              title: 'text-[13px] font-semibold tracking-tight text-[#0B1220]',
+              description: 'text-[12px] font-normal text-[#5E6675]',
             },
           }}
         />
