@@ -1,91 +1,104 @@
-import { HiArrowRight, HiTruck } from 'react-icons/hi2'
+import { ArrowRight, Truck } from '@phosphor-icons/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { useAdminStore } from '../../store/adminStore'
 
 export function HomeHero() {
   const { settings } = useAdminStore()
-  const activeBanners = settings.heroBanners.filter((b) => b.active)
+  const shouldReduceMotion = useReducedMotion()
+  const activeBanners = (settings.heroBanners || []).filter((b) => b.active)
   const currentBanner = activeBanners[0]
 
-  return (
-    <section className="relative w-full overflow-hidden bg-[#F7F8FA] min-h-[480px] sm:min-h-[520px] md:min-h-[580px] lg:min-h-[640px] flex items-center font-['Outfit',sans-serif]">
-      {/* Background image: Admin uploaded image if present, else fallback asset */}
-      {currentBanner?.imageUrl ? (
-        <div className="absolute inset-0 z-0 bg-[#12203D]">
-          <img
-            src={currentBanner.imageUrl}
-            alt={currentBanner.title}
-            className="w-full h-full object-cover opacity-85 object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#12203D]/90 via-[#12203D]/60 to-transparent" />
-        </div>
-      ) : (
-        <>
-          <img
-            src="/products/hero-background-mobile.png"
-            alt="Noma Home Products Mobile"
-            className="block md:hidden absolute inset-0 w-full h-full object-cover object-right-top opacity-90"
-          />
-          <img
-            src="/products/hero-background-desktop.png"
-            alt="Noma Home Products Desktop"
-            className="hidden md:block absolute inset-0 w-full h-full object-cover object-right"
-          />
-        </>
-      )}
+  const bannerImage =
+    currentBanner?.imageUrl && !currentBanner.imageUrl.includes('unsplash.com')
+      ? currentBanner.imageUrl
+      : ''
 
-      {/* Main hero content overlay */}
-      <div className="relative z-10 w-full py-8 md:py-14 lg:py-16 pb-16 md:pb-24">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
-          {/* Left Hero Column */}
-          <div className="flex flex-col items-start max-w-xl text-[#12203D]">
-            {/* Delivery / Badge Tag */}
-            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#12203D]/10 bg-white/95 px-3.5 py-1.5 text-[9px] font-extrabold uppercase tracking-wide text-[#12203D] backdrop-blur-md sm:text-[10px] md:px-4 md:py-2 md:text-[11px] shadow-xs">
-              <HiTruck size={15} className="shrink-0 text-[#F5A623]" />
-              <span className="truncate">{currentBanner?.badge || 'DELIVERY COST CONFIRMED BEFORE YOU PAY'}</span>
-              <svg width="14" height="10" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-0.5 shrink-0 rounded-[2px]">
-                <rect width="16" height="12" fill="#FFFFFF" />
-                <rect width="5.33333" height="12" fill="#008751" />
-                <rect x="10.6667" width="5.33333" height="12" fill="#008751" />
-              </svg>
+  return (
+    <section className="flex min-h-[calc(100dvh-64px)] items-center bg-white pt-8 pb-10 md:pt-12 lg:max-h-[700px]">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.22fr_1fr] lg:gap-12">
+          {/* Left Column: Editorial Stack (Max 4 Elements) */}
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="flex flex-col items-start"
+          >
+            {/* Eyebrow 1 */}
+            <div className="inline-flex max-w-full items-center gap-2 rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#0B1220]">
+              <Truck size={14} weight="regular" className="shrink-0 text-[#1049EB]" />
+              <span className="truncate">
+                {currentBanner?.badge?.replace(/[—–]/g, '-') || 'NIGERIA HOME & TECH MARKETPLACE'}
+              </span>
             </div>
 
-            {/* Headline Title with "home" styled in Royal Blue (#2F5FE3) */}
-            <h1 className="mt-4 font-sans text-[2.1rem] font-black leading-[1.1] tracking-tight sm:text-[2.7rem] md:text-[3.3rem] lg:text-[3.9rem] text-[#12203D]">
+            {/* Headline */}
+            <h1 className="mt-4 max-w-xl font-sans text-4xl font-extrabold leading-[1.08] tracking-tight text-[#0B1220] md:text-5xl lg:text-[3.5rem]">
               {currentBanner?.title ? (
-                currentBanner.title
+                currentBanner.title.replace(/[—–]/g, '-')
               ) : (
                 <>
-                  Everything your<br />
-                  <span className="text-[#2F5FE3]">home</span> needs,<br />
-                  without the<br />
-                  market stress.
+                  Everything your <span className="text-[#1049EB]">home</span> needs, priced clearly.
                 </>
               )}
             </h1>
 
-            {/* Subtitle */}
-            <p className="mt-3.5 max-w-[420px] text-[14px] font-medium leading-relaxed text-[#526484] sm:text-[16px] md:mt-5 md:text-[17px]">
-              {currentBanner?.subtitle || 'Shop electronics, kitchenware, appliances and more with clear prices and no surprises.'}
+            {/* Subtext (<= 20 words) */}
+            <p className="mt-4 max-w-[46ch] text-sm leading-[1.6] text-[#374151] md:text-[15px]">
+              {currentBanner?.subtitle
+                ? currentBanner.subtitle.replace(/[—–]/g, '-')
+                : 'Shop electronics, kitchenware, appliances, and solar gear with upfront delivery fees and zero surprises.'}
             </p>
 
-            {/* Action Buttons */}
-            <div className="mt-6 flex flex-wrap items-center gap-3 sm:gap-4 md:mt-8">
+            {/* Primary & Secondary CTAs */}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 to={currentBanner?.targetUrl || '/catalog'}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#2F5FE3] px-6 text-[14px] font-extrabold text-white shadow-lg shadow-[#2F5FE3]/30 transition-all hover:bg-[#254EC4] active:scale-95 sm:h-12 sm:px-8 sm:text-[15px]"
+                className="inline-flex items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1E293B] active:scale-[0.98]"
               >
-                Shop Now
-                <HiArrowRight size={18} />
+                <span>Shop Catalog</span>
+                <ArrowRight size={16} weight="regular" />
               </Link>
               <Link
                 to="/catalog"
-                className="inline-flex h-11 items-center justify-center rounded-full border border-[#12203D]/20 bg-white/80 px-6 text-[14px] font-bold text-[#12203D] shadow-xs backdrop-blur-md transition-all hover:bg-white active:scale-95 sm:h-12 sm:px-8 sm:text-[15px]"
+                className="inline-flex items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white px-5 py-3 text-sm font-semibold text-[#0B1220] transition-colors hover:border-[#D1D5DB] hover:bg-[#F6F7F9] active:scale-[0.98]"
               >
                 Browse Categories
               </Link>
             </div>
-          </div>
+          </motion.div>
+
+          {/* Right Column: Architectural Studio Image Frame */}
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.06, ease: 'easeOut' }}
+            className="w-full"
+          >
+            <div className="overflow-hidden rounded-[10px] border border-[#E5E7EB] bg-[#F6F7F9]">
+              {bannerImage ? (
+                <img
+                  src={bannerImage}
+                  alt={currentBanner?.title || 'Noma curated home products'}
+                  className="aspect-[4/5] w-full object-cover md:aspect-[16/10]"
+                />
+              ) : (
+                <>
+                  <img
+                    src="/images/hero-living-mobile.png"
+                    alt="Noma curated home appliances and espresso bar"
+                    className="block aspect-[4/5] w-full object-cover md:hidden"
+                  />
+                  <img
+                    src="/images/hero-living-desktop.png"
+                    alt="Noma minimalist living space with smart home electronics"
+                    className="hidden aspect-[16/10] w-full object-cover md:block"
+                  />
+                </>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>

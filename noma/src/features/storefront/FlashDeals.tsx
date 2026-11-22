@@ -1,27 +1,34 @@
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkle } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { formatNaira } from '../../utils/pricing'
+import { ProductCard } from '../../components/commerce/ProductCard'
+import { EmptyState } from '../../design-system/components/EmptyState'
 import { useAdminStore } from '../../store/adminStore'
 import { useProductStore } from '../../store/productStore'
 
-function useCountdown(endTimestamp?: number) {
-  const getTimeLeft = () => {
-    const target = endTimestamp || Date.now() + 86400000 * 2
-    const diff = Math.max(0, target - Date.now())
-    const d = Math.floor(diff / (1000 * 60 * 60 * 24))
-    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)) + d * 24
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const s = Math.floor((diff % (1000 * 60)) / 1000)
-    return { h, m, s, expired: diff <= 0 }
+function getTimeLeft(endTimestamp?: number) {
+  const now = Date.now()
+  let target = typeof endTimestamp === 'number' && endTimestamp > now ? endTimestamp : 0
+  if (!target) {
+    const endOfDay = new Date()
+    endOfDay.setHours(23, 59, 59, 999)
+    target = endOfDay.getTime()
   }
+  const diff = Math.max(0, target - now)
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  return { h, m, s, expired: diff <= 0 }
+}
 
-  const [time, setTime] = useState(getTimeLeft())
+function useCountdown(endTimestamp?: number) {
+  const [time, setTime] = useState(() => getTimeLeft(endTimestamp))
 
   useEffect(() => {
-    setTime(getTimeLeft())
-    const id = setInterval(() => setTime(getTimeLeft()), 1000)
-    return () => clearInterval(id)
+    const id = window.setInterval(() => {
+      setTime(getTimeLeft(endTimestamp))
+    }, 1000)
+    return () => window.clearInterval(id)
   }, [endTimestamp])
 
   return time
@@ -30,10 +37,12 @@ function useCountdown(endTimestamp?: number) {
 function Digit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-[#12203D] bg-white text-2xl font-black text-[#12203D] shadow-[4px_4px_0_0_#12203D] md:h-16 md:w-16 md:text-3xl">
+      <div className="flex h-11 w-11 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white font-mono text-lg font-bold text-[#0B1220] md:h-12 md:w-12 md:text-xl">
         {String(value).padStart(2, '0')}
       </div>
-      <span className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#12203D]/60">{label}</span>
+      <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
+        {label}
+      </span>
     </div>
   )
 }
@@ -43,106 +52,63 @@ export function FlashDeals() {
   const { products } = useProductStore()
   const { h, m, s, expired } = useCountdown(settings.todaysDealsEndTimestamp)
 
-  // Get Admin-selected Today's Deals products or fallback to products with discounts
   const dealProducts = (settings.todaysDealsProductIds || [])
     .map((id) => products.find((p) => p.id === id))
-    .filter(Boolean) as typeof products
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
 
   const displayDeals =
     dealProducts.length > 0
       ? dealProducts
-      : products.filter((p) => p.basePrice > p.finalPrice || p.discountBadge).slice(0, 3)
+      : products
+          .filter(
+            (p) =>
+              (p.compareAtPrice && p.compareAtPrice > p.finalPrice) || Boolean(p.discountBadge)
+          )
+          .slice(0, 4)
 
   return (
-    <section className="bg-[#F9F9F6] py-16 md:py-24 border-y border-[#12203D]/10">
-      <div className="mx-auto w-full max-w-[1600px] px-4 md:px-8 lg:px-12">
-        {/* Header Block with Admin Controlled Timer */}
-        <div className="mb-12 flex flex-col justify-between gap-8 border-b border-[#12203D]/10 pb-8 md:flex-row md:items-end">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F44336] shadow-[4px_4px_0_0_#12203D] border-2 border-[#12203D]">
-                <Sparkles size={24} className="text-white" />
-              </div>
-              <h2 className="font-['Outfit'] text-[2.5rem] font-black leading-none tracking-tight text-[#12203D] md:text-[4rem]">
-                FLASH DEALS
-              </h2>
+    <section className="border-y border-[#E5E7EB] bg-[#F6F7F9] py-16">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
+        <div className="mb-8 flex flex-col justify-between gap-6 border-b border-[#E5E7EB] pb-6 md:flex-row md:items-end">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1049EB]">
+              <Sparkle size={14} weight="fill" className="text-[#FEB719]" />
+              <span>{expired ? 'Refreshing soon' : 'Limited-time offers'}</span>
             </div>
-            <p className="text-[14px] font-bold uppercase tracking-widest text-[#12203D]/50">
-              {expired ? 'Offers Expired • Check Back Soon' : 'Limited time offers • Controlled Live by Admin'}
-            </p>
+            <h2 className="text-2xl font-bold tracking-tight text-[#0B1220] md:text-[1.75rem]">
+              Flash Deals
+            </h2>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2">
             <Digit value={h} label="hrs" />
-            <span className="mb-6 text-3xl font-black text-[#12203D] md:text-4xl">:</span>
+            <span className="mb-4 font-mono text-xl font-bold text-[#5E6675]">:</span>
             <Digit value={m} label="min" />
-            <span className="mb-6 text-3xl font-black text-[#12203D] md:text-4xl">:</span>
+            <span className="mb-4 font-mono text-xl font-bold text-[#5E6675]">:</span>
             <Digit value={s} label="sec" />
           </div>
         </div>
 
-        {/* Deal Cards */}
         {displayDeals.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-[#12203D]/20 bg-white p-12 text-center text-gray-500 font-bold text-sm">
-            No Flash Deal products featured currently. Feature products in Admin Settings!
-          </div>
+          <EmptyState
+            title="No active flash deals right now"
+            detail="Featured price drops will appear here once scheduled by the store team."
+          />
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {displayDeals.map((prod) => {
-              const hasDiscount = prod.basePrice > prod.finalPrice
-              const pct = hasDiscount
-                ? Math.round(((prod.basePrice - prod.finalPrice) / prod.basePrice) * 100)
-                : 15
-
-              return (
-                <Link
-                  key={prod.id}
-                  to={`/product/${prod.slug || prod.id}`}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl border-2 border-[#12203D] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#12203D]"
-                >
-                  {/* Discount Badge */}
-                  <div className="absolute right-0 top-0 z-10 flex h-12 w-16 items-center justify-center rounded-bl-3xl border-b-2 border-l-2 border-[#12203D] bg-[#F44336] text-[15px] font-black text-white">
-                    -{pct}%
-                  </div>
-
-                  {/* Image */}
-                  <div className="flex h-[240px] items-center justify-center border-b-2 border-[#12203D] bg-[#F7F8FA] p-6">
-                    <img
-                      src={prod.image}
-                      alt={prod.name}
-                      className="h-full w-full object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex flex-col p-6">
-                    <span className="mb-4 line-clamp-2 text-[15px] font-bold text-[#12203D]">
-                      {prod.name}
-                    </span>
-                    <div className="mt-auto flex items-end gap-3">
-                      <span className="text-2xl font-black tracking-tight text-[#12203D]">
-                        {formatNaira(prod.finalPrice)}
-                      </span>
-                      {hasDiscount && (
-                        <span className="mb-1 text-[13px] font-bold text-[#12203D]/40 line-through">
-                          {formatNaira(prod.basePrice)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {displayDeals.map((prod) => (
+              <ProductCard key={prod.id} product={prod} />
+            ))}
           </div>
         )}
 
-        {/* View All Button */}
-        <div className="mt-12 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[#12203D] bg-[#12203D] px-8 py-4 text-[13px] font-black uppercase tracking-widest text-white transition-all hover:bg-white hover:text-[#12203D] hover:shadow-[4px_4px_0_0_#12203D]"
+            className="inline-flex items-center gap-2 rounded-[6px] bg-[#0B1220] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
           >
-            View All Deals <ArrowRight size={18} strokeWidth={2.5} />
+            <span>View All Deals</span>
+            <ArrowRight size={14} weight="regular" />
           </Link>
         </div>
       </div>

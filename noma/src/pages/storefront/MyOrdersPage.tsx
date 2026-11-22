@@ -1,380 +1,523 @@
-// MyOrdersPage.tsx - Track Orders with Guest Order Lookup & Signed-In History
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
-  HiChevronRight,
-  HiFunnel,
-  HiMagnifyingGlass,
-  HiXMark,
-  HiCube,
-  HiTruck,
-  HiCheckCircle,
-  HiClock,
-  HiSparkles,
-  HiUserPlus,
-  HiExclamationTriangle,
-  HiClipboardDocumentList,
-} from 'react-icons/hi2'
-import { formatNaira } from '../../utils/pricing'
-import { useUserStore } from '../../store/userStore'
+  CaretRight,
+  CheckCircle,
+  CircleNotch,
+  ClipboardText,
+  Clock,
+  MagnifyingGlass,
+  Package,
+  Truck,
+  UserPlus,
+  WarningCircle,
+  X,
+} from '@phosphor-icons/react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { EmptyState } from '../../design-system/components/EmptyState'
+import { orderService } from '../../services/firebase/orderService'
 import { useProductStore } from '../../store/productStore'
+import { useUserStore } from '../../store/userStore'
+import type { Order } from '../../types/commerce'
+import { formatNaira } from '../../utils/pricing'
+
+type OrderFilterTab =
+  | 'All Orders'
+  | 'Placed'
+  | 'Processing'
+  | 'Dispatched'
+  | 'Delivered'
+  | 'Cancelled'
+
+const ORDER_TABS: OrderFilterTab[] = [
+  'All Orders',
+  'Placed',
+  'Processing',
+  'Dispatched',
+  'Delivered',
+  'Cancelled',
+]
+
+function getStepProgress(status: string): number {
+  const s = status.toLowerCase()
+  switch (s) {
+    case 'processing':
+    case 'packed':
+      return 2
+    case 'dispatched':
+      return 3
+    case 'delivered':
+      return 4
+    case 'cancelled':
+      return 0
+    default:
+      return 1
+  }
+}
+
+function getStatusBadgeClasses(status: string): string {
+  switch (status.toLowerCase()) {
+    case 'delivered':
+      return 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]'
+    case 'dispatched':
+      return 'border-[#1049EB]/25 bg-[#EEF3FE] text-[#1049EB]'
+    case 'processing':
+    case 'packed':
+      return 'border-[#FDE68A] bg-[#FFFBEB] text-[#B45309]'
+    case 'cancelled':
+      return 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+    default:
+      return 'border-[#E5E7EB] bg-[#F6F7F9] text-[#0B1220]'
+  }
+}
 
 export function MyOrdersPage() {
+  const [searchParams] = useSearchParams()
+  const initialQueryId = searchParams.get('id')?.trim() || ''
+
   const { profile } = useUserStore()
   const { orders: storeOrders } = useProductStore()
 
-  // State for Signed-In Order Dashboard
-  const [activeTab, setActiveTab] = useState<'All Orders' | 'Placed' | 'Processing' | 'Dispatched' | 'Delivered' | 'Cancelled'>('All Orders')
+  const [activeTab, setActiveTab] = useState<OrderFilterTab>('All Orders')
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
-  // State for Guest Order Lookup Tool (Defaults to empty state as requested!)
-  const [guestOrderInput, setGuestOrderInput] = useState('')
-  const [searchedGuestOrder, setSearchedGuestOrder] = useState<any | null>(null)
+  const [guestOrderInput, setGuestOrderInput] = useState(initialQueryId)
+  const [searchedGuestOrder, setSearchedGuestOrder] = useState<Order | null>(null)
   const [guestLookupError, setGuestLookupError] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [isLookingUp, setIsLookingUp] = useState(false)
 
-  const handleGuestLookup = (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
+  const lookupOrderByRef = useCallback(
+    async (rawRef: string): Promise<Order | null> => {
+      const cleanId = rawRef.trim().toUpperCase()
+      if (!cleanId) return null
+
+      const localMatch = storeOrders.find(
+        (o) =>
+          o.id.toUpperCase() === cleanId ||
+          (o.paymentRef && o.paymentRef.toUpperCase() === cleanId)
+      )
+      if (localMatch) return localMatch
+
+      return await orderService.findOrderByRef(cleanId)
+    },
+    [storeOrders]
+  )
+
+  useEffect(() => {
+    if (!initialQueryId || !profile.isGuest) return
+    let active = true
+
+    lookupOrderByRef(initialQueryId)
+      .then((found) => {
+        if (!active) return
+        setHasSearched(true)
+        if (found) {
+          setSearchedGuestOrder(found)
+          setGuestLookupError(false)
+        } else {
+          setSearchedGuestOrder(null)
+          setGuestLookupError(true)
+        }
+      })
+      .catch(() => {
+        if (!active) return
+        setHasSearched(true)
+        setSearchedGuestOrder(null)
+        setGuestLookupError(true)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [initialQueryId, profile.isGuest, lookupOrderByRef])
+
+  const handleGuestLookup = async (e: React.FormEvent) => {
+    e.preventDefault()
     const cleanId = guestOrderInput.trim().toUpperCase()
-    if (!cleanId) return
+    if (!cleanId || isLookingUp) return
 
+    setIsLookingUp(true)
     setHasSearched(true)
-    const found = storeOrders.find(
-      (o) => o.id.toUpperCase() === cleanId || o.paymentRef?.toUpperCase() === cleanId
-    )
-
-    if (found) {
-      setSearchedGuestOrder(found)
-      setGuestLookupError(false)
-    } else {
+    try {
+      const found = await lookupOrderByRef(cleanId)
+      if (found) {
+        setSearchedGuestOrder(found)
+        setGuestLookupError(false)
+      } else {
+        setSearchedGuestOrder(null)
+        setGuestLookupError(true)
+      }
+    } catch {
       setSearchedGuestOrder(null)
       setGuestLookupError(true)
+    } finally {
+      setIsLookingUp(false)
     }
   }
 
   const filteredOrders = storeOrders.filter((o) => {
-    if (activeTab !== 'All Orders' && o.status.toLowerCase() !== activeTab.toLowerCase()) return false
+    if (activeTab !== 'All Orders' && o.status.toLowerCase() !== activeTab.toLowerCase()) {
+      return false
+    }
     if (
       searchQuery &&
       !o.id.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !o.customer.toLowerCase().includes(searchQuery.toLowerCase())
+      !o.customer.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !(o.paymentRef && o.paymentRef.toLowerCase().includes(searchQuery.toLowerCase()))
     ) {
       return false
     }
     return true
   })
 
-  // Helper for tracking steps mapping
-  const getStepProgress = (status: string) => {
-    const s = status.toLowerCase()
-    switch (s) {
-      case 'processing':
-        return 2
-      case 'dispatched':
-      case 'shipped':
-        return 3
-      case 'delivered':
-        return 4
-      case 'cancelled':
-        return 0
-      default:
-        return 1
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-[#F8F9FB] font-['Outfit',sans-serif] text-[#12203D] selection:bg-[#2F5FE3] selection:text-white pb-24 pt-3 md:pt-5">
-      <div className="mx-auto w-full max-w-[1200px] px-4 md:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#F6F7F9] pb-24 pt-4 text-[#0B1220]">
+      <div className="mx-auto w-full max-w-5xl px-4 md:px-8">
         {/* Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-gray-500">
-          <Link to="/" className="hover:text-[#2F5FE3] transition-colors">
+        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-[#5E6675]">
+          <Link to="/" className="transition-colors hover:text-[#1049EB]">
             Home
           </Link>
-          <HiChevronRight size={12} className="text-gray-400" />
-          <span className="font-bold text-[#12203D]">Track Orders</span>
+          <CaretRight size={12} weight="regular" />
+          <span className="font-semibold text-[#0B1220]">
+            {profile.isGuest ? 'Track Order' : 'My Orders'}
+          </span>
         </nav>
 
-        {/* GUEST USER MODE: LOOKUP TOOL & SIGN UP CALLOUT BANNER */}
         {profile.isGuest ? (
           <div className="space-y-8">
-            {/* Header Title */}
-            <div className="border-b border-gray-200/60 pb-5">
-              <h1 className="text-3xl font-extrabold tracking-tight text-[#12203D] sm:text-4xl">
+            <div className="border-b border-[#E5E7EB] pb-5">
+              <h1 className="text-2xl font-bold tracking-tight text-[#0B1220] sm:text-3xl">
                 Track Order
               </h1>
-              <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
-                Enter your order ID or Paystack payment reference number to get real-time delivery status updates.
+              <p className="mt-1 text-xs text-[#5E6675] sm:text-sm">
+                Enter your Noma Order ID or payment reference to view live dispatch status.
               </p>
             </div>
 
-            {/* Guest Order Lookup Card */}
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm space-y-6">
-              <form onSubmit={handleGuestLookup} className="space-y-4">
-                <label className="block text-sm font-extrabold text-[#12203D]">
-                  Enter Order Tracking ID or Payment Reference
+            {/* Guest Lookup Card */}
+            <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-8">
+              <form onSubmit={handleGuestLookup} className="space-y-3">
+                <label
+                  htmlFor="guest-order-ref"
+                  className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
+                >
+                  Order ID or Payment Reference
                 </label>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <div className="relative flex-1 w-full">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="relative flex-1">
+                    <Package
+                      size={17}
+                      weight="regular"
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5E6675]"
+                    />
                     <input
+                      id="guest-order-ref"
                       type="text"
                       value={guestOrderInput}
                       onChange={(e) => setGuestOrderInput(e.target.value)}
-                      placeholder="E.g. NMA-78901234 or PSK-98124"
-                      className="w-full rounded-2xl border border-gray-200 bg-gray-50/70 pl-11 pr-4 py-3.5 text-sm font-extrabold text-[#12203D] outline-none focus:border-[#2F5FE3] focus:bg-white transition-all uppercase tracking-wider"
+                      placeholder="NMA-123456 or PSK-123456"
+                      className="h-11 w-full rounded-[6px] border border-[#D1D5DB] bg-white pl-10 pr-4 font-mono text-sm font-semibold uppercase tracking-wider text-[#0B1220] placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-[#5E6675]/70 focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
                     />
-                    <HiCube size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-[#2F5FE3] px-8 py-3.5 text-sm font-extrabold text-white shadow-xs hover:bg-[#254ec4] active:scale-[0.99] transition-all shrink-0"
+                    disabled={isLookingUp}
+                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#1049EB] disabled:opacity-60"
                   >
-                    <HiMagnifyingGlass size={16} />
-                    <span>Track Package</span>
+                    {isLookingUp ? (
+                      <>
+                        <CircleNotch size={16} className="animate-spin" />
+                        <span>Looking up...</span>
+                      </>
+                    ) : (
+                      <>
+                        <MagnifyingGlass size={16} weight="regular" />
+                        <span>Track Package</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
 
-              {/* SEARCHED ORDER RESULT CARD */}
-              {searchedGuestOrder && (
-                <div className="rounded-2xl border border-gray-200 bg-[#F8F9FB] p-6 space-y-6 animate-in fade-in">
-                  {/* Result Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/80 pb-4">
+              {/* Result Card */}
+              {searchedGuestOrder ? (
+                <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-5 sm:p-6">
+                  <div className="flex flex-col justify-between gap-3 border-b border-[#E5E7EB] pb-4 sm:flex-row sm:items-center">
                     <div>
-                      <span className="rounded-full bg-blue-100 text-blue-800 px-3 py-0.5 text-[10px] font-black uppercase tracking-wider">
-                        Live Status
+                      <span
+                        className={`inline-block rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusBadgeClasses(
+                          searchedGuestOrder.status
+                        )}`}
+                      >
+                        {searchedGuestOrder.status}
                       </span>
-                      <h3 className="text-xl font-black text-[#12203D] mt-1">
-                        Order #{searchedGuestOrder.id}
-                      </h3>
-                      <p className="text-xs text-gray-500 font-medium">Placed for {searchedGuestOrder.customer}</p>
+                      <h2 className="mt-1.5 font-mono text-lg font-bold text-[#0B1220]">
+                        Order {searchedGuestOrder.id}
+                      </h2>
+                      <p className="text-xs text-[#5E6675]">
+                        Recipient: {searchedGuestOrder.customer} -{' '}
+                        {searchedGuestOrder.deliveryArea || 'Nigeria'}
+                      </p>
                     </div>
 
-                    <div className="text-left sm:text-right">
-                      <span className="text-[10px] font-extrabold uppercase text-gray-400 block">Total Amount</span>
-                      <span className="text-xl font-black text-[#2F5FE3]">
+                    <div className="sm:text-right">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
+                        Order Total
+                      </span>
+                      <strong className="font-mono text-lg font-bold text-[#0B1220]">
                         {formatNaira(searchedGuestOrder.total)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* 4-Stage Horizontal Stepper */}
+                  {searchedGuestOrder.status === 'cancelled' ? (
+                    <div className="rounded-[6px] border border-[#FECACA] bg-[#FEF2F2] p-3.5 text-center text-xs font-semibold text-[#B91C1C]">
+                      This order has been cancelled. Contact Noma support for assistance.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
+                        Delivery Progress
                       </span>
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {[
+                          { label: 'Order Placed', step: 1, icon: Clock },
+                          { label: 'Processing', step: 2, icon: Package },
+                          { label: 'Dispatched', step: 3, icon: Truck },
+                          { label: 'Delivered', step: 4, icon: CheckCircle },
+                        ].map((item) => {
+                          const currentStep = getStepProgress(searchedGuestOrder.status)
+                          const isDone = item.step <= currentStep
+                          const IconComponent = item.icon
 
-                  {/* Visual Tracker Timeline Progress Bar */}
-                  <div className="space-y-4 pt-2">
-                    <h4 className="text-xs font-extrabold text-[#12203D] uppercase tracking-wider">Delivery Progress</h4>
-
-                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                      {[
-                        { label: 'Order Placed', step: 1, icon: HiClock },
-                        { label: 'Processing', step: 2, icon: HiCube },
-                        { label: 'Dispatched', step: 3, icon: HiTruck },
-                        { label: 'Delivered', step: 4, icon: HiCheckCircle },
-                      ].map((item) => {
-                        const currentStep = getStepProgress(searchedGuestOrder.status)
-                        const isDone = item.step <= currentStep
-                        const IconComponent = item.icon
-
-                        return (
-                          <div key={item.step} className="flex flex-col items-center space-y-2">
-                            <div
-                              className={`flex h-10 w-10 items-center justify-center rounded-2xl border-2 transition-all ${
-                                isDone
-                                  ? 'border-[#2F5FE3] bg-[#2F5FE3] text-white shadow-xs'
-                                  : 'border-gray-200 bg-white text-gray-300'
-                              }`}
-                            >
-                              <IconComponent size={18} />
+                          return (
+                            <div key={item.step} className="flex flex-col items-center gap-2">
+                              <div
+                                className={`flex h-10 w-10 items-center justify-center rounded-[8px] border transition-colors ${
+                                  isDone
+                                    ? 'border-[#1049EB] bg-[#1049EB] text-white'
+                                    : 'border-[#E5E7EB] bg-white text-[#5E6675]'
+                                }`}
+                              >
+                                <IconComponent size={18} weight={isDone ? 'fill' : 'regular'} />
+                              </div>
+                              <span
+                                className={`text-[11px] font-semibold ${
+                                  isDone ? 'text-[#0B1220]' : 'text-[#5E6675]'
+                                }`}
+                              >
+                                {item.label}
+                              </span>
                             </div>
-                            <span
-                              className={`text-[11px] font-extrabold ${
-                                isDone ? 'text-[#12203D]' : 'text-gray-400'
-                              }`}
-                            >
-                              {item.label}
-                            </span>
-                          </div>
-                        )
-                      })}
+                          )
+                        })}
+                      </div>
                     </div>
+                  )}
 
-                    <p className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-xl p-3 text-center mt-2">
-                      STATUS: ORDER IS {searchedGuestOrder.status.toUpperCase()}
-                    </p>
-                  </div>
+                  {Array.isArray(searchedGuestOrder.items) &&
+                  searchedGuestOrder.items.length > 0 ? (
+                    <div className="space-y-2 border-t border-[#E5E7EB] pt-4">
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
+                        Items in Package
+                      </span>
+                      <div className="divide-y divide-[#E5E7EB] rounded-[6px] border border-[#E5E7EB] bg-white">
+                        {searchedGuestOrder.items.map((item, idx) => (
+                          <div
+                            key={`${item.productId}-${idx}`}
+                            className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-xs"
+                          >
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              {item.image ? (
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="h-9 w-9 shrink-0 rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] object-contain p-0.5"
+                                />
+                              ) : null}
+                              <div className="min-w-0">
+                                <span className="block truncate font-semibold text-[#0B1220]">
+                                  {item.name}
+                                </span>
+                                <span className="font-mono text-[11px] text-[#5E6675]">
+                                  Qty {item.quantity}
+                                  {item.size ? ` - Size ${item.size}` : ''}
+                                </span>
+                              </div>
+                            </div>
+                            <strong className="shrink-0 font-mono font-semibold text-[#0B1220]">
+                              {formatNaira(item.unitPrice * item.quantity)}
+                            </strong>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              )}
+              ) : null}
 
-              {/* ERROR STATE: ORDER NOT FOUND */}
-              {guestLookupError && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center space-y-3 animate-in fade-in">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-                    <HiExclamationTriangle size={24} />
+              {/* Error State */}
+              {guestLookupError ? (
+                <div className="space-y-2 rounded-[8px] border border-[#FECACA] bg-[#FEF2F2] p-5 text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-[6px] border border-[#FECACA] bg-white text-[#B91C1C]">
+                    <WarningCircle size={20} weight="regular" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-extrabold text-red-900">Order ID Not Found</h4>
-                    <p className="text-xs text-red-700 mt-1 font-medium">
-                      No order was found matching "{guestOrderInput}". Please check the tracking number on your receipt or checkout email.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* INITIAL CLEAN EMPTY STATE PROMPT */}
-              {!hasSearched && !searchedGuestOrder && (
-                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-10 text-center flex flex-col items-center justify-center gap-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-gray-400 shadow-xs border">
-                    <HiCube size={24} />
-                  </div>
-                  <h4 className="text-sm font-bold text-[#12203D]">Ready to Track Your Order</h4>
-                  <p className="text-xs text-gray-400 max-w-sm">
-                    Type your Order Reference above and click "Track Package" to view live shipping updates.
+                  <h3 className="text-sm font-bold text-[#B91C1C]">Order ID Not Found</h3>
+                  <p className="text-xs text-[#B91C1C]/90">
+                    No order was found matching &quot;{guestOrderInput}&quot;. Check your confirmation receipt or sign in if you checked out with an account.
                   </p>
                 </div>
-              )}
+              ) : null}
+
+              {/* Empty Prompt */}
+              {!hasSearched && !searchedGuestOrder ? (
+                <EmptyState
+                  icon={<Package size={24} weight="regular" />}
+                  title="Ready to track your order"
+                  detail="Enter your NMA order reference above to inspect delivery milestones."
+                />
+              ) : null}
             </div>
 
-            {/* PROMINENT "SIGN UP FOR ORDER HISTORY" CALLOUT BANNER */}
-            <div className="rounded-3xl bg-gradient-to-r from-[#12203D] via-[#1A2C54] to-[#2F5FE3] p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="space-y-2 max-w-xl">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 border border-amber-300/30 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-200">
-                  <HiSparkles size={14} /> Never Lose an Order
+            {/* Flat #0B1220 Account Callout */}
+            <div className="flex flex-col items-start justify-between gap-6 rounded-[10px] border border-[#0B1220] bg-[#0B1220] p-6 text-white sm:p-8 md:flex-row md:items-center">
+              <div className="max-w-xl space-y-2">
+                <span className="inline-block rounded-[4px] border border-white/20 bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+                  Account Sync
                 </span>
-                <h3 className="text-2xl font-black tracking-tight">
-                  Sign up to get 1-click access to your full Order History
-                </h3>
-                <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed font-medium">
-                  Currently browsing as guest. Create a free account or sign in so all your future & past purchases automatically save in your order history dashboard!
+                <h2 className="text-xl font-bold tracking-tight text-white">
+                  Sign in for automatic order history
+                </h2>
+                <p className="text-xs leading-relaxed text-white/75 sm:text-sm">
+                  Create a Noma account or sign in so future orders, saved Nigerian addresses, and wishlist items sync across devices.
                 </p>
               </div>
 
-              <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                <Link
-                  to="/account"
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-xs font-black text-[#12203D] shadow-md hover:bg-gray-100 transition-all"
-                >
-                  <HiUserPlus size={16} className="text-[#2F5FE3]" />
-                  <span>Sign In / Create Account</span>
-                </Link>
-              </div>
+              <Link
+                to="/account"
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-[6px] bg-white px-5 py-3 text-xs font-semibold text-[#0B1220] transition-colors hover:bg-[#F6F7F9] md:w-auto"
+              >
+                <UserPlus size={16} weight="regular" className="text-[#1049EB]" />
+                <span>Sign In / Create Account</span>
+              </Link>
             </div>
           </div>
         ) : (
-          /* SIGNED-IN USER MODE: FULL ORDER HISTORY DASHBOARD */
-          <main className="space-y-6">
-            {/* Header with Search & Filter */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200/60 pb-5">
+          /* Signed-in Mode: Full Order History */
+          <div className="space-y-6">
+            <div className="flex flex-col justify-between gap-4 border-b border-[#E5E7EB] pb-5 sm:flex-row sm:items-end">
               <div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-[#12203D] sm:text-4xl">My Orders</h1>
-                <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
-                  Welcome back, {profile.name}! Viewing your full order history dashboard.
+                <h1 className="text-2xl font-bold tracking-tight text-[#0B1220] sm:text-3xl">
+                  My Orders
+                </h1>
+                <p className="mt-1 text-xs text-[#5E6675] sm:text-sm">
+                  Signed in as <strong className="text-[#0B1220]">{profile.name || profile.email}</strong>
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="relative flex-1 sm:w-64">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search orders"
-                    className="w-full rounded-xl border border-gray-200 bg-white pl-8 pr-3 py-2 text-xs font-semibold text-[#12203D] outline-none focus:border-[#2F5FE3]"
-                  />
-                  <HiMagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                </div>
-                <button className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-bold text-[#12203D]">
-                  <HiFunnel size={14} />
-                  <span>Filter</span>
-                </button>
+              <div className="relative w-full sm:w-64">
+                <MagnifyingGlass
+                  size={14}
+                  weight="regular"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5E6675]"
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search order ID or ref"
+                  className="h-9 w-full rounded-[6px] border border-[#D1D5DB] bg-white pl-8 pr-3 text-xs font-medium text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
+                />
               </div>
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-2 border-b border-gray-200/60 pb-3 overflow-x-auto scrollbar-none text-xs font-bold">
-              {(['All Orders', 'Placed', 'Processing', 'Dispatched', 'Delivered', 'Cancelled'] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`rounded-full px-4 py-2 transition-all shrink-0 ${
-                      activeTab === tab
-                        ? 'bg-[#2F5FE3] text-white shadow-2xs'
-                        : 'bg-white text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ),
-              )}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {ORDER_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`shrink-0 rounded-[6px] border px-3.5 py-2 transition-colors ${
+                    activeTab === tab
+                      ? 'border-[#0B1220] bg-[#0B1220] text-white'
+                      : 'border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#EEF0F4]'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
 
-            {/* Orders Cards List or Empty State */}
             {filteredOrders.length === 0 ? (
-              <div className="rounded-3xl border border-gray-100 bg-white p-12 text-center flex flex-col items-center justify-center gap-3 shadow-xs">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400 mb-1">
-                  <HiClipboardDocumentList size={28} />
-                </div>
-                <h3 className="font-bold text-base text-[#12203D]">No Orders Found</h3>
-                <p className="text-xs text-gray-400 max-w-sm">
-                  You haven't placed any orders yet. Purchases placed from this account will automatically save in your history.
-                </p>
-                <Link
-                  to="/catalog"
-                  className="mt-2 inline-flex items-center gap-2 rounded-2xl bg-[#2F5FE3] px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#254ec4]"
-                >
-                  Start Shopping
-                </Link>
-              </div>
+              <EmptyState
+                icon={<ClipboardText size={24} weight="regular" />}
+                title="No Orders Found"
+                detail="Orders placed while signed into this account will appear here automatically."
+                action={
+                  <Link
+                    to="/catalog"
+                    className="inline-flex items-center gap-2 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1049EB]"
+                  >
+                    Start Shopping
+                  </Link>
+                }
+              />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {filteredOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="rounded-3xl border border-gray-100 bg-white p-5 shadow-2xs space-y-4 hover:border-gray-200 transition-all"
+                    className="space-y-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#0B1220]/30"
                   >
-                    {/* Order Top Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3 text-xs">
-                      <div>
-                        <span className="font-extrabold text-[#12203D]">Order #{order.id}</span>
-                        <span className="text-gray-400 ml-3">{order.paymentRef || 'PSK-ONLINE'}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`rounded-full px-3 py-0.5 text-[10px] font-extrabold uppercase ${
-                            order.status === 'delivered'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : order.status === 'dispatched'
-                              ? 'bg-blue-100 text-blue-800'
-                              : order.status === 'processing'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {order.status}
+                    <div className="flex flex-col justify-between gap-2 border-b border-[#E5E7EB] pb-3 text-xs sm:flex-row sm:items-center">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="font-mono font-bold text-[#0B1220]">
+                          Order {order.id}
+                        </span>
+                        <span className="font-mono text-[#5E6675]">
+                          {order.paymentRef || 'PSK-ONLINE'}
                         </span>
                       </div>
+
+                      <span
+                        className={`inline-block self-start rounded-[4px] border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider sm:self-auto ${getStatusBadgeClasses(
+                          order.status
+                        )}`}
+                      >
+                        {order.status}
+                      </span>
                     </div>
 
-                    {/* Order Items Summary Row */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-gray-500 shrink-0">
-                          Customer: {order.customer}
-                        </span>
+                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                      <div className="space-y-0.5 text-xs text-[#5E6675]">
+                        <div>
+                          Recipient: <strong className="text-[#0B1220]">{order.customer}</strong>
+                        </div>
+                        <div>
+                          Destination: <span>{order.deliveryArea || 'Nigeria'}</span>
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-6">
+                      <div className="flex items-center justify-between gap-5 sm:justify-end">
                         <div>
-                          <span className="text-[10px] font-bold text-gray-400 block">Total</span>
-                          <span className="text-base font-extrabold text-[#12203D]">
-                            {formatNaira(order.total)}
+                          <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
+                            Total
                           </span>
+                          <strong className="font-mono text-base font-bold text-[#0B1220]">
+                            {formatNaira(order.total)}
+                          </strong>
                         </div>
 
                         <button
+                          type="button"
                           onClick={() => setSelectedOrder(order)}
-                          className="rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-2 text-xs font-bold text-[#2F5FE3] hover:bg-[#2F5FE3] hover:text-white transition-colors"
+                          className="rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-4 py-2 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
                         >
                           View Details
                         </button>
@@ -384,40 +527,110 @@ export function MyOrdersPage() {
                 ))}
               </div>
             )}
-          </main>
+          </div>
         )}
       </div>
 
-      {/* Order Details Modal / Drawer for Signed-In Users */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+      {/* Signed-In Order Details Modal */}
+      {selectedOrder ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1220]/50 p-4">
+          <div className="relative max-h-[90vh] w-full max-w-xl space-y-5 overflow-y-auto rounded-[10px] border border-[#E5E7EB] bg-white p-6 shadow-[0_8px_24px_rgba(11,18,32,0.08)]">
             <button
+              type="button"
               onClick={() => setSelectedOrder(null)}
-              className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Close order details"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#5E6675] hover:text-[#0B1220]"
             >
-              <HiXMark size={20} />
+              <X size={16} weight="regular" />
             </button>
 
-            <div className="border-b border-gray-100 pb-4">
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-extrabold text-[#2F5FE3]">
-                Order Details
+            <div className="border-b border-[#E5E7EB] pb-4">
+              <span
+                className={`inline-block rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusBadgeClasses(
+                  selectedOrder.status
+                )}`}
+              >
+                {selectedOrder.status}
               </span>
-              <h3 className="text-xl font-extrabold text-[#12203D] mt-2">
-                Order #{selectedOrder.id}
+              <h3 className="mt-2 font-mono text-lg font-bold text-[#0B1220]">
+                Order {selectedOrder.id}
               </h3>
-              <p className="text-xs text-gray-500">Customer: {selectedOrder.customer} • Area: {selectedOrder.deliveryArea}</p>
+              <p className="mt-0.5 text-xs text-[#5E6675]">
+                Ref:{' '}
+                <span className="font-mono">{selectedOrder.paymentRef || 'N/A'}</span>
+                {selectedOrder.paymentMethod ? ` - ${selectedOrder.paymentMethod.toUpperCase()}` : ''}
+              </p>
             </div>
 
-            <div className="border-t border-gray-100 pt-4 flex items-center justify-between">
-              <span className="text-sm font-bold text-gray-500">Grand Total</span>
-              <span className="text-xl font-extrabold text-[#2F5FE3]">
-                {formatNaira(selectedOrder.total)}
+            {/* Shipping Details */}
+            <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-4 text-xs">
+              <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
+                Delivery Details
               </span>
+              <p className="font-semibold text-[#0B1220]">{selectedOrder.customer}</p>
+              <p className="font-mono text-[#5E6675]">{selectedOrder.phone}</p>
+              <p className="mt-1 text-[#374151]">
+                {[selectedOrder.address, selectedOrder.deliveryArea].filter(Boolean).join(', ')}
+              </p>
+            </div>
+
+            {/* Line Items */}
+            {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+              <div className="space-y-2">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
+                  Items
+                </span>
+                <div className="divide-y divide-[#E5E7EB] rounded-[8px] border border-[#E5E7EB]">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div
+                      key={`${item.productId}-${idx}`}
+                      className="flex items-center justify-between gap-3 p-3 text-xs"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="h-10 w-10 shrink-0 rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] object-contain p-0.5"
+                          />
+                        ) : null}
+                        <div className="min-w-0">
+                          <span className="block truncate font-semibold text-[#0B1220]">
+                            {item.name}
+                          </span>
+                          <span className="font-mono text-[11px] text-[#5E6675]">
+                            Qty {item.quantity}
+                            {item.size ? ` - Size ${item.size}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <strong className="shrink-0 font-mono font-semibold text-[#0B1220]">
+                        {formatNaira(item.unitPrice * item.quantity)}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Summary */}
+            <div className="space-y-2 border-t border-[#E5E7EB] pt-4 text-xs">
+              <div className="flex items-center justify-between text-[#5E6675]">
+                <span>Delivery Fee</span>
+                <span className="font-mono font-semibold text-[#0B1220]">
+                  {formatNaira(selectedOrder.deliveryFee)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-bold text-[#0B1220]">Grand Total</span>
+                <strong className="font-mono text-lg font-bold text-[#0B1220]">
+                  {formatNaira(selectedOrder.total)}
+                </strong>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
