@@ -10,7 +10,7 @@ export const initialSiteSettings: SiteSettings = {
   todaysDealsProductIds: [],
   todaysDealsEndTimestamp: Date.now() + 86400000 * 2,
   trendingProductIds: [],
-  announcementText: 'Transparent Naira pricing across Nigeria — delivery fees confirmed before checkout.',
+  announcementText: 'Transparent Naira pricing across Nigeria - delivery fees confirmed before checkout.',
   announcementActive: true,
   supportPhone: '+234 803 000 6662',
   supportEmail: 'support@shopnoma.com',
