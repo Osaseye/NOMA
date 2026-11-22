@@ -6,6 +6,7 @@ import {
   deleteDoc,
   onSnapshot,
   query,
+  where,
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
@@ -13,10 +14,28 @@ import type { ProductReview } from '../../types/commerce'
 
 const REVIEWS_COLLECTION = 'reviews'
 
+function stripUndefinedFields(obj: Record<string, unknown>): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value
+    }
+  }
+  return cleaned
+}
+
 export const reviewService = {
-  subscribeReviews: (callback: (reviews: ProductReview[]) => void) => {
+  subscribeReviews: (
+    callback: (reviews: ProductReview[]) => void,
+    options?: { approvedOnly?: boolean }
+  ) => {
     try {
-      const q = query(collection(db, REVIEWS_COLLECTION))
+      const approvedOnly = options?.approvedOnly ?? true
+      const reviewsCol = collection(db, REVIEWS_COLLECTION)
+      const q = approvedOnly
+        ? query(reviewsCol, where('status', '==', 'approved'))
+        : query(reviewsCol)
+
       return onSnapshot(
         q,
         (snapshot) => {
@@ -49,15 +68,17 @@ export const reviewService = {
     }
   },
 
-  addReview: async (reviewData: Omit<ProductReview, 'id'>) => {
-    const customId = `rev-${Date.now()}`
+  addReview: async (reviewData: Omit<ProductReview, 'id'> & { id?: string }) => {
+    const customId = reviewData.id?.trim() || `rev-${Date.now()}`
     const newReview: ProductReview = {
       ...reviewData,
       id: customId,
     }
 
+    const payload = stripUndefinedFields(newReview as unknown as Record<string, unknown>)
+
     await setDoc(doc(db, REVIEWS_COLLECTION, customId), {
-      ...newReview,
+      ...payload,
       createdAt: serverTimestamp(),
     })
 

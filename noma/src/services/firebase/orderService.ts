@@ -131,6 +131,32 @@ export const orderService = {
     )
   },
 
+  subscribeOrdersForUser: (uid: string, callback: (orders: Order[]) => void) => {
+    const cleanUid = uid.trim()
+    if (!cleanUid) {
+      callback([])
+      return () => {}
+    }
+
+    const q = query(collection(db, ORDERS_COLLECTION), where('userId', '==', cleanUid))
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const ordersList: Order[] = snapshot.docs
+          .map((docSnap) => mapFirestoreOrder(docSnap.id, docSnap.data()))
+          .sort((a, b) => {
+            const ta = a.createdAt ? Date.parse(a.createdAt) || 0 : 0
+            const tb = b.createdAt ? Date.parse(b.createdAt) || 0 : 0
+            return tb - ta
+          })
+        callback(ordersList)
+      },
+      (error) => {
+        console.warn('Firestore user orders listener notice:', error?.message || error)
+      }
+    )
+  },
+
   addOrder: async (orderData: Order): Promise<Order> => {
     const orderId = orderData.id?.trim() || generateOrderId()
     const createdAtIso = orderData.createdAt || new Date().toISOString()
