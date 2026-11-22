@@ -97,10 +97,24 @@ export const authService = {
   },
 
   updateUserProfile: async (uid: string, updates: Partial<UserDoc>) => {
+    const cleanUpdates: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) {
+        cleanUpdates[key] = value
+      }
+    }
     await updateDoc(doc(db, 'users', uid), {
-      ...updates,
+      ...cleanUpdates,
       updatedAt: serverTimestamp(),
     })
+  },
+
+  getCurrentIdToken: async (): Promise<string | null> => {
+    const currentUser = auth.currentUser
+    if (!currentUser) {
+      return null
+    }
+    return await currentUser.getIdToken()
   },
 
   logout: async () => {

@@ -6,6 +6,9 @@ export function formatNaira(value: number) {
 }
 
 export function markupPercent(product: Product) {
+  if (!product.basePrice || product.basePrice <= 0) {
+    return 0
+  }
   return Math.round(((product.finalPrice - product.basePrice) / product.basePrice) * 100)
 }
 
