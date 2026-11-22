@@ -9,7 +9,7 @@ export function ProductsPage() {
     <div className="flex flex-col gap-6 pb-12">
       <AdminTitle
         title="Product Inventory Catalog"
-        detail="Manage storefront products, prices, stock levels, markups, and promotional badges."
+        detail="Manage storefront products, wholesale and retail pricing, compare-at prices, stock levels, and badges."
       />
       <AdminProductGrid products={products} />
     </div>

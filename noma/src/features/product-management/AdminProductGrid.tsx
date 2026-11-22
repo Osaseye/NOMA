@@ -1,9 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { HiPencilSquare, HiTrash, HiMagnifyingGlass, HiPlus, HiSparkles, HiShoppingBag } from 'react-icons/hi2'
+import {
+  MagnifyingGlass,
+  PencilSimple,
+  Plus,
+  ShoppingBag,
+  Trash,
+} from '@phosphor-icons/react'
+import { toast } from 'sonner'
+import { EmptyState } from '../../design-system/components/EmptyState'
+import { useProductStore } from '../../store/productStore'
 import type { Product } from '../../types/commerce'
 import { formatNaira, getMarkupAmount } from '../../utils/pricing'
-import { useProductStore } from '../../store/productStore'
 
 export function AdminProductGrid({ products }: { products: Product[] }) {
   const { toggleStockStatus, deleteProduct, categories } = useProductStore()
@@ -11,34 +19,50 @@ export function AdminProductGrid({ products }: { products: Product[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   const filtered = products.filter((p) => {
+    const q = search.toLowerCase()
     const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      (p.brand && p.brand.toLowerCase().includes(search.toLowerCase())) ||
-      p.id.toLowerCase().includes(search.toLowerCase())
+      p.name.toLowerCase().includes(q) ||
+      (p.brand && p.brand.toLowerCase().includes(q)) ||
+      p.id.toLowerCase().includes(q)
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
+  const handleDelete = async (product: Product) => {
+    try {
+      await deleteProduct(product.id)
+      toast.success(`Removed "${product.name}" from catalog.`)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete product.'
+      toast.error(message)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Controls Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex flex-1 flex-wrap sm:flex-nowrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <HiMagnifyingGlass size={16} className="absolute left-3.5 top-3 text-slate-400" />
+      <div className="flex flex-col gap-3 rounded-[8px] border border-[#E5E7EB] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-wrap items-center gap-3 sm:flex-nowrap">
+          <div className="relative min-w-[200px] max-w-xs flex-1">
+            <MagnifyingGlass
+              size={16}
+              weight="regular"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5E6675]"
+            />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products, brand..."
-              className="w-full rounded-xl border border-slate-200 py-2 pl-9 pr-4 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500"
+              placeholder="Search products, brand, or ID..."
+              className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2 pl-9 pr-3.5 text-xs text-[#0B1220] placeholder:text-[#5E6675]/70 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
             />
           </div>
 
           <select
+            aria-label="Filter products by category"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-bold text-slate-700 outline-none focus:border-emerald-500"
+            className="rounded-[6px] border border-[#D1D5DB] bg-white px-3 py-2 text-xs font-semibold text-[#0B1220] transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
           >
             <option value="all">All Categories</option>
             {categories.map((c) => (
@@ -49,101 +73,135 @@ export function AdminProductGrid({ products }: { products: Product[] }) {
           </select>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link
-            to="/admin/products/new"
-            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700 transition-all"
-          >
-            <HiPlus size={16} /> Add Product Card
-          </Link>
-        </div>
+        <Link
+          to="/admin/products/new"
+          className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
+        >
+          <Plus size={15} weight="regular" />
+          <span>Add Product</span>
+        </Link>
       </div>
 
-      {/* Empty State Check */}
+      {/* Empty State or Cards Grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center flex flex-col items-center justify-center gap-3 shadow-xs">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-1">
-            <HiShoppingBag size={28} />
-          </div>
-          <span className="font-bold text-sm text-slate-900">No Products in Catalog</span>
-          <span className="text-xs text-slate-400 max-w-sm">
-            Product catalog is scrubbed clean for backend API integration. Create products manually or sync from your backend database.
-          </span>
-          <Link
-            to="/admin/products/new"
-            className="mt-2 flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700"
-          >
-            <HiPlus size={16} /> Add Product Card
-          </Link>
-        </div>
+        <EmptyState
+          icon={<ShoppingBag size={24} weight="regular" />}
+          title="No Products in Catalog"
+          detail="Create products manually or adjust your search and category filters."
+          action={
+            <Link
+              to="/admin/products/new"
+              className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1E293B]"
+            >
+              <Plus size={15} weight="regular" />
+              <span>Add Product</span>
+            </Link>
+          }
+        />
       ) : (
-        /* 2-COLUMN ON MOBILE / RESPONSIVE CARDS VIEW */
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((p) => {
             const markup = getMarkupAmount(p.finalPrice, p.basePrice)
             const inStock = p.stockQty > 0
             return (
-              <div key={p.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
-                <div className="relative mb-2 sm:mb-3 h-32 sm:h-44 w-full rounded-xl bg-slate-50 border p-1.5 sm:p-2 flex items-center justify-center overflow-hidden">
-                  <img src={p.image} alt={p.name} className="max-h-full max-w-full object-contain" />
-                  <span
-                    className={`absolute top-1.5 left-1.5 rounded-full px-2 py-0.5 text-[8px] sm:text-[9px] font-black uppercase shadow-xs ${
-                      inStock ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
-                    }`}
-                  >
-                    {inStock ? `${p.stockQty} In Stock` : 'Out of Stock'}
-                  </span>
-                  {p.badge && (
-                    <span className="absolute top-1.5 right-1.5 rounded-full bg-slate-900 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-black uppercase text-white shadow-xs hidden sm:inline-block">
-                      {p.badge}
+              <article
+                key={p.id}
+                className="flex flex-col justify-between rounded-[8px] border border-[#E5E7EB] bg-white p-3.5 transition-colors hover:border-[#D1D5DB] sm:p-4"
+              >
+                <div>
+                  <div className="relative mb-3 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-2">
+                    <img
+                      src={p.image || '/images/catalog-banner-all.png'}
+                      alt={p.name}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                    <span
+                      className={`absolute left-2 top-2 rounded-[4px] border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase ${
+                        inStock
+                          ? 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]'
+                          : 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+                      }`}
+                    >
+                      {inStock ? `${p.stockQty} In Stock` : 'Out of Stock'}
                     </span>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] sm:text-[10px] font-extrabold uppercase text-slate-400 truncate">{p.category}</span>
-                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 truncate">{p.brand}</span>
+                    {p.badge ? (
+                      <span className="absolute right-2 top-2 hidden rounded-[4px] bg-[#0B1220] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-white sm:inline-block">
+                        {p.badge}
+                      </span>
+                    ) : null}
                   </div>
-                  <h3 className="font-bold text-xs text-slate-900 line-clamp-2 leading-snug">{p.name}</h3>
 
-                  <div className="mt-1.5 sm:mt-2 flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-1.5 sm:pt-2 text-xs gap-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[11px] font-medium uppercase tracking-wider text-[#5E6675]">
+                      {p.category}
+                    </span>
+                    {p.brand ? (
+                      <span className="truncate text-[11px] font-medium text-[#5E6675]">
+                        {p.brand}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <h3 className="mt-1 line-clamp-2 text-xs font-bold leading-snug text-[#0B1220] sm:text-sm">
+                    {p.name}
+                  </h3>
+
+                  <div className="mt-3 flex flex-col justify-between gap-1.5 border-t border-[#E5E7EB] pt-2.5 sm:flex-row sm:items-end">
                     <div className="flex flex-col">
-                      <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase">Price</span>
-                      <span className="font-black text-slate-900 text-xs sm:text-sm">{formatNaira(p.finalPrice)}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#5E6675]">
+                        Retail
+                      </span>
+                      <div className="flex flex-wrap items-baseline gap-1.5">
+                        <span className="font-mono tabular-nums text-xs font-bold text-[#0B1220] sm:text-sm">
+                          {formatNaira(p.finalPrice)}
+                        </span>
+                        {p.compareAtPrice && p.compareAtPrice > p.finalPrice ? (
+                          <span className="font-mono tabular-nums text-[10px] text-[#5E6675] line-through">
+                            {formatNaira(p.compareAtPrice)}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="flex flex-col sm:items-end">
-                      <span className="text-[8px] sm:text-[9px] font-bold text-emerald-600 uppercase">Margin</span>
-                      <span className="font-bold text-emerald-600 text-[11px] sm:text-xs flex items-center gap-0.5">
-                        <HiSparkles size={10} /> +{formatNaira(markup)}
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#15803D]">
+                        Markup
+                      </span>
+                      <span className="font-mono tabular-nums text-[11px] font-semibold text-[#15803D] sm:text-xs">
+                        +{formatNaira(markup)}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-3 sm:mt-4 flex items-center gap-1.5 sm:gap-2">
+                <div className="mt-3.5 flex items-center gap-1.5 sm:gap-2">
                   <button
+                    type="button"
                     onClick={() => toggleStockStatus(p.id)}
-                    className={`rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] font-extrabold ${
-                      inStock ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-emerald-100 text-emerald-800'
+                    className={`rounded-[6px] border px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
+                      inStock
+                        ? 'border-[#E5E7EB] bg-[#F6F7F9] text-[#374151] hover:bg-[#EEF0F4]'
+                        : 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D] hover:bg-[#DCFCE7]'
                     }`}
                   >
-                    {inStock ? 'In Stock' : 'Restock'}
+                    {inStock ? 'Mark Out' : 'Restock'}
                   </button>
                   <Link
                     to={`/admin/products/${p.id}/edit`}
-                    className="flex-1 rounded-xl bg-slate-900 py-1.5 sm:py-2 text-center text-[10px] sm:text-xs font-bold text-white hover:bg-slate-800 flex items-center justify-center gap-1"
+                    className="flex flex-1 items-center justify-center gap-1 rounded-[6px] bg-[#0B1220] py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-[#1E293B]"
                   >
-                    <HiPencilSquare size={13} /> Edit
+                    <PencilSimple size={13} weight="regular" />
+                    <span>Edit</span>
                   </Link>
                   <button
-                    onClick={() => deleteProduct(p.id)}
-                    className="rounded-xl border border-rose-200 p-1.5 sm:p-2 text-rose-600 hover:bg-rose-50"
+                    type="button"
+                    onClick={() => handleDelete(p)}
+                    aria-label={`Delete ${p.name}`}
+                    className="flex items-center justify-center rounded-[6px] border border-[#FECACA] bg-[#FEF2F2] p-1.5 text-[#B91C1C] transition-colors hover:bg-[#FEE2E2]"
                   >
-                    <HiTrash size={14} />
+                    <Trash size={14} weight="regular" />
                   </button>
                 </div>
-              </div>
+              </article>
             )
           })}
         </div>

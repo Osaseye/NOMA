@@ -9,7 +9,7 @@ export function CategoriesPage() {
     <div className="flex flex-col gap-6 pb-12">
       <AdminTitle
         title="Category Markups & Merchandising Rules"
-        detail="Set category pricing psychology guidelines, default profit markup percentages, and promotional sublines."
+        detail="Set category pricing guidelines, default profit markup percentages, cover imagery, and subcategory trees."
       />
       <CategoryMarkupGrid categories={categories} />
     </div>

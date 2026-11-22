@@ -7,25 +7,53 @@ import { formatNaira, monthlySummary } from '../../utils/pricing'
 export function RevenuePage() {
   const { orders } = useProductStore()
   const summary = monthlySummary(orders)
+  const averageOrderValue = orders.length > 0 ? Math.round(summary.totalSales / orders.length) : 0
 
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <div className="flex flex-col gap-6 pb-12">
       <AdminTitle
         title="Gross Sales & Revenue Analytics"
-        detail="Monitor customer sales volume, average order values, and category revenue performance."
+        detail="Monitor customer sales volume, average order values, and operator margin performance."
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard label="Gross Store Sales" value={formatNaira(summary.totalSales)} tone="emerald" subtitle="All processed payments" />
-        <KpiCard label="Average Order Value" value={formatNaira(Math.round(summary.totalSales / (orders.length || 1)))} tone="blue" subtitle="Per completed checkout" />
-        <KpiCard label="Total Orders" value={`${orders.length} Orders`} tone="gold" subtitle="Fulfilled this month" />
-        <KpiCard label="Net Store Margin" value={formatNaira(summary.markupEarned)} tone="ink" subtitle="Operator markup profit" />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <KpiCard
+          label="Gross Store Sales"
+          value={formatNaira(summary.totalSales)}
+          tone="cobalt"
+          subtitle="All processed payments"
+        />
+        <KpiCard
+          label="Average Order Value"
+          value={formatNaira(averageOrderValue)}
+          tone="ink"
+          subtitle="Per completed checkout"
+        />
+        <KpiCard
+          label="Total Orders"
+          value={`${orders.length}`}
+          tone="amber"
+          subtitle="Recorded orders"
+        />
+        <KpiCard
+          label="Net Store Margin"
+          value={formatNaira(summary.markupEarned)}
+          tone="success"
+          subtitle="Operator markup profit"
+        />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
-        <h2 className="font-['Outfit'] font-black text-base text-slate-900">Gross Sales Trajectory (Naira)</h2>
-        <RevenueAreaChart />
-      </div>
+      <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+        <div className="border-b border-[#E5E7EB] pb-4">
+          <h2 className="text-base font-bold tracking-tight text-[#0B1220]">
+            Gross Sales Trajectory (NGN)
+          </h2>
+          <p className="mt-0.5 text-xs text-[#5E6675]">
+            Aggregated chronologically from live order records
+          </p>
+        </div>
+        <RevenueAreaChart orders={orders} />
+      </section>
     </div>
   )
 }

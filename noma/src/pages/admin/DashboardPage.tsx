@@ -8,13 +8,13 @@ export function DashboardPage() {
   const { orders, products } = useProductStore()
 
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <div className="flex flex-col gap-6 pb-12">
       <AdminTitle
         title="Monthly Executive Summary"
-        detail="Supplier wholesale cost and profit markup margins stay strictly separated for maximum clarity."
+        detail="Supplier wholesale cost and profit markup margins stay strictly separated for operational clarity."
       />
       <MonthlySummaryCards orders={orders} />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DashboardRevenueChart />
         <NeedsAttention products={products} />
       </div>
