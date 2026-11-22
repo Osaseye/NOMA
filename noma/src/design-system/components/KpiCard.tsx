@@ -1,43 +1,92 @@
-import { HiArrowTrendingUp, HiSparkles, HiBanknotes, HiBuildingStorefront } from 'react-icons/hi2'
+import type { ReactNode } from 'react'
+import { Bank, Sparkle, Storefront, TrendUp } from '@phosphor-icons/react'
+
+export type KpiTone = 'ink' | 'cobalt' | 'amber' | 'success' | 'blue' | 'gold' | 'emerald'
+type NormalizedTone = 'ink' | 'cobalt' | 'amber' | 'success'
+
+const normalizeTone = (tone: KpiTone): NormalizedTone => {
+  switch (tone) {
+    case 'blue':
+    case 'cobalt':
+      return 'cobalt'
+    case 'gold':
+    case 'amber':
+      return 'amber'
+    case 'emerald':
+    case 'success':
+      return 'success'
+    case 'ink':
+    default:
+      return 'ink'
+  }
+}
+
+const toneMeta: Record<
+  NormalizedTone,
+  {
+    bar: string
+    iconBox: string
+    Icon: typeof TrendUp
+  }
+> = {
+  ink: {
+    bar: 'bg-[#0B1220]',
+    iconBox: 'bg-[#F6F7F9] border-[#E5E7EB] text-[#0B1220]',
+    Icon: Storefront,
+  },
+  cobalt: {
+    bar: 'bg-[#1049EB]',
+    iconBox: 'bg-[#EEF3FE] border-[#1049EB]/20 text-[#1049EB]',
+    Icon: TrendUp,
+  },
+  amber: {
+    bar: 'bg-[#FEB719]',
+    iconBox: 'bg-[#FFFBEB] border-[#FDE68A] text-[#B45309]',
+    Icon: Sparkle,
+  },
+  success: {
+    bar: 'bg-[#15803D]',
+    iconBox: 'bg-[#F0FDF4] border-[#BBF7D0] text-[#15803D]',
+    Icon: Bank,
+  },
+}
 
 export function KpiCard({
   label,
   value,
-  tone = 'blue',
+  tone = 'cobalt',
   subtitle,
+  icon,
 }: {
   label: string
   value: string
-  tone?: 'blue' | 'gold' | 'ink' | 'emerald'
+  tone?: KpiTone
   subtitle?: string
+  icon?: ReactNode
 }) {
-  const styles = {
-    blue: 'border-blue-200 bg-blue-50/40 text-blue-900',
-    gold: 'border-amber-200 bg-amber-50/40 text-amber-900',
-    ink: 'border-slate-800 bg-slate-900 text-white',
-    emerald: 'border-emerald-200 bg-emerald-50/40 text-emerald-900',
-  }
-
-  const icons = {
-    blue: HiArrowTrendingUp,
-    gold: HiSparkles,
-    ink: HiBuildingStorefront,
-    emerald: HiBanknotes,
-  }
-
-  const Icon = icons[tone] || HiArrowTrendingUp
+  const normalized = normalizeTone(tone)
+  const meta = toneMeta[normalized]
+  const DefaultIcon = meta.Icon
 
   return (
-    <article className={`relative overflow-hidden rounded-2xl border p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-md ${styles[tone]}`}>
+    <article className="relative overflow-hidden rounded-[8px] border border-[#E5E7EB] bg-white p-4 sm:p-5 transition-colors hover:border-[#D1D5DB]">
+      <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-[2px] ${meta.bar}`} />
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider opacity-75 line-clamp-1">{label}</span>
-        <div className="rounded-xl bg-white/20 p-1.5 sm:p-2 backdrop-blur-xs shrink-0">
-          <Icon className="text-sm sm:text-base" />
+        <span className="line-clamp-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
+          {label}
+        </span>
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] border ${meta.iconBox}`}
+        >
+          {icon ?? <DefaultIcon size={16} weight="regular" />}
         </div>
       </div>
-      <strong className="mt-2 sm:mt-3 block font-['Outfit'] font-black text-lg sm:text-2xl md:text-3xl tracking-tight truncate">{value}</strong>
-      {subtitle && <span className="mt-1 block text-[10px] sm:text-[11px] font-medium opacity-80 line-clamp-1">{subtitle}</span>}
+      <strong className="mt-3 block truncate font-mono tabular-nums text-xl font-bold tracking-tight text-[#0B1220] sm:text-2xl">
+        {value}
+      </strong>
+      {subtitle ? (
+        <span className="mt-1 block line-clamp-1 text-xs text-[#5E6675]">{subtitle}</span>
+      ) : null}
     </article>
   )
 }
-

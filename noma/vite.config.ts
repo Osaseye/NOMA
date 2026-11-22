@@ -8,13 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png', 'icon.PNG'],
+      includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png', 'icon.png'],
       manifest: {
         name: 'NOMA | Online Shopping Marketplace',
         short_name: 'NOMA',
-        description: 'Shop Electronics, Fashion, Solar Power, Appliances & Everyday Essentials at NOMA.',
-        theme_color: '#12203D',
-        background_color: '#12203D',
+        description: 'Shop Electronics, Kitchen Appliances, Solar Power, Smartphones & Home Essentials at NOMA.',
+        theme_color: '#0B1220',
+        background_color: '#FFFFFF',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -38,7 +38,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
       },
     }),
   ],
