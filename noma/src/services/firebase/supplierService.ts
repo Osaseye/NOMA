@@ -23,7 +23,7 @@ export const initialSuppliers: Supplier[] = [
     address: 'Alaba International Market, Ojo, Lagos',
     paymentTerms: 'Net 30 Days',
     notes: 'Primary supplier for generators and heavy power equipment.',
-    logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80',
+    logo: '/images/cat-power.png',
   },
   {
     id: 'sup-2',
@@ -34,7 +34,7 @@ export const initialSuppliers: Supplier[] = [
     address: 'Trade Fair Complex, Badagry Expressway, Lagos',
     paymentTerms: 'Pay on Stock Delivery',
     notes: 'Direct importer of air fryers, blenders, and nonstick cookware sets.',
-    logo: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=400&q=80',
+    logo: '/images/cat-kitchen.png',
   },
   {
     id: 'sup-3',
@@ -45,7 +45,7 @@ export const initialSuppliers: Supplier[] = [
     address: 'Ikeja Industrial Estate, Lagos',
     paymentTerms: 'Consignment / Monthly Settlement',
     notes: 'Authorized distributor for fans, standing coolers, and microwaves.',
-    logo: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=400&q=80',
+    logo: '/images/cat-appliances.png',
   },
 ]
 
@@ -99,8 +99,9 @@ export const supplierService = {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })
-    } catch (err: any) {
-      console.warn('Firestore addSupplier notice (saved locally):', err?.message || err)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('Firestore addSupplier notice (saved locally):', message)
     }
 
     return newSupplier
@@ -112,16 +113,18 @@ export const supplierService = {
         ...updates,
         updatedAt: serverTimestamp(),
       })
-    } catch (err: any) {
-      console.warn('Firestore updateSupplier notice (updated locally):', err?.message || err)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('Firestore updateSupplier notice (updated locally):', message)
     }
   },
 
   deleteSupplier: async (id: string) => {
     try {
       await deleteDoc(doc(db, SUPPLIERS_COLLECTION, id))
-    } catch (err: any) {
-      console.warn('Firestore deleteSupplier notice (removed locally):', err?.message || err)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('Firestore deleteSupplier notice (removed locally):', message)
     }
   },
 }
