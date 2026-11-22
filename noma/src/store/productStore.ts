@@ -36,7 +36,7 @@ interface ProductStoreState {
 
   // Order actions
   updateOrderStatus: (orderId: string, status: OrderStatus) => void
-  addOrder: (order: Order) => void
+  addOrder: (order: Order) => Promise<Order>
   setOrders: (orders: Order[]) => void
 
   // Customer actions
@@ -240,13 +240,34 @@ export const useProductStore = create<ProductStoreState>()(
         })
       },
 
-      addOrder: (order) => {
+      addOrder: async (order) => {
+        const optimisticId = order.id?.trim() || `NMA-PENDING-${Date.now()}`
+        const optimisticOrder: Order = {
+          ...order,
+          id: optimisticId,
+          createdAt: order.createdAt || new Date().toISOString(),
+        }
+
         set((state) => ({
-          orders: [order, ...state.orders],
+          orders: [optimisticOrder, ...state.orders.filter((o) => o.id !== optimisticId)],
         }))
-        orderService.addOrder(order).catch((err) => {
+
+        try {
+          const created = await orderService.addOrder(order)
+          set((state) => ({
+            orders: [
+              created,
+              ...state.orders.filter((o) => o.id !== optimisticId && o.id !== created.id),
+            ],
+          }))
+          return created
+        } catch (err) {
+          set((state) => ({
+            orders: state.orders.filter((o) => o.id !== optimisticId),
+          }))
           console.error('Failed to add order to Firestore:', err)
-        })
+          throw err
+        }
       },
 
       setOrders: (orders) => set({ orders }),

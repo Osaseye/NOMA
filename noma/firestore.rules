@@ -1,39 +1,86 @@
 rules_version = '2';
+
+// Target Firebase Firestore database: `noma` (configured in src/lib/firebase.ts).
+// Deploy explicitly to the named database via:
+//   firebase deploy --only firestore:rules
+// with firebase.json pointing `"firestore": [{ "database": "noma", "rules": "firestore.rules" }]`.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Global permissive access rule to ensure smooth Admin operations across all collections
-    match /{document=**} {
-      allow read, write: if true;
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Explicit collection declarations
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Catalog, categories, and storefront settings: public read, admin-only write
     match /products/{productId} {
-      allow read, write: if true;
-    }
-
-    match /suppliers/{supplierId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /categories/{categoryId} {
-      allow read, write: if true;
-    }
-
-    match /orders/{orderId} {
-      allow read, write: if true;
-    }
-
-    match /reviews/{reviewId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /siteSettings/{settingId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
+    // Supplier directory & wholesale cost terms: strictly admin-only
+    match /suppliers/{supplierId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Product reviews: public sees approved reviews only; rating must be 1..5 on create
+    match /reviews/{reviewId} {
+      allow read: if resource.data.status == 'approved' || isAdmin();
+      allow create: if request.resource.data.rating is number &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5;
+      allow update, delete: if isAdmin();
+    }
+
+    // Orders:
+    // - Guest & customer checkout may create valid orders (total > 0, customer name string)
+    // - Direct document lookup by exact Order ID (`allow get`) supports guest tracking
+    // - Collection queries (`allow list`) are restricted to admins or the owning user's orders
+    // - Status changes & deletions are admin-only
+    match /orders/{orderId} {
+      allow create: if request.resource.data.total is number &&
+        request.resource.data.total > 0 &&
+        request.resource.data.customer is string;
+      allow get: if true;
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // User profiles:
+    // - Initial admin bootstrap note: `!exists(/databases/$(database)/documents/users/$(userId))`
+    //   permits creating the initial `users/{uid}` profile (including the first admin operator
+    //   via `/admin/register`) when no document exists for that UID yet.
+    // - After initial admin accounts are seeded in production, tighten `allow create` to
+    //   `request.resource.data.role == 'customer'` and provision further admins exclusively
+    //   through Firebase Admin SDK / custom claims or the Firebase Console.
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() &&
+        request.auth.uid == userId &&
+        (
+          request.resource.data.role == 'customer' ||
+          !exists(/databases/$(database)/documents/users/$(userId))
+        );
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (request.auth.uid == userId && request.resource.data.role == resource.data.role)
+      );
+      allow delete: if isAdmin();
     }
   }
 }

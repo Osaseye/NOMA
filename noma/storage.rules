@@ -1,33 +1,31 @@
 rules_version = '2';
+
+// Fallback Firebase Storage rules (primary media storage runs on Cloudflare R2 via /api/media/upload).
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Helper function for admin verification via Firestore database 'noma'
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isAdmin() {
       return isSignedIn() &&
+        firestore.exists(/databases/noma/documents/users/$(request.auth.uid)) &&
         firestore.get(/databases/noma/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    function isImage() {
-      return request.resource.contentType.matches('image/.*');
+    function isSafeImage() {
+      return request.resource.contentType.matches('image/(jpeg|jpg|png|webp|avif)');
     }
 
     function isUnder10MB() {
-      return request.resource.size < 10 * 1024 * 1024;
+      return request.resource.size <= 10 * 1024 * 1024;
     }
 
-    // =======================================================
-    // STORAGE ACCESS RULES
-    // =======================================================
-    // - Public Read: Product & banner images can be viewed by all storefront visitors
-    // - Admin Write: Only authenticated admins can upload images under 10MB
+    // Public read for product & banner assets; admin-only image uploads up to 10 MB
     match /{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && isImage() && isUnder10MB();
+      allow write: if isAdmin() && isSafeImage() && isUnder10MB();
     }
   }
 }

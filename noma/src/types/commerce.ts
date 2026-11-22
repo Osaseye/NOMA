@@ -43,6 +43,7 @@ export type Product = {
   supplierName?: string
   finalPrice: number
   basePrice: number
+  compareAtPrice?: number
   stockQty: number
   rating: number
   reviewsCount?: number
@@ -96,6 +97,24 @@ export type CartLine = {
   quantity: number
 }
 
+export type CartLineEntry = {
+  key: string
+  productId: string
+  size?: string
+  quantity: number
+}
+
+export type OrderItem = {
+  productId: string
+  slug: string
+  name: string
+  image: string
+  unitPrice: number
+  basePrice: number
+  quantity: number
+  size?: string
+}
+
 export type Order = {
   id: string
   customer: string
@@ -107,6 +126,16 @@ export type Order = {
   baseAmountOwed: number
   markupEarned: number
   paymentRef: string
+  items?: OrderItem[]
+  email?: string
+  deliveryMethod?: 'standard' | 'express'
+  paymentMethod?: string
+  address?: string
+  city?: string
+  state?: string
+  neighborhood?: string
+  createdAt?: string
+  userId?: string
 }
 
 export type Customer = {

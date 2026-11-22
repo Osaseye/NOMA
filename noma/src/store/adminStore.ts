@@ -31,6 +31,8 @@ export interface SiteSettings {
   cloudinaryCloudName?: string
   cloudinaryUploadPreset?: string
   cloudflareBucketUrl?: string
+  cloudflareUploadEndpoint?: string
+  cloudflarePublicUrl?: string
 }
 
 interface AdminState {
@@ -169,6 +171,8 @@ export const useAdminStore = create<AdminState>()(
           cloudinaryCloudName: '',
           cloudinaryUploadPreset: '',
           cloudflareBucketUrl: '',
+          cloudflareUploadEndpoint: '/api/media/upload',
+          cloudflarePublicUrl: '',
         }
         set({ settings: emptySettings })
         settingsService.updateSiteSettings(emptySettings).catch((err) => {

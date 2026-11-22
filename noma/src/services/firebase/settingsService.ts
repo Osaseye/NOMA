@@ -5,20 +5,22 @@ import type { SiteSettings } from '../../store/adminStore'
 const SETTINGS_DOC_REF = doc(db, 'siteSettings', 'global')
 
 export const initialSiteSettings: SiteSettings = {
-  allProductsBannerImage: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&w=1000&q=80',
+  allProductsBannerImage: '/images/catalog-banner-all.png',
   heroBanners: [],
   todaysDealsProductIds: [],
   todaysDealsEndTimestamp: Date.now() + 86400000 * 2,
   trendingProductIds: [],
-  announcementText: '⚡ WELCOME TO NOMA STORES - LIVE FIREBASE BACKEND ACTIVE',
+  announcementText: 'Transparent Naira pricing across Nigeria — delivery fees confirmed before checkout.',
   announcementActive: true,
-  supportPhone: '0803 000 NOMA',
-  supportEmail: 'support@noma.ng',
+  supportPhone: '+234 803 000 6662',
+  supportEmail: 'support@shopnoma.com',
   whatsappNumber: '2348030006662',
   storageProvider: 'firebase',
   cloudinaryCloudName: '',
   cloudinaryUploadPreset: '',
   cloudflareBucketUrl: '',
+  cloudflareUploadEndpoint: '/api/media/upload',
+  cloudflarePublicUrl: '',
 }
 
 export const settingsService = {
@@ -43,12 +45,17 @@ export const settingsService = {
             cloudinaryCloudName: data.cloudinaryCloudName || '',
             cloudinaryUploadPreset: data.cloudinaryUploadPreset || '',
             cloudflareBucketUrl: data.cloudflareBucketUrl || '',
+            cloudflareUploadEndpoint:
+              data.cloudflareUploadEndpoint || initialSiteSettings.cloudflareUploadEndpoint,
+            cloudflarePublicUrl: data.cloudflarePublicUrl || '',
           })
         } else {
-          // Initialize document if missing
+          // Initialize document if missing (only succeeds when signed in as admin)
           setDoc(SETTINGS_DOC_REF, {
             ...initialSiteSettings,
             createdAt: serverTimestamp(),
+          }).catch((err) => {
+            console.warn('Skipped initializing siteSettings document:', err?.message || err)
           })
           callback(initialSiteSettings)
         }
