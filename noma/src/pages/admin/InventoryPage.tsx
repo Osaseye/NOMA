@@ -9,7 +9,7 @@ export function InventoryPage() {
     <div className="flex flex-col gap-6 pb-12">
       <AdminTitle
         title="Stock & Inventory Control"
-        detail="Monitor warehouse stock health levels, low-stock notifications, and instant quantity restocking."
+        detail="Monitor warehouse stock health levels, low-stock alerts, and instant quantity restocking."
       />
       <InventoryTable products={products} />
     </div>

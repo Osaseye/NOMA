@@ -11,7 +11,7 @@ export function ProductEditorPage() {
   const product = isNew ? undefined : products.find((item) => item.id === productId)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-12">
       <AdminTitle
         title={isNew ? 'Create New Storefront Product' : `Edit Product: ${product?.name || productId}`}
         detail="Supplier base costs and profit markup margins remain visible only to authenticated operators."

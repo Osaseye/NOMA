@@ -1,22 +1,32 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  HiSparkles,
-  HiCheckCircle,
-  HiArrowLeft,
-  HiArrowUpTray,
-  HiPlus,
-  HiTrash,
-  HiPhoto,
-  HiStar,
-} from 'react-icons/hi2'
-import type { Product, CategoryId, ProductSizeVariant } from '../../types/commerce'
-import { formatNaira, getMarkupAmount } from '../../utils/pricing'
+  ArrowLeft,
+  Baby,
+  Check,
+  CheckCircle,
+  Image as ImageIcon,
+  Plus,
+  Sneaker,
+  SpinnerGap,
+  Star,
+  Trash,
+  TShirt,
+  UploadSimple,
+  X,
+} from '@phosphor-icons/react'
+import { toast } from 'sonner'
+import { storageService } from '../../services/firebase/storageService'
 import { useProductStore } from '../../store/productStore'
 import { useSupplierStore } from '../../store/supplierStore'
-import { storageService } from '../../services/firebase/storageService'
-import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import type { CategoryId, Product, ProductSizeVariant } from '../../types/commerce'
+import { formatNaira, getMarkupAmount } from '../../utils/pricing'
+
+const inputBaseClass =
+  'w-full rounded-[6px] border border-[#D1D5DB] bg-white p-2.5 text-xs font-medium text-[#0B1220] placeholder:text-[#5E6675]/70 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15'
+
+const labelBaseClass =
+  'text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]'
 
 export function ProductEditorForm({ product }: { product?: Product }) {
   const navigate = useNavigate()
@@ -30,28 +40,27 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   const [category, setCategory] = useState<CategoryId>(
     (product?.category as CategoryId) || (categories[0]?.id as CategoryId) || 'electronics'
   )
-  // Resolve subcategory initial value if it was saved as an ID (e.g. sub-1234567)
+
   const initialSubCategory = useMemo(() => {
     const raw = product?.subCategory || product?.subcategory || ''
     if (!raw) return ''
     for (const cat of categories) {
-      const match = cat.subcategories?.find((s) => s.id === raw || s.label.toLowerCase() === raw.toLowerCase())
+      const match = cat.subcategories?.find(
+        (s) => s.id === raw || s.label.toLowerCase() === raw.toLowerCase()
+      )
       if (match) return match.label
     }
     return raw.startsWith('sub-') ? '' : raw
   }, [product, categories])
 
-  const [subCategory, setSubCategory] = useState(initialSubCategory)
+  const [subCategoryInput, setSubCategoryInput] = useState<string | null>(null)
+  const subCategory = subCategoryInput !== null ? subCategoryInput : initialSubCategory
 
-  useEffect(() => {
-    if (initialSubCategory && !subCategory) {
-      setSubCategory(initialSubCategory)
-    }
-  }, [initialSubCategory])
   const [supplierId, setSupplierId] = useState(product?.supplierId || '')
   const [brand, setBrand] = useState(product?.brand || 'Noma')
   const [basePrice, setBasePrice] = useState<number>(product?.basePrice ?? 100000)
   const [finalPrice, setFinalPrice] = useState<number>(product?.finalPrice ?? 120000)
+  const [compareAtPrice, setCompareAtPrice] = useState<number>(product?.compareAtPrice ?? 0)
   const [stockQty, setStockQty] = useState<number>(product?.stockQty ?? 15)
   const [badge, setBadge] = useState(product?.badge ?? 'Best Seller')
   const [discountBadge, setDiscountBadge] = useState(product?.discountBadge || '')
@@ -65,25 +74,23 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   const [customSizeQty, setCustomSizeQty] = useState<number>(5)
 
   // Images state
-  const initialImages = Array.isArray(product?.images) && product.images.length > 0
-    ? product.images
-    : product?.image
-    ? [product.image]
-    : []
+  const initialImages =
+    Array.isArray(product?.images) && product.images.length > 0
+      ? product.images
+      : product?.image
+      ? [product.image]
+      : []
   const [images, setImages] = useState<string[]>(initialImages)
   const [newImageUrl, setNewImageUrl] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
 
-  // Description
+  // Description & Highlights
   const [description, setDescription] = useState(product?.description || '')
-
-  // "What's in the Box" state
   const [whatsInTheBox, setWhatsInTheBox] = useState<string[]>(
     Array.isArray(product?.whatsInTheBox) ? product.whatsInTheBox : []
   )
   const [boxItemInput, setBoxItemInput] = useState('')
 
-  // "Key Highlights / Features" state
   const [keyFeatures, setKeyFeatures] = useState<string[]>(
     Array.isArray(product?.keyFeatures)
       ? product.keyFeatures
@@ -92,23 +99,20 @@ export function ProductEditorForm({ product }: { product?: Product }) {
       : []
   )
   const [featureInput, setFeatureInput] = useState('')
-
   const [successMsg, setSuccessMsg] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Selected category object & markup
   const selectedCategoryObj = categories.find((c) => c.id === category)
   const availableSubCategories = selectedCategoryObj?.subcategories || []
   const categoryMarkupPercent = selectedCategoryObj?.defaultMarkupPercent ?? 20
 
-  // Selected supplier name
   const selectedSupplierObj = suppliers.find((s) => s.id === supplierId)
   const supplierName = selectedSupplierObj?.name || product?.supplierName || ''
 
-  // Markup calculation
   const markupAmount = getMarkupAmount(finalPrice, basePrice)
-  const markupPercent = basePrice > 0 ? Math.round(((finalPrice - basePrice) / basePrice) * 100) : 0
+  const markupPercent =
+    basePrice > 0 ? Math.round(((finalPrice - basePrice) / basePrice) * 100) : 0
 
-  // Auto-calculate finalPrice when basePrice changes
   const handleBasePriceChange = (newBaseCost: number) => {
     setBasePrice(newBaseCost)
     if (newBaseCost > 0) {
@@ -117,10 +121,9 @@ export function ProductEditorForm({ product }: { product?: Product }) {
     }
   }
 
-  // When category changes, recalculate suggested finalPrice
   const handleCategoryChange = (newCat: CategoryId) => {
     setCategory(newCat)
-    setSubCategory('')
+    setSubCategoryInput('')
     const targetCat = categories.find((c) => c.id === newCat)
     const targetMarkup = targetCat?.defaultMarkupPercent ?? 20
     if (basePrice > 0) {
@@ -129,12 +132,10 @@ export function ProductEditorForm({ product }: { product?: Product }) {
     }
   }
 
-  // Multi-file upload handler
   const handleMultipleFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files
     if (!fileList || fileList.length === 0) return
 
-    // Immediately copy files to array and reset target so selecting the same file again works
     const files = Array.from(fileList)
     e.target.value = ''
 
@@ -144,39 +145,36 @@ export function ProductEditorForm({ product }: { product?: Product }) {
       const uploadPromises = files.map((file) => storageService.uploadImage(file, 'products'))
       const downloadUrls = await Promise.all(uploadPromises)
       setImages((prev) => [...prev, ...downloadUrls])
-      toast.success(`${downloadUrls.length} image(s) added to product gallery!`, { id: toastId })
-    } catch (err: any) {
+      toast.success(`${downloadUrls.length} image(s) added to gallery.`, { id: toastId })
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to upload image(s)'
       console.error('Failed to upload images:', err)
-      toast.error(err?.message || 'Failed to upload image(s)', { id: toastId })
+      toast.error(message, { id: toastId })
     } finally {
       setUploadingImage(false)
     }
   }
 
-  // Add image by URL
   const handleAddImageUrl = () => {
     if (!newImageUrl.trim()) return
     setImages((prev) => [...prev, newImageUrl.trim()])
     setNewImageUrl('')
-    toast.success('Image URL added to gallery')
+    toast.success('Image URL added to gallery.')
   }
 
-  // Remove an image from gallery
   const handleRemoveImage = (indexToRemove: number) => {
     setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove))
   }
 
-  // Set an image as primary (move to index 0)
   const handleSetPrimaryImage = (indexToPrimary: number) => {
     setImages((prev) => {
       const target = prev[indexToPrimary]
       const remaining = prev.filter((_, idx) => idx !== indexToPrimary)
       return [target, ...remaining]
     })
-    toast.success('Primary cover image updated')
+    toast.success('Primary cover image updated.')
   }
 
-  // "What's in the Box" handlers
   const handleAddBoxItem = () => {
     if (!boxItemInput.trim()) return
     setWhatsInTheBox((prev) => [...prev, boxItemInput.trim()])
@@ -187,7 +185,6 @@ export function ProductEditorForm({ product }: { product?: Product }) {
     setWhatsInTheBox((prev) => prev.filter((_, i) => i !== idx))
   }
 
-  // "Key Highlights" handlers
   const handleAddFeature = () => {
     if (!featureInput.trim()) return
     setKeyFeatures((prev) => [...prev, featureInput.trim()])
@@ -198,7 +195,6 @@ export function ProductEditorForm({ product }: { product?: Product }) {
     setKeyFeatures((prev) => prev.filter((_, i) => i !== idx))
   }
 
-  // Sizing & Variant Inventory Handlers
   const handleAddPresetSizes = (presetList: string[]) => {
     setSizes((prev) => {
       const existingSizes = new Set(prev.map((s) => s.size))
@@ -210,7 +206,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
       setStockQty(total)
       return combined
     })
-    toast.success('Preset sizes added!')
+    toast.success('Preset sizes added.')
   }
 
   const handleAddCustomSize = () => {
@@ -220,12 +216,15 @@ export function ProductEditorForm({ product }: { product?: Product }) {
       toast.error('This size already exists.')
       return
     }
-    const updated = [...sizes, { size: sizeName, stockQty: Math.max(0, Number(customSizeQty) || 0) }]
+    const updated = [
+      ...sizes,
+      { size: sizeName, stockQty: Math.max(0, Number(customSizeQty) || 0) },
+    ]
     setSizes(updated)
     setCustomSizeInput('')
     setCustomSizeQty(5)
     setStockQty(updated.reduce((sum, s) => sum + s.stockQty, 0))
-    toast.success(`Size "${sizeName}" added!`)
+    toast.success(`Size "${sizeName}" added.`)
   }
 
   const handleUpdateSizeQty = (index: number, newQty: number) => {
@@ -247,8 +246,6 @@ export function ProductEditorForm({ product }: { product?: Product }) {
     })
   }
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isSubmitting) return
@@ -260,7 +257,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
 
     setIsSubmitting(true)
 
-    const mainCoverImage = images[0] || 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1200&q=80'
+    const mainCoverImage = images[0] || '/images/catalog-banner-all.png'
 
     const payload = {
       name: name.trim(),
@@ -271,6 +268,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
       brand: brand.trim() || 'Noma',
       basePrice: Number(basePrice) || 0,
       finalPrice: Number(finalPrice) || 0,
+      compareAtPrice: compareAtPrice > 0 ? Number(compareAtPrice) : undefined,
       stockQty: Number(stockQty) || 0,
       badge: badge.trim() || '',
       discountBadge: discountBadge.trim() || '',
@@ -287,7 +285,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
     try {
       if (isEditing && product) {
         await updateProduct(product.id, payload)
-        toast.success('Product updated live on storefront!')
+        toast.success('Product updated live on storefront.')
       } else {
         await addProduct({
           ...payload,
@@ -295,93 +293,97 @@ export function ProductEditorForm({ product }: { product?: Product }) {
           rating: 0,
           reviewsCount: 0,
         })
-        toast.success(`Product "${name}" published live on storefront!`)
+        toast.success(`Product "${name}" published live on storefront.`)
       }
 
       setSuccessMsg(true)
       setTimeout(() => {
         setSuccessMsg(false)
         navigate('/admin/products')
-      }, 800)
-    } catch (err: any) {
-      console.error('Failed to save product to database:', err)
-      toast.error(`Error saving product: ${err?.message || 'Please check your connection and try again.'}`)
+      }, 600)
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Please check your connection and try again.'
+      console.error('Failed to save product:', err)
+      toast.error(`Error saving product: ${message}`)
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 md:gap-8 pb-12 font-['Outfit',sans-serif]">
-      {successMsg && (
-        <div className="flex items-center gap-2 rounded-xl bg-emerald-100 p-4 text-xs font-bold text-emerald-800 shadow-md">
-          <HiCheckCircle size={20} /> Product saved & published live! Redirecting to catalog...
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 pb-12">
+      {successMsg ? (
+        <div className="flex items-center gap-2 rounded-[8px] border border-[#BBF7D0] bg-[#F0FDF4] p-4 text-xs font-semibold text-[#15803D]">
+          <CheckCircle size={18} weight="regular" />
+          <span>Product saved and published live. Redirecting to catalog...</span>
         </div>
-      )}
+      ) : null}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={() => navigate('/admin/products')}
-          className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5E6675] transition-colors hover:text-[#0B1220]"
         >
-          <HiArrowLeft size={16} /> Back to Products Catalog
+          <ArrowLeft size={15} weight="regular" />
+          <span>Back to Products Catalog</span>
         </button>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => navigate('/admin/products')}
-            className="flex-1 sm:flex-none rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+            className="flex-1 rounded-[6px] border border-[#E5E7EB] bg-white px-4 py-2 text-xs font-semibold text-[#374151] transition-colors hover:bg-[#F6F7F9] sm:flex-none"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={uploadingImage || isSubmitting}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B] disabled:opacity-50 sm:flex-none"
           >
             {isSubmitting ? (
               <>
-                <Loader2 size={16} className="animate-spin" />
+                <SpinnerGap size={15} weight="regular" className="animate-spin" />
                 <span>Saving...</span>
               </>
             ) : isEditing ? (
               'Save & Update Product'
             ) : (
-              'Create Product Card'
+              'Create Product'
             )}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left 2 Cols: Basic Details, Pricing, Packaging & Highlights */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="flex flex-col gap-6 lg:col-span-2">
           {/* Basic Info */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3">
+          <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+            <h3 className="border-b border-[#E5E7EB] pb-3 text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
               Basic Product Information
             </h3>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase text-slate-600">Product Title *</label>
+              <label className={labelBaseClass}>Product Title *</label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Samsung 55 UHD 4K Smart TV"
-                className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                className={inputBaseClass}
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase text-slate-600">Main Category *</label>
+                <label className={labelBaseClass}>Main Category *</label>
                 <select
                   value={category}
                   onChange={(e) => handleCategoryChange(e.target.value as CategoryId)}
-                  className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 bg-white"
+                  className={inputBaseClass}
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -392,14 +394,14 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase text-slate-600">Sub Category</label>
+                <label className={labelBaseClass}>Sub Category</label>
                 {availableSubCategories.length > 0 ? (
                   <select
                     value={subCategory}
-                    onChange={(e) => setSubCategory(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 bg-white"
+                    onChange={(e) => setSubCategoryInput(e.target.value)}
+                    className={inputBaseClass}
                   >
-                    <option value="">-- Select Subcategory --</option>
+                    <option value="">Select Subcategory</option>
                     {availableSubCategories.map((sub) => (
                       <option key={sub.id} value={sub.label}>
                         {sub.label} {sub.ageGroup ? `(${sub.ageGroup})` : ''}
@@ -410,21 +412,21 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                   <input
                     type="text"
                     value={subCategory}
-                    onChange={(e) => setSubCategory(e.target.value)}
-                    placeholder="e.g. Women's Shoes, Mountain Bikes"
-                    className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                    onChange={(e) => setSubCategoryInput(e.target.value)}
+                    placeholder="e.g. Smart 4K TVs"
+                    className={inputBaseClass}
                   />
                 )}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase text-slate-600">Supplier *</label>
+                <label className={labelBaseClass}>Supplier</label>
                 <select
                   value={supplierId}
                   onChange={(e) => setSupplierId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 bg-white"
+                  className={inputBaseClass}
                 >
-                  <option value="">-- Select Supplier --</option>
+                  <option value="">Select Supplier</option>
                   {suppliers.map((sup) => (
                     <option key={sup.id} value={sup.id}>
                       {sup.name}
@@ -434,45 +436,44 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase text-slate-600">Brand Name</label>
+                <label className={labelBaseClass}>Brand Name</label>
                 <input
                   type="text"
                   required
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   placeholder="e.g. Samsung, LG, Noma"
-                  className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  className={inputBaseClass}
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase text-slate-600">Product Details Description</label>
+              <label className={labelBaseClass}>Product Description</label>
               <textarea
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detailed description shown to customers on the product detail page..."
-                className="w-full rounded-xl border border-slate-300 p-3 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                className={inputBaseClass}
               />
             </div>
-          </div>
+          </section>
 
-          {/* Pricing & Profit Psychology with Category Markup auto-calculation */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3 flex items-center justify-between">
-              <span>Pricing & Automatic Category Markup</span>
-              <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                <HiSparkles size={14} /> Category Markup: +{categoryMarkupPercent}%
+          {/* Pricing & Markup */}
+          <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] pb-3">
+              <h3 className="text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
+                Pricing &amp; Automatic Category Markup
+              </h3>
+              <span className="rounded-[4px] bg-[#EEF3FE] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#1049EB]">
+                Category Rule: +{categoryMarkupPercent}%
               </span>
-            </h3>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-bold uppercase text-slate-600">Supplier Base Cost (₦) *</label>
-                  <span className="text-[10px] text-slate-400">Your sourcing cost</span>
-                </div>
+                <label className={labelBaseClass}>Supplier Base Cost (₦) *</label>
                 <input
                   type="number"
                   required
@@ -480,15 +481,13 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                   value={basePrice}
                   onChange={(e) => handleBasePriceChange(Number(e.target.value))}
                   placeholder="e.g. 50000"
-                  className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  className={`${inputBaseClass} font-mono tabular-nums font-semibold`}
                 />
+                <span className="text-[11px] text-[#5E6675]">Operator sourcing cost</span>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-bold uppercase text-slate-600">Customer Final Retail Price (₦) *</label>
-                  <span className="text-[10px] text-emerald-600 font-bold">Auto-calculated (+{categoryMarkupPercent}%)</span>
-                </div>
+                <label className={labelBaseClass}>Customer Retail Price (₦) *</label>
                 <input
                   type="number"
                   required
@@ -496,34 +495,58 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                   value={finalPrice}
                   onChange={(e) => setFinalPrice(Number(e.target.value))}
                   placeholder="e.g. 60000"
-                  className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-emerald-700 outline-none focus:border-emerald-500"
+                  className={`${inputBaseClass} font-mono tabular-nums font-bold text-[#0B1220]`}
                 />
+                <span className="text-[11px] text-[#1049EB]">
+                  Suggested: +{categoryMarkupPercent}% over base
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className={labelBaseClass}>Compare-At Retail Price (₦)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={compareAtPrice || ''}
+                  onChange={(e) => setCompareAtPrice(Math.max(0, Number(e.target.value) || 0))}
+                  placeholder="Optional (e.g. 75000)"
+                  className={`${inputBaseClass} font-mono tabular-nums`}
+                />
+                <span className="text-[11px] text-[#5E6675]">
+                  Optional strike-through on storefront
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-emerald-50 p-4 border border-emerald-200">
-              <div>
-                <span className="text-xs font-bold text-slate-700">Calculated Markup Profit:</span>
-                <span className="ml-2 text-sm font-black text-emerald-800">{formatNaira(markupAmount)}</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[6px] border border-[#BBF7D0] bg-[#F0FDF4] p-4">
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs font-semibold text-[#15803D]">
+                  Calculated Markup Profit:
+                </span>
+                <span className="font-mono tabular-nums text-sm font-bold text-[#15803D]">
+                  {formatNaira(markupAmount)}
+                </span>
               </div>
-              <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-black text-white">
-                +{markupPercent}% Active Margin
+              <span className="rounded-[4px] border border-[#BBF7D0] bg-white px-2.5 py-0.5 font-mono tabular-nums text-xs font-bold text-[#15803D]">
+                +{markupPercent}% Margin
               </span>
             </div>
-          </div>
+          </section>
 
-          {/* "What's in the Box" Packaging Content Manager */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          {/* What's in the Box */}
+          <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
               <div>
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                  What's in the Box (Packaging Contents)
+                <h3 className="text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
+                  What&apos;s in the Box
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  List items included inside the product package for customer clarity.
+                <p className="mt-0.5 text-[11px] text-[#5E6675]">
+                  List items included inside the package for customer clarity.
                 </p>
               </div>
-              <span className="text-xs font-bold text-slate-500">{whatsInTheBox.length} item(s)</span>
+              <span className="font-mono text-xs font-semibold text-[#5E6675]">
+                {whatsInTheBox.length} item(s)
+              </span>
             </div>
 
             <div className="flex gap-2">
@@ -537,53 +560,60 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                     handleAddBoxItem()
                   }
                 }}
-                placeholder="e.g. Power Cable, Remote Control + Batteries, User Manual..."
-                className="flex-1 rounded-xl border border-slate-300 p-2.5 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                placeholder="e.g. Power Cable, Remote Control, User Manual..."
+                className={inputBaseClass}
               />
               <button
                 type="button"
                 onClick={handleAddBoxItem}
-                className="flex items-center gap-1 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors"
+                className="inline-flex shrink-0 items-center gap-1 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
               >
-                <HiPlus size={15} /> Add Item
+                <Plus size={14} weight="regular" />
+                <span>Add</span>
               </button>
             </div>
 
             {whatsInTheBox.length > 0 ? (
-              <div className="flex flex-col gap-2 pt-1">
+              <div className="flex flex-col gap-2">
                 {whatsInTheBox.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-800"
+                    className="flex items-center justify-between rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-3.5 py-2 text-xs font-medium text-[#0B1220]"
                   >
-                    <span>✓ {item}</span>
+                    <span className="flex items-center gap-2">
+                      <Check size={14} weight="regular" className="text-[#15803D]" />
+                      <span>{item}</span>
+                    </span>
                     <button
                       type="button"
                       onClick={() => handleRemoveBoxItem(idx)}
-                      className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                      className="p-1 text-[#5E6675] transition-colors hover:text-[#B91C1C]"
+                      aria-label={`Remove ${item}`}
                     >
-                      <HiTrash size={15} />
+                      <Trash size={14} weight="regular" />
                     </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 italic">No package items added yet.</p>
+              <p className="text-xs text-[#5E6675]">No package items added yet.</p>
             )}
-          </div>
+          </section>
 
-          {/* "Key Highlights / Features" Manager */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          {/* Key Highlights / Specs */}
+          <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
               <div>
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                  Key Product Highlights & Specs
+                <h3 className="text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
+                  Key Product Highlights &amp; Specs
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Highlight key specs displayed as badges on the storefront (e.g. 4K Resolution, 1 Year Warranty).
+                <p className="mt-0.5 text-[11px] text-[#5E6675]">
+                  Highlight specs displayed on the storefront (e.g. 4K Resolution, 1 Year Warranty).
                 </p>
               </div>
-              <span className="text-xs font-bold text-slate-500">{keyFeatures.length} feature(s)</span>
+              <span className="font-mono text-xs font-semibold text-[#5E6675]">
+                {keyFeatures.length} spec(s)
+              </span>
             </div>
 
             <div className="flex gap-2">
@@ -598,99 +628,112 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                   }
                 }}
                 placeholder="e.g. Wireless Remote, 4K UHD, Bluetooth 5.2..."
-                className="flex-1 rounded-xl border border-slate-300 p-2.5 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                className={inputBaseClass}
               />
               <button
                 type="button"
                 onClick={handleAddFeature}
-                className="flex items-center gap-1 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors"
+                className="inline-flex shrink-0 items-center gap-1 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
               >
-                <HiPlus size={15} /> Add Feature
+                <Plus size={14} weight="regular" />
+                <span>Add</span>
               </button>
             </div>
 
             {keyFeatures.length > 0 ? (
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-wrap gap-2">
                 {keyFeatures.map((feat, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-bold text-[#2F5FE3]"
+                    className="inline-flex items-center gap-1.5 rounded-[4px] border border-[#1049EB]/25 bg-[#EEF3FE] px-2.5 py-1 text-xs font-semibold text-[#1049EB]"
                   >
                     <span>{feat}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveFeature(idx)}
-                      className="text-blue-400 hover:text-red-600 transition-colors"
+                      className="text-[#1049EB]/70 transition-colors hover:text-[#B91C1C]"
+                      aria-label={`Remove ${feat}`}
                     >
-                      ✕
+                      <X size={12} weight="regular" />
                     </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 italic">No key features added yet.</p>
+              <p className="text-xs text-[#5E6675]">No key specs added yet.</p>
             )}
-          </div>
+          </section>
 
-          {/* Sizing & Variant Inventory Manager (Footwear & Apparel) */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          {/* Sizing & Variant Inventory Manager */}
+          <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] pb-3">
               <div>
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                  <span>Available Sizes & Per-Size Stock</span>
-                  <span className="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-black text-purple-700">
-                    Footwear & Apparel
+                <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
+                  <span>Available Sizes &amp; Per-Size Stock</span>
+                  <span className="rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] px-2 py-0.5 font-mono text-[10px] font-semibold text-[#374151]">
+                    Variants
                   </span>
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Configure dynamic selectable sizes (e.g. EU 40, 41, 42 or S, M, L) with dedicated stock quantity per size.
+                <p className="mt-0.5 text-[11px] text-[#5E6675]">
+                  Configure selectable sizes (EU 40, S, M, L) with stock counts per variant.
                 </p>
               </div>
-              <span className="text-xs font-bold text-slate-500">{sizes.length} size(s)</span>
+              <span className="font-mono text-xs font-semibold text-[#5E6675]">
+                {sizes.length} size(s)
+              </span>
             </div>
 
             {/* Quick Preset Buttons */}
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-bold uppercase text-slate-500">Quick-Add Size Presets:</span>
+              <span className={labelBaseClass}>Quick-Add Size Presets:</span>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => handleAddPresetSizes(['38', '39', '40', '41', '42', '43', '44', '45', '46'])}
-                  className="rounded-xl border border-purple-200 bg-purple-50/70 px-3 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-100 transition-colors"
+                  onClick={() =>
+                    handleAddPresetSizes(['38', '39', '40', '41', '42', '43', '44', '45', '46'])
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-3 py-1.5 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
                 >
-                  👟 Shoe Sizes (EU 38 - 46)
+                  <Sneaker size={15} weight="regular" />
+                  <span>Shoe Sizes (EU 38 - 46)</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleAddPresetSizes(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'])}
-                  className="rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                  onClick={() =>
+                    handleAddPresetSizes(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'])
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-3 py-1.5 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
                 >
-                  👕 Clothing Sizes (XS - 3XL)
+                  <TShirt size={15} weight="regular" />
+                  <span>Clothing Sizes (XS - 3XL)</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleAddPresetSizes(['0-6M', '6-12M', '1-2Y', '2-3Y', '4-5Y'])}
-                  className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors"
+                  onClick={() =>
+                    handleAddPresetSizes(['0-6M', '6-12M', '1-2Y', '2-3Y', '4-5Y'])
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-3 py-1.5 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
                 >
-                  👶 Baby & Kids (0-6M - 4-5Y)
+                  <Baby size={15} weight="regular" />
+                  <span>Baby &amp; Kids (0-6M - 4-5Y)</span>
                 </button>
-                {sizes.length > 0 && (
+                {sizes.length > 0 ? (
                   <button
                     type="button"
                     onClick={() => {
                       setSizes([])
                       toast.info('All sizes cleared.')
                     }}
-                    className="rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors"
+                    className="rounded-[6px] border border-[#FECACA] bg-[#FEF2F2] px-3 py-1.5 text-xs font-semibold text-[#B91C1C] hover:bg-[#FEE2E2]"
                   >
                     Clear All
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
 
             {/* Custom Size Adder */}
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center gap-2 border-t border-[#E5E7EB] pt-3">
               <input
                 type="text"
                 value={customSizeInput}
@@ -701,57 +744,58 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                     handleAddCustomSize()
                   }
                 }}
-                placeholder="Custom Size (e.g. 47, One Size, 32W/30L)"
-                className="flex-1 rounded-xl border border-slate-300 p-2.5 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                placeholder="Custom Size (e.g. 47, One Size)"
+                className={`${inputBaseClass} min-w-[160px] flex-1`}
               />
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-slate-500">Qty:</span>
+                <span className="text-[11px] font-semibold text-[#5E6675]">Qty:</span>
                 <input
                   type="number"
                   min={0}
                   value={customSizeQty}
                   onChange={(e) => setCustomSizeQty(Number(e.target.value))}
-                  className="w-16 rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 text-center outline-none focus:border-emerald-500"
+                  className="w-16 rounded-[6px] border border-[#D1D5DB] bg-white p-2.5 text-center font-mono text-xs font-bold text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleAddCustomSize}
-                className="flex items-center gap-1 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors"
+                className="inline-flex items-center gap-1 rounded-[6px] bg-[#0B1220] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
               >
-                <HiPlus size={15} /> Add
+                <Plus size={14} weight="regular" />
+                <span>Add</span>
               </button>
             </div>
 
-            {/* Sizes List Table */}
+            {/* Sizes Grid */}
             {sizes.length > 0 ? (
-              <div className="flex flex-col gap-2 pt-2">
-                <span className="text-[10px] font-bold uppercase text-slate-500">Configured Sizes & Stock breakdown:</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              <div className="flex flex-col gap-2 pt-1">
+                <span className={labelBaseClass}>Configured Sizes &amp; Stock Breakdown:</span>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                   {sizes.map((s, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 p-2.5 gap-2"
+                      className="flex items-center justify-between gap-2 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-2.5"
                     >
-                      <span className="rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-extrabold text-[#12203D] shadow-2xs">
-                        Size {s.size}
+                      <span className="rounded-[4px] border border-[#E5E7EB] bg-white px-2.5 py-1 font-mono text-xs font-bold text-[#0B1220]">
+                        {s.size}
                       </span>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-slate-500">Units:</span>
+                        <span className="text-[11px] text-[#5E6675]">Units:</span>
                         <input
                           type="number"
                           min={0}
                           value={s.stockQty}
                           onChange={(e) => handleUpdateSizeQty(idx, Number(e.target.value))}
-                          className="w-14 rounded-lg border border-slate-300 bg-white p-1 text-xs font-bold text-center text-slate-900 outline-none focus:border-emerald-500"
+                          className="w-14 rounded-[4px] border border-[#D1D5DB] bg-white p-1 text-center font-mono text-xs font-bold text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveSize(idx)}
-                          className="text-slate-400 hover:text-red-600 p-1 transition-colors"
+                          className="p-1 text-[#5E6675] hover:text-[#B91C1C]"
                           title="Remove size"
                         >
-                          <HiTrash size={14} />
+                          <Trash size={14} weight="regular" />
                         </button>
                       </div>
                     </div>
@@ -759,39 +803,42 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-400 italic">No sizes configured. Default single product stock quantity will apply.</p>
+              <p className="text-xs text-[#5E6675]">
+                No sizes configured. Default single product stock quantity applies.
+              </p>
             )}
-          </div>
+          </section>
         </div>
 
-        {/* Right Col: Multi-Image Gallery Manager & Stock/Badges */}
+        {/* Right Col: Gallery Manager & Stock/Badges */}
         <div className="flex flex-col gap-6">
-          {/* Multi-Image Gallery Manager */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                Product Photo Gallery ({images.length})
-              </h3>
-            </div>
+          {/* Gallery */}
+          <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+            <h3 className="border-b border-[#E5E7EB] pb-3 text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
+              Product Photo Gallery ({images.length})
+            </h3>
 
-            {/* Primary Cover Image Preview */}
-            <div className="relative h-48 w-full overflow-hidden rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+            {/* Cover Preview */}
+            <div className="relative flex h-48 w-full items-center justify-center overflow-hidden rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9]">
               {images.length > 0 ? (
                 <>
-                  <img src={images[0]} alt="Main Cover" className="h-full w-full object-contain p-2" />
-                  <span className="absolute top-2 left-2 rounded-lg bg-emerald-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
+                  <img
+                    src={images[0]}
+                    alt="Main Cover"
+                    className="h-full w-full object-contain p-2"
+                  />
+                  <span className="absolute left-2.5 top-2.5 rounded-[4px] bg-[#0B1220] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
                     Primary Cover
                   </span>
                 </>
               ) : (
-                <div className="flex flex-col items-center gap-1 text-slate-400">
-                  <HiPhoto size={36} />
-                  <span className="text-xs font-semibold">No images uploaded yet</span>
+                <div className="flex flex-col items-center gap-1.5 text-[#5E6675]">
+                  <ImageIcon size={32} weight="regular" />
+                  <span className="text-xs font-medium">No images uploaded yet</span>
                 </div>
               )}
             </div>
 
-            {/* Hidden native file input */}
             <input
               ref={fileInputRef}
               id="product-photo-upload"
@@ -803,63 +850,63 @@ export function ProductEditorForm({ product }: { product?: Product }) {
               className="hidden"
             />
 
-            {/* Upload Multiple Files Button */}
             <button
               type="button"
               disabled={uploadingImage}
               onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-500 bg-emerald-50/70 p-4 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100 active:scale-[0.99] transition-all text-center select-none disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-[6px] border border-dashed border-[#D1D5DB] bg-[#F6F7F9] p-4 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE]/50 disabled:opacity-60"
             >
               {uploadingImage ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 size={18} className="animate-spin text-emerald-600" />
+                <>
+                  <SpinnerGap size={16} weight="regular" className="animate-spin text-[#1049EB]" />
                   <span>Uploading Images to Storage...</span>
-                </div>
+                </>
               ) : (
-                <div className="flex items-center gap-2">
-                  <HiArrowUpTray size={18} className="text-emerald-700" />
+                <>
+                  <UploadSimple size={16} weight="regular" className="text-[#1049EB]" />
                   <span>Upload Photos from Device</span>
-                </div>
+                </>
               )}
             </button>
 
-            {/* Add Image by Web URL */}
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
                 placeholder="Or paste image URL (https://...)"
-                className="flex-1 rounded-xl border border-slate-300 p-2 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                className={inputBaseClass}
               />
               <button
                 type="button"
                 onClick={handleAddImageUrl}
-                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-900 active:scale-95 transition-all"
+                className="shrink-0 rounded-[6px] bg-[#0B1220] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
               >
                 Add URL
               </button>
             </div>
 
-            {/* All Thumbnails Grid with Primary / Remove controls */}
-            {images.length > 0 && (
-              <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-bold uppercase text-slate-500">
-                  All Gallery Images (Click star to set as Cover)
+            {images.length > 0 ? (
+              <div className="flex flex-col gap-2 border-t border-[#E5E7EB] pt-3">
+                <span className={labelBaseClass}>
+                  Gallery Thumbnails (Star sets cover)
                 </span>
                 <div className="grid grid-cols-3 gap-2.5">
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className={`group relative aspect-square rounded-xl border-2 overflow-hidden bg-slate-50 p-1 flex items-center justify-center ${
-                        idx === 0 ? 'border-emerald-500 shadow-2xs' : 'border-slate-200'
+                      className={`group relative flex aspect-square items-center justify-center overflow-hidden rounded-[6px] border bg-[#F6F7F9] p-1 ${
+                        idx === 0 ? 'border-[#1049EB] ring-1 ring-[#1049EB]' : 'border-[#E5E7EB]'
                       }`}
                     >
-                      <img src={img} alt={`Thumb ${idx}`} className="h-full w-full object-contain" />
-                      
-                      {/* Actions overlay: visible on hover on desktop, always visible on mobile/touch */}
-                      <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
-                        {idx !== 0 && (
+                      <img
+                        src={img}
+                        alt={`Thumbnail ${idx + 1}`}
+                        className="h-full w-full object-contain"
+                      />
+
+                      <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-[#0B1220]/45 p-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                        {idx !== 0 ? (
                           <button
                             type="button"
                             onClick={(e) => {
@@ -867,11 +914,11 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                               handleSetPrimaryImage(idx)
                             }}
                             title="Set as Primary Cover"
-                            className="p-1.5 rounded-lg bg-white text-amber-500 shadow hover:bg-amber-50 active:scale-95"
+                            className="rounded-[4px] bg-white p-1.5 text-[#B45309] hover:bg-[#FFFBEB]"
                           >
-                            <HiStar size={14} />
+                            <Star size={13} weight="fill" className="text-[#FEB719]" />
                           </button>
-                        )}
+                        ) : null}
                         <button
                           type="button"
                           onClick={(e) => {
@@ -879,32 +926,26 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                             handleRemoveImage(idx)
                           }}
                           title="Remove Photo"
-                          className="p-1.5 rounded-lg bg-white text-red-600 shadow hover:bg-red-50 active:scale-95"
+                          className="rounded-[4px] bg-white p-1.5 text-[#B91C1C] hover:bg-[#FEF2F2]"
                         >
-                          <HiTrash size={14} />
+                          <Trash size={13} weight="regular" />
                         </button>
                       </div>
-
-                      {idx === 0 && (
-                        <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
-                      )}
                     </div>
                   ))}
                 </div>
               </div>
-            )}
-          </div>
+            ) : null}
+          </section>
 
-          {/* Inventory, Badges & Freight */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3">
-              Stock & Badges
+          {/* Stock & Badges */}
+          <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
+            <h3 className="border-b border-[#E5E7EB] pb-3 text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
+              Stock &amp; Badges
             </h3>
 
-            <div>
-              <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                Stock Quantity Available *
-              </label>
+            <div className="flex flex-col gap-1.5">
+              <label className={labelBaseClass}>Stock Quantity Available *</label>
               <input
                 type="number"
                 required
@@ -912,73 +953,69 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                 value={stockQty}
                 onChange={(e) => setStockQty(Number(e.target.value))}
                 placeholder="15"
-                className="w-full rounded-xl border border-slate-300 p-3 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                className={`${inputBaseClass} font-mono tabular-nums font-bold`}
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                  Badge Tag
-                </label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <label className={labelBaseClass}>Badge Tag</label>
                 <input
                   type="text"
                   value={badge}
                   onChange={(e) => setBadge(e.target.value)}
-                  placeholder="e.g. New, Best Seller, Hot Deal"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  placeholder="e.g. New, Best Seller"
+                  className={inputBaseClass}
                 />
               </div>
-              <div>
-                <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                  Discount Tag
-                </label>
+              <div className="flex flex-col gap-1.5">
+                <label className={labelBaseClass}>Discount Tag</label>
                 <input
                   type="text"
                   value={discountBadge}
                   onChange={(e) => setDiscountBadge(e.target.value)}
-                  placeholder="e.g. -20% OFF"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  placeholder="e.g. -20%"
+                  className={`${inputBaseClass} font-mono`}
                 />
               </div>
             </div>
 
-            <label className="flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer pt-2 border-t border-slate-100">
+            <label className="flex cursor-pointer items-center gap-2.5 border-t border-[#E5E7EB] pt-3 text-xs font-semibold text-[#374151]">
               <input
                 type="checkbox"
                 checked={bulky}
                 onChange={(e) => setBulky(e.target.checked)}
-                className="rounded h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                className="h-4 w-4 rounded-[4px] border-[#D1D5DB] text-[#1049EB] focus:ring-[#1049EB]"
               />
               <span>Bulky Freight Item (Requires Special Delivery)</span>
             </label>
-          </div>
+          </section>
         </div>
       </div>
 
-      {/* Mobile-Friendly Sticky Bottom Bar / Action Footer */}
-      <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white p-4 rounded-2xl shadow-sm">
+      {/* Bottom Action Footer */}
+      <div className="flex items-center justify-between gap-3 rounded-[8px] border border-[#E5E7EB] bg-white p-4">
         <button
           type="button"
           onClick={() => navigate('/admin/products')}
-          className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+          className="rounded-[6px] border border-[#E5E7EB] bg-white px-4 py-2 text-xs font-semibold text-[#374151] transition-colors hover:bg-[#F6F7F9]"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={uploadingImage || isSubmitting}
-          className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-[6px] bg-[#0B1220] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B] disabled:opacity-50"
         >
           {isSubmitting ? (
             <>
-              <Loader2 size={16} className="animate-spin" />
+              <SpinnerGap size={15} weight="regular" className="animate-spin" />
               <span>Saving...</span>
             </>
           ) : isEditing ? (
             'Save & Update Product'
           ) : (
-            'Create Product Card'
+            'Create Product'
           )}
         </button>
       </div>

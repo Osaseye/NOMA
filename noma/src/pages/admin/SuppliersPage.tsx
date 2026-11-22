@@ -1,28 +1,35 @@
 import { useState } from 'react'
 import {
-  HiBuildingOffice2,
-  HiPlus,
-  HiPencilSquare,
-  HiTrash,
-  HiPhone,
-  HiEnvelope,
-  HiMapPin,
-  HiBanknotes,
-  HiCube,
-  HiCheckCircle,
-  HiXMark,
-  HiMagnifyingGlass,
-  HiExclamationTriangle,
-  HiArrowUpTray,
-  HiPhoto,
-} from 'react-icons/hi2'
-import { Loader2 } from 'lucide-react'
+  Buildings,
+  CheckCircle,
+  Envelope,
+  Image as ImageIcon,
+  MagnifyingGlass,
+  MapPin,
+  PencilSimple,
+  Phone,
+  Plus,
+  SpinnerGap,
+  Trash,
+  UploadSimple,
+  Warning,
+  X,
+} from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { useSupplierStore } from '../../store/supplierStore'
-import { useProductStore } from '../../store/productStore'
+import { AdminTitle } from '../../components/admin/AdminTitle'
+import { EmptyState } from '../../design-system/components/EmptyState'
+import { KpiCard } from '../../design-system/components/KpiCard'
 import { storageService } from '../../services/firebase/storageService'
-import { formatNaira } from '../../utils/pricing'
+import { useProductStore } from '../../store/productStore'
+import { useSupplierStore } from '../../store/supplierStore'
 import type { Supplier } from '../../types/commerce'
+import { formatNaira } from '../../utils/pricing'
+
+const inputClass =
+  'w-full rounded-[6px] border border-[#D1D5DB] bg-white p-2.5 text-xs font-medium text-[#0B1220] placeholder:text-[#5E6675]/70 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15'
+
+const labelClass =
+  'mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]'
 
 export function SuppliersPage() {
   const { suppliers, addSupplier, updateSupplier, deleteSupplier } = useSupplierStore()
@@ -33,7 +40,6 @@ export function SuppliersPage() {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
   const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null)
 
-  // Form states
   const [name, setName] = useState('')
   const [contactPerson, setContactPerson] = useState('')
   const [phone, setPhone] = useState('')
@@ -72,19 +78,19 @@ export function SuppliersPage() {
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setUploadingLogo(true)
-      const toastId = toast.loading('Uploading supplier logo...')
-      try {
-        const downloadUrl = await storageService.uploadImage(file, 'suppliers')
-        setLogo(downloadUrl)
-        toast.success('Supplier logo uploaded!', { id: toastId })
-      } catch (err: any) {
-        console.error('Failed to upload supplier logo:', err)
-        toast.error(err?.message || 'Failed to upload supplier logo', { id: toastId })
-      } finally {
-        setUploadingLogo(false)
-      }
+    if (!file) return
+    setUploadingLogo(true)
+    const toastId = toast.loading('Uploading supplier logo...')
+    try {
+      const downloadUrl = await storageService.uploadImage(file, 'suppliers')
+      setLogo(downloadUrl)
+      toast.success('Supplier logo uploaded.', { id: toastId })
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to upload supplier logo'
+      console.error('Failed to upload supplier logo:', err)
+      toast.error(message, { id: toastId })
+    } finally {
+      setUploadingLogo(false)
     }
   }
 
@@ -108,7 +114,7 @@ export function SuppliersPage() {
           logo,
           image: logo,
         })
-        toast.success(`Supplier "${name}" updated!`)
+        toast.success(`Supplier "${name}" updated.`)
       } else {
         await addSupplier({
           name: name.trim(),
@@ -121,11 +127,12 @@ export function SuppliersPage() {
           logo,
           image: logo,
         })
-        toast.success(`Supplier "${name}" created!`)
+        toast.success(`Supplier "${name}" created.`)
       }
       setModalOpen(false)
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to save supplier.')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save supplier.'
+      toast.error(message)
     }
   }
 
@@ -136,12 +143,12 @@ export function SuppliersPage() {
       await deleteSupplier(deletingSupplier.id)
       setDeletingSupplier(null)
       toast.success(`Supplier "${targetName}" removed from ledger.`)
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to delete supplier.')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete supplier.'
+      toast.error(message)
     }
   }
 
-  // Calculate Payables & Inventory Cost per supplier
   const supplierStats = suppliers.map((sup) => {
     const sourcedProducts = products.filter(
       (p) => p.supplierId === sup.id || p.supplierName?.toLowerCase() === sup.name.toLowerCase()
@@ -160,124 +167,111 @@ export function SuppliersPage() {
   })
 
   const totalPayableCostAcrossAll = supplierStats.reduce((acc, s) => acc + s.totalOwedBaseCost, 0)
+  const linkedProductsCount = products.filter((p) => p.supplierId || p.supplierName).length
 
-  const filteredStats = supplierStats.filter(
-    (s) =>
-      s.supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.supplier.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredStats = supplierStats.filter((s) => {
+    const q = searchQuery.toLowerCase()
+    return (
+      s.supplier.name.toLowerCase().includes(q) ||
+      s.supplier.contactPerson.toLowerCase().includes(q) ||
       s.supplier.phone.includes(searchQuery)
-  )
+    )
+  })
 
   return (
-    <div className="flex flex-col gap-6 font-['Outfit',sans-serif] pb-12">
-      {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-            <HiBuildingOffice2 className="text-emerald-600" /> Suppliers & Payables Ledger
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Manage your product sourcing partners, upload brand logos, track inventory base costs, and monitor amounts owed.
-          </p>
-        </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition-all shrink-0"
-        >
-          <HiPlus size={16} /> Add New Supplier
-        </button>
-      </div>
+    <div className="flex flex-col gap-6 pb-12">
+      <AdminTitle
+        title="Suppliers & Payables Ledger"
+        detail="Manage product sourcing partners, vendor terms, inventory base costs, and supplier payables."
+        action={
+          <button
+            type="button"
+            onClick={openAddModal}
+            className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
+          >
+            <Plus size={15} weight="regular" />
+            <span>Add New Supplier</span>
+          </button>
+        }
+      />
 
-      {/* Overview Stat Cards - 2 Column Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
-              Active Suppliers
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">{suppliers.length}</h3>
-          </div>
-          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#2F5FE3] shrink-0">
-            <HiBuildingOffice2 className="text-lg sm:text-2xl" />
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3.5 sm:p-5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-emerald-800 tracking-wider">
-              Sourcing Cost
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-emerald-900 mt-1 truncate max-w-[150px]">
-              {formatNaira(totalPayableCostAcrossAll)}
-            </h3>
-          </div>
-          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shrink-0">
-            <HiBanknotes className="text-lg sm:text-2xl" />
-          </div>
-        </div>
-
-        <div className="col-span-2 lg:col-span-1 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
-              Products Linked
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-              {products.filter((p) => p.supplierId || p.supplierName).length} items
-            </h3>
-          </div>
-          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shrink-0">
-            <HiCube className="text-lg sm:text-2xl" />
-          </div>
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+        <KpiCard
+          label="Active Suppliers"
+          value={`${suppliers.length}`}
+          tone="cobalt"
+          subtitle="Verified vendor partners"
+        />
+        <KpiCard
+          label="Inventory Base Cost"
+          value={formatNaira(totalPayableCostAcrossAll)}
+          tone="success"
+          subtitle="Current stock sourcing value"
+        />
+        <div className="col-span-2 lg:col-span-1">
+          <KpiCard
+            label="Linked Catalog SKUs"
+            value={`${linkedProductsCount}`}
+            tone="amber"
+            subtitle="Assigned to suppliers"
+          />
         </div>
       </div>
 
       {/* Search Bar */}
-      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xs">
-        <HiMagnifyingGlass size={18} className="text-slate-400 shrink-0" />
+      <div className="relative rounded-[8px] border border-[#E5E7EB] bg-white">
+        <MagnifyingGlass
+          size={16}
+          weight="regular"
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5E6675]"
+        />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search suppliers by company name, contact person, or phone number..."
-          className="w-full text-xs font-bold text-slate-900 outline-none placeholder:text-slate-400 bg-transparent"
+          placeholder="Search suppliers by company name, contact person, or phone..."
+          className="w-full rounded-[8px] bg-transparent py-2.5 pl-10 pr-4 text-xs font-medium text-[#0B1220] placeholder:text-[#5E6675]/70 focus:outline-none focus:ring-2 focus:ring-[#1049EB]/20"
         />
       </div>
 
-      {/* Suppliers Grid / Cards - 2 Column Format */}
+      {/* Suppliers Grid */}
       {filteredStats.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center flex flex-col items-center justify-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-            <HiBuildingOffice2 size={28} />
-          </div>
-          <h3 className="text-base font-extrabold text-slate-900">
-            {searchQuery ? 'No suppliers matching your search' : 'No suppliers registered yet'}
-          </h3>
-          <p className="text-xs text-slate-500 max-w-sm">
-            {searchQuery
-              ? 'Try searching with a different supplier name or contact person.'
-              : 'Add your vendor and supplier partners to track inventory sourcing costs and payables.'}
-          </p>
-          {!searchQuery && (
-            <button
-              onClick={openAddModal}
-              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition-all"
-            >
-              <HiPlus size={16} /> Add First Supplier
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={<Buildings size={24} weight="regular" />}
+          title={
+            searchQuery ? 'No suppliers match your search' : 'No suppliers registered yet'
+          }
+          detail={
+            searchQuery
+              ? 'Try searching with another supplier name, contact, or phone number.'
+              : 'Add vendor and supplier partners to track inventory sourcing costs and payables.'
+          }
+          action={
+            !searchQuery ? (
+              <button
+                type="button"
+                onClick={openAddModal}
+                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1E293B]"
+              >
+                <Plus size={15} weight="regular" />
+                <span>Add First Supplier</span>
+              </button>
+            ) : undefined
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 sm:gap-5">
           {filteredStats.map(({ supplier, sourcedProducts, totalUnits, totalOwedBaseCost }) => (
-            <div
+            <article
               key={supplier.id}
-              className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-xs transition-all hover:shadow-md"
+              className="flex flex-col justify-between rounded-[8px] border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#D1D5DB]"
             >
               <div>
-                {/* Header with Supplier Logo */}
-                <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
+                {/* Header */}
+                <div className="mb-4 flex items-start justify-between gap-2 border-b border-[#E5E7EB] pb-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9]">
                       {supplier.logo || supplier.image ? (
                         <img
                           src={supplier.logo || supplier.image}
@@ -285,126 +279,141 @@ export function SuppliersPage() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-emerald-700 font-extrabold text-sm">
+                        <span className="font-mono text-xs font-bold text-[#0B1220]">
                           {supplier.name.substring(0, 2).toUpperCase()}
-                        </div>
+                        </span>
                       )}
                     </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-slate-900 line-clamp-1">
+                    <div className="min-w-0">
+                      <h3 className="line-clamp-1 text-sm font-bold text-[#0B1220]">
                         {supplier.name}
                       </h3>
-                      <span className="text-xs font-semibold text-emerald-700">
+                      <span className="text-xs font-medium text-[#5E6675]">
                         Contact: {supplier.contactPerson}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1">
                     <button
+                      type="button"
                       onClick={() => openEditModal(supplier)}
-                      className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                      className="rounded-[6px] p-1.5 text-[#5E6675] transition-colors hover:bg-[#EEF3FE] hover:text-[#1049EB]"
                       title="Edit Supplier"
                     >
-                      <HiPencilSquare size={17} />
+                      <PencilSimple size={16} weight="regular" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => setDeletingSupplier(supplier)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="rounded-[6px] p-1.5 text-[#5E6675] transition-colors hover:bg-[#FEF2F2] hover:text-[#B91C1C]"
                       title="Delete Supplier"
                     >
-                      <HiTrash size={17} />
+                      <Trash size={16} weight="regular" />
                     </button>
                   </div>
                 </div>
 
-                {/* Contact Information */}
-                <div className="flex flex-col gap-2 text-xs text-slate-600 mb-4">
-                  <div className="flex items-center gap-2">
-                    <HiPhone size={14} className="text-slate-400 shrink-0" />
-                    <span className="font-bold text-slate-800">{supplier.phone}</span>
+                {/* Contact Info */}
+                <div className="mb-4 flex flex-col gap-2 text-xs text-[#374151]">
+                  <div className="flex items-center gap-2 font-mono font-semibold text-[#0B1220]">
+                    <Phone size={14} weight="regular" className="shrink-0 text-[#5E6675]" />
+                    <span>{supplier.phone}</span>
                   </div>
-                  {supplier.email && (
+                  {supplier.email ? (
                     <div className="flex items-center gap-2">
-                      <HiEnvelope size={14} className="text-slate-400 shrink-0" />
-                      <span>{supplier.email}</span>
+                      <Envelope size={14} weight="regular" className="shrink-0 text-[#5E6675]" />
+                      <span className="truncate">{supplier.email}</span>
                     </div>
-                  )}
-                  {supplier.address && (
+                  ) : null}
+                  {supplier.address ? (
                     <div className="flex items-center gap-2">
-                      <HiMapPin size={14} className="text-slate-400 shrink-0" />
+                      <MapPin size={14} weight="regular" className="shrink-0 text-[#5E6675]" />
                       <span className="line-clamp-1">{supplier.address}</span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
-                {/* Payment Terms & Notes */}
-                {supplier.paymentTerms && (
-                  <div className="mb-4 rounded-xl bg-slate-50 p-2.5 text-[11px] text-slate-600 border border-slate-100">
-                    <span className="font-bold text-slate-800 block">Terms: {supplier.paymentTerms}</span>
-                    {supplier.notes && <p className="mt-0.5 text-slate-500 italic line-clamp-2">{supplier.notes}</p>}
+                {/* Terms & Notes */}
+                {supplier.paymentTerms ? (
+                  <div className="mb-4 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-3 text-xs text-[#374151]">
+                    <span className="block font-semibold text-[#0B1220]">
+                      Terms: {supplier.paymentTerms}
+                    </span>
+                    {supplier.notes ? (
+                      <p className="mt-0.5 line-clamp-2 text-[11px] text-[#5E6675]">
+                        {supplier.notes}
+                      </p>
+                    ) : null}
                   </div>
-                )}
+                ) : null}
               </div>
 
-              {/* Payables Summary Box */}
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex items-center justify-between mt-2">
+              {/* Payables Summary */}
+              <div className="flex items-center justify-between gap-2 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-3.5">
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase text-emerald-800 tracking-wider">
+                  <span className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
                     Total Sourcing Cost ({totalUnits} units)
                   </span>
-                  <h4 className="text-base font-black text-emerald-950 mt-0.5">
+                  <span className="mt-0.5 block font-mono tabular-nums text-base font-bold text-[#0B1220]">
                     {formatNaira(totalOwedBaseCost)}
-                  </h4>
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-emerald-200">
-                  {sourcedProducts.length} Products
+                <span className="rounded-[4px] border border-[#E5E7EB] bg-white px-2.5 py-1 font-mono text-[11px] font-semibold text-[#374151]">
+                  {sourcedProducts.length} SKUs
                 </span>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}
 
       {/* Add / Edit Supplier Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl z-10 animate-in zoom-in-95 duration-200 my-8">
-            <div className="flex items-center justify-between border-b pb-3 mb-4">
-              <h3 className="text-base font-extrabold text-slate-900">
+      {modalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0B1220]/45 p-4 backdrop-blur-xs">
+          <div className="my-8 w-full max-w-md rounded-[10px] border border-[#E5E7EB] bg-white p-6 shadow-[0_8px_24px_rgba(11,18,32,0.08)]">
+            <div className="mb-4 flex items-center justify-between border-b border-[#E5E7EB] pb-3">
+              <h3 className="text-base font-bold text-[#0B1220]">
                 {editingSupplier ? 'Edit Supplier Details' : 'Add New Supplier Record'}
               </h3>
               <button
+                type="button"
                 onClick={() => setModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-[6px] p-1 text-[#5E6675] hover:bg-[#F6F7F9] hover:text-[#0B1220]"
               >
-                <HiXMark size={20} />
+                <X size={18} weight="regular" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveSupplier} className="flex flex-col gap-4">
-              {/* Supplier Logo Upload */}
+            <form onSubmit={handleSaveSupplier} className="flex flex-col gap-3.5">
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-bold uppercase text-slate-600">Supplier Logo / Brand Image</label>
+                <label className={labelClass}>Supplier Logo / Brand Image</label>
                 <div className="flex items-center gap-3">
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9]">
                     {logo ? (
                       <img src={logo} alt="Logo Preview" className="h-full w-full object-cover" />
                     ) : (
-                      <HiPhoto size={24} className="text-slate-400" />
+                      <ImageIcon size={22} weight="regular" className="text-[#5E6675]" />
                     )}
                   </div>
 
-                  <label className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-500 bg-emerald-50/50 p-3 text-xs font-bold text-emerald-800 cursor-pointer hover:bg-emerald-100/60 transition-colors">
+                  <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[6px] border border-dashed border-[#D1D5DB] bg-[#F6F7F9] p-3 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE]/50">
                     {uploadingLogo ? (
                       <>
-                        <Loader2 size={16} className="animate-spin text-emerald-600" />
+                        <SpinnerGap size={15} weight="regular" className="animate-spin text-[#1049EB]" />
                         <span>Uploading Logo...</span>
                       </>
                     ) : (
                       <>
-                        <HiArrowUpTray size={16} /> Upload Logo Image
-                        <input type="file" accept="image/*" disabled={uploadingLogo} onChange={handleLogoUpload} className="hidden" />
+                        <UploadSimple size={15} weight="regular" className="text-[#1049EB]" />
+                        <span>Upload Logo Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingLogo}
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
                       </>
                     )}
                   </label>
@@ -413,162 +422,148 @@ export function SuppliersPage() {
                   type="text"
                   value={logo}
                   onChange={(e) => setLogo(e.target.value)}
-                  placeholder="Or paste Logo Image Web URL (https://...)"
-                  className="w-full rounded-xl border border-slate-300 p-2 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                  placeholder="Or paste Logo URL (https://...)"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                  Supplier / Company Name *
-                </label>
+                <label className={labelClass}>Supplier / Company Name *</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Sumec Firman Nigeria Ltd"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                  Contact Person *
-                </label>
+                <label className={labelClass}>Contact Person *</label>
                 <input
                   type="text"
                   required
                   value={contactPerson}
                   onChange={(e) => setContactPerson(e.target.value)}
                   placeholder="e.g. Mr. Emeka Okafor"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  className={inputClass}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                    Phone Number *
-                  </label>
+                  <label className={labelClass}>Phone Number *</label>
                   <input
                     type="text"
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="0803 000 0000"
-                    className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                    className={`${inputClass} font-mono`}
                   />
                 </div>
-
                 <div>
-                  <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                    Email Address
-                  </label>
+                  <label className={labelClass}>Email Address</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="sales@company.com"
-                    className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                    className={inputClass}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                  Office / Warehouse Address
-                </label>
+                <label className={labelClass}>Office / Warehouse Address</label>
                 <input
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="e.g. Alaba International Market, Ojo, Lagos"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  placeholder="e.g. Alaba International Market, Lagos"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                  Payment Terms
-                </label>
+                <label className={labelClass}>Payment Terms</label>
                 <input
                   type="text"
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
                   placeholder="e.g. Net 30 Days, Pay on Delivery"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase text-slate-600 block mb-1">
-                  Notes
-                </label>
+                <label className={labelClass}>Notes</label>
                 <textarea
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Special agreements, bank details, or delivery preferences..."
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"
+                  placeholder="Agreements, settlement bank info, or delivery notes..."
+                  className={inputClass}
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 mt-2 pt-3 border-t">
+              <div className="mt-2 flex items-center justify-end gap-2.5 border-t border-[#E5E7EB] pt-3">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700"
+                  className="rounded-[6px] border border-[#E5E7EB] bg-white px-4 py-2 text-xs font-semibold text-[#374151] hover:bg-[#F6F7F9]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={uploadingLogo}
-                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-extrabold uppercase text-white shadow-md hover:bg-emerald-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B] disabled:opacity-50"
                 >
-                  <HiCheckCircle size={16} /> Save Supplier Record
+                  <CheckCircle size={15} weight="regular" />
+                  <span>Save Supplier</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Custom Delete Confirmation Modal Popup */}
-      {deletingSupplier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl z-10 text-center animate-in zoom-in-95 duration-200 border border-slate-100">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-600 mb-4">
-              <HiExclamationTriangle size={28} />
+      {/* Delete Confirmation Modal */}
+      {deletingSupplier ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1220]/45 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-[10px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_8px_24px_rgba(11,18,32,0.08)]">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-[8px] border border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]">
+              <Warning size={24} weight="regular" />
             </div>
 
-            <h3 className="text-lg font-extrabold text-slate-900">
-              Delete Supplier Record?
-            </h3>
-            <p className="text-xs font-semibold text-slate-500 mt-2">
-              Are you sure you want to remove <strong className="text-slate-800">{deletingSupplier.name}</strong> from your supplier ledger? This action cannot be undone.
+            <h3 className="text-base font-bold text-[#0B1220]">Delete Supplier Record?</h3>
+            <p className="mt-2 text-xs leading-relaxed text-[#5E6675]">
+              Are you sure you want to remove{' '}
+              <strong className="text-[#0B1220]">{deletingSupplier.name}</strong> from your
+              supplier ledger? This action cannot be undone.
             </p>
 
-            <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-slate-100">
+            <div className="mt-6 flex items-center gap-2.5 border-t border-[#E5E7EB] pt-4">
               <button
                 type="button"
                 onClick={() => setDeletingSupplier(null)}
-                className="flex-1 rounded-xl border border-slate-300 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                className="flex-1 rounded-[6px] border border-[#E5E7EB] bg-white py-2 text-xs font-semibold text-[#374151] hover:bg-[#F6F7F9]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmDeleteSupplier}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-red-700 transition-all"
+                className="flex-1 rounded-[6px] bg-[#B91C1C] py-2 text-xs font-semibold text-white hover:bg-[#991B1B]"
               >
-                Yes, Delete
+                Delete Supplier
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

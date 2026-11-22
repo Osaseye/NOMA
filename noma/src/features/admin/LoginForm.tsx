@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { HiLockClosed, HiShieldCheck, HiEnvelope, HiKey, HiArrowRight } from 'react-icons/hi2'
+import {
+  ArrowRight,
+  Envelope,
+  Key,
+  LockKey,
+  ShieldCheck,
+  SpinnerGap,
+} from '@phosphor-icons/react'
+import { toast } from 'sonner'
 import { authService } from '../../services/firebase/authService'
 import { useAdminStore } from '../../store/adminStore'
-import { toast } from 'sonner'
 
 export function LoginForm() {
   const navigate = useNavigate()
@@ -39,7 +46,7 @@ export function LoginForm() {
           role: 'Master Admin',
         },
       })
-      toast.success('Welcome back, Admin!')
+      toast.success('Welcome back to Noma Operations.')
       navigate('/admin')
     } catch (err: unknown) {
       const error = err as { message?: string }
@@ -51,55 +58,80 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4 font-sans text-slate-900">
-      <div className="flex w-full max-w-md flex-col items-center overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-8 text-center shadow-2xl shadow-emerald-950/20">
-        {/* Brand Icon Header */}
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-slate-900 shadow-inner">
-          <img src="/icon.PNG" alt="Noma Logo" className="h-10 w-10 object-contain" />
+    <div className="flex min-h-screen items-center justify-center bg-[#F6F7F9] p-4 font-sans text-[#0B1220]">
+      <div className="w-full max-w-md rounded-[10px] border border-[#E5E7EB] bg-white p-8">
+        {/* Brand Header */}
+        <div className="mb-6 flex flex-col items-center text-center">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-2">
+            <img
+              src="/icon.png"
+              alt="Noma"
+              className="h-full w-full object-contain"
+              onError={(e) => {
+                e.currentTarget.src = '/fav.png'
+              }}
+            />
+          </div>
+
+          <span className="mb-2 rounded-[4px] bg-[#EEF3FE] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#1049EB]">
+            Restricted Operator Access
+          </span>
+
+          <h1 className="text-2xl font-bold tracking-tight text-[#0B1220]">
+            NOMA Operator Portal
+          </h1>
+          <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-[#5E6675]">
+            Authorized personnel sign-in for store operations, fulfillment, and catalog control.
+          </p>
         </div>
 
-        <span className="mb-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-400">
-          Restricted Operator Access
-        </span>
-
-        <h1 className="mb-2 font-['Outfit'] text-3xl font-black tracking-tight text-white">
-          NOMA Operator Portal
-        </h1>
-        <p className="mb-6 max-w-xs text-xs font-medium leading-relaxed text-slate-400">
-          Authorized personnel sign-in for store operations, fulfillment, and content management.
-        </p>
-
-        <form className="flex w-full flex-col gap-4 text-left" onSubmit={handleSubmit}>
+        <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-black uppercase tracking-widest text-slate-300">
-              Email Address
+            <label
+              htmlFor="admin-login-email"
+              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
+            >
+              Operator Email
             </label>
             <div className="relative flex items-center">
-              <HiEnvelope className="absolute left-3.5 text-slate-500" size={18} />
+              <Envelope
+                size={16}
+                weight="regular"
+                className="pointer-events-none absolute left-3.5 text-[#5E6675]"
+              />
               <input
+                id="admin-login-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@noma.ng"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 py-3 pl-10 pr-4 text-sm font-bold text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-500 focus:bg-slate-900/90"
+                placeholder="admin@shopnoma.com"
+                className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2.5 pl-10 pr-3.5 text-sm text-[#0B1220] placeholder:text-[#5E6675]/60 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-black uppercase tracking-widest text-slate-300">
+            <label
+              htmlFor="admin-login-password"
+              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
+            >
               Operator Password
             </label>
             <div className="relative flex items-center">
-              <HiKey className="absolute left-3.5 text-slate-500" size={18} />
+              <Key
+                size={16}
+                weight="regular"
+                className="pointer-events-none absolute left-3.5 text-[#5E6675]"
+              />
               <input
+                id="admin-login-password"
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 py-3 pl-10 pr-4 text-sm font-bold text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-500 focus:bg-slate-900/90"
+                placeholder="Enter password"
+                className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2.5 pl-10 pr-3.5 text-sm text-[#0B1220] placeholder:text-[#5E6675]/60 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
               />
             </div>
           </div>
@@ -107,27 +139,33 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/30 transition-all hover:bg-emerald-500 active:scale-[0.99] disabled:opacity-50"
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] text-sm font-semibold text-white transition-colors hover:bg-[#1E293B] active:scale-[0.99] disabled:opacity-50"
           >
             {isSubmitting ? (
-              'Authenticating...'
+              <>
+                <SpinnerGap size={16} weight="regular" className="animate-spin" />
+                <span>Authenticating...</span>
+              </>
             ) : (
               <>
-                <HiLockClosed size={18} /> Sign In to Dashboard <HiArrowRight size={16} />
+                <LockKey size={16} weight="regular" />
+                <span>Sign In to Dashboard</span>
+                <ArrowRight size={15} weight="regular" />
               </>
             )}
           </button>
         </form>
 
-        <div className="mt-6 text-xs font-bold text-slate-400">
-          Need an Admin Account?{' '}
-          <Link to="/admin/register" className="font-black text-emerald-400 hover:underline">
+        <div className="mt-6 text-center text-xs text-[#5E6675]">
+          Need an operator account?{' '}
+          <Link to="/admin/register" className="font-semibold text-[#1049EB] hover:underline">
             Register Admin Account
           </Link>
         </div>
 
-        <div className="mt-8 flex w-full items-center justify-center gap-2 border-t border-slate-900 pt-6 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-          <HiShieldCheck size={16} className="text-emerald-500" /> Protected Operator Environment
+        <div className="mt-6 flex w-full items-center justify-center gap-2 border-t border-[#E5E7EB] pt-5 font-mono text-[11px] uppercase tracking-wider text-[#5E6675]">
+          <ShieldCheck size={15} weight="regular" className="text-[#15803D]" />
+          <span>Protected Operator Environment</span>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
+import { SpinnerGap } from '@phosphor-icons/react'
 import { authService } from '../../services/firebase/authService'
 import { useAdminStore } from '../../store/adminStore'
-import { Loader2 } from 'lucide-react'
 
 export function AdminProtectedRoute() {
   const { isLoggedIn, operatorUser, login, logout } = useAdminStore()
@@ -11,19 +11,18 @@ export function AdminProtectedRoute() {
   useEffect(() => {
     const unsubscribe = authService.subscribeAuthState((authUser, profile) => {
       if (authUser && profile?.role === 'admin') {
-        login(authUser.email || 'admin@noma.ng')
+        login(authUser.email || 'admin@shopnoma.com')
         useAdminStore.setState({
           isLoggedIn: true,
           operatorUser: {
             name: profile.name || 'Admin User',
-            email: profile.email,
+            email: profile.email || authUser.email || '',
             role: 'Master Admin',
           },
         })
-      } else if (authUser && !profile) {
-        // Auth user exists but profile might still be loading or created via fallback
-        // Check if admin store was already logged in
-      } else {
+      } else if (authUser && profile && profile.role !== 'admin') {
+        logout()
+      } else if (!authUser) {
         logout()
       }
       setCheckingAuth(false)
@@ -34,10 +33,23 @@ export function AdminProtectedRoute() {
 
   if (checkingAuth) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F4F6F9]">
-        <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-[#12203D] bg-white p-8 shadow-[6px_6px_0px_0px_#12203D]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#0066FF]" />
-          <p className="font-bold text-[#12203D]">Verifying Admin Credentials...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#F6F7F9] p-4 font-sans text-[#0B1220]">
+        <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-[10px] border border-[#E5E7EB] bg-white p-8 text-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-2">
+            <img
+              src="/icon.png"
+              alt="Noma"
+              className="h-full w-full object-contain"
+              onError={(e) => {
+                e.currentTarget.src = '/fav.png'
+              }}
+            />
+          </div>
+          <SpinnerGap size={24} weight="regular" className="animate-spin text-[#1049EB]" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-[#0B1220]">Verifying Operator Credentials</p>
+            <p className="font-mono text-[11px] text-[#5E6675]">Checking administrator session...</p>
+          </div>
         </div>
       </div>
     )
