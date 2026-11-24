@@ -2,6 +2,7 @@ import {
   ArrowsCounterClockwise,
   CaretRight,
   Clock,
+  MapPin,
   Minus,
   Plus,
   ShieldCheck,
@@ -16,26 +17,50 @@ import { toast } from 'sonner'
 import { OrderSummary } from '../../components/commerce/OrderSummary'
 import { ProductCard } from '../../components/commerce/ProductCard'
 import { EmptyState } from '../../design-system/components/EmptyState'
-import { toCartLineEntries, useCartStore } from '../../store/cartStore'
+import {
+  estimateStateDeliveryFee,
+  FREE_DELIVERY_THRESHOLD,
+  toCartLineEntries,
+  useCartStore,
+} from '../../store/cartStore'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
 
-const PREVIEW_STATES = [
-  { label: 'Lagos', standardFee: 3500, eta: '1-2 business days' },
-  { label: 'Ogun', standardFee: 4500, eta: '2-3 business days' },
-  { label: 'Oyo', standardFee: 4500, eta: '2-3 business days' },
-  { label: 'FCT - Abuja', standardFee: 6000, eta: '2-4 business days' },
-  { label: 'Rivers', standardFee: 6000, eta: '2-4 business days' },
-  { label: 'Other Nigerian States', standardFee: 7500, eta: '3-5 business days' },
+const NIGERIAN_STATES = [
+  'Lagos',
+  'FCT - Abuja',
+  'Ogun',
+  'Oyo',
+  'Rivers',
+  'Delta',
+  'Edo',
+  'Enugu',
+  'Anambra',
+  'Kano',
+  'Kaduna',
+  'Akwa Ibom',
+  'Cross River',
+  'Imo',
+  'Kwara',
+  'Osun',
+  'Ondo',
+  'Ekiti',
+  'Plateau',
+  'Abia',
 ]
 
 export function CartPage() {
   const navigate = useNavigate()
-  const { items, setItemQuantity, removeLine } = useCartStore()
+  const {
+    items,
+    setItemQuantity,
+    removeLine,
+    clearCart,
+    deliveryState,
+    setDeliveryState,
+  } = useCartStore()
   const { products } = useProductStore()
 
-  const [previewState, setPreviewState] = useState('Lagos')
-  const [changingLocation, setChangingLocation] = useState(false)
   const [promoCode, setPromoCode] = useState('')
   const [showPromoInput, setShowPromoInput] = useState(false)
 
@@ -54,62 +79,103 @@ export function CartPage() {
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
   }, [cartEntries, products])
 
+  // Smart Related Products matching the space/categories of items in the bag
   const recommendedProducts = useMemo(() => {
+    const SPACE_CLUSTERS: string[][] = [
+      ['electronics', 'appliances', 'phones', 'power', 'solar'],
+      ['kitchen', 'cooking', 'home-essentials', 'wines'],
+      ['clothing', 'fashion', 'shoes'],
+      ['outdoor', 'bicycles'],
+    ]
+
     const inCartIds = new Set(activeCartList.map((entry) => entry.productId))
-    return products.filter((p) => !inCartIds.has(p.id)).slice(0, 4)
+    const cartCategories = new Set(
+      activeCartList.map((entry) => (entry.product.category || '').toLowerCase()),
+    )
+    const activeClusters = new Set<string>()
+    cartCategories.forEach((cat) => {
+      activeClusters.add(cat)
+      const cluster = SPACE_CLUSTERS.find((c) => c.includes(cat))
+      if (cluster) cluster.forEach((item) => activeClusters.add(item))
+    })
+
+    return products
+      .filter((p) => !inCartIds.has(p.id))
+      .map((p) => {
+        const cat = (p.category || '').toLowerCase()
+        let score = 0
+        if (cartCategories.has(cat)) score += 80
+        else if (activeClusters.has(cat)) score += 40
+        else score += 10
+        return { p, score }
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map((entry) => entry.p)
   }, [products, activeCartList])
 
   const itemCount = activeCartList.reduce((sum, entry) => sum + entry.quantity, 0)
   const subtotal = activeCartList.reduce(
     (sum, entry) => sum + entry.product.finalPrice * entry.quantity,
-    0
+    0,
   )
   const hasBulkyItem = activeCartList.some((entry) => Boolean(entry.product.bulky))
 
-  const selectedEstimate =
-    PREVIEW_STATES.find((s) => s.label === previewState) || PREVIEW_STATES[0]
-  const deliveryFee =
-    activeCartList.length > 0 ? selectedEstimate.standardFee + (hasBulkyItem ? 4000 : 0) : 0
+  const deliveryEstimate = useMemo(
+    () => estimateStateDeliveryFee(deliveryState, hasBulkyItem, subtotal),
+    [deliveryState, hasBulkyItem, subtotal],
+  )
+  const deliveryFee = activeCartList.length > 0 ? deliveryEstimate.standardFee : 0
+  const remainingForFreeShipping = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal)
+  const freeShippingProgress = Math.min(100, Math.round((subtotal / FREE_DELIVERY_THRESHOLD) * 100))
 
   return (
-    <div className="min-h-screen bg-[#F6F7F9] pb-24 pt-4 text-[#0B1220]">
-      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-[#5E6675]">
-          <Link to="/" className="transition-colors hover:text-[#1049EB]">
-            Home
-          </Link>
-          <CaretRight size={12} weight="regular" />
-          <span className="font-semibold text-[#0B1220]">Cart</span>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col justify-between gap-4 border-b border-[#E5E7EB] pb-5 md:flex-row md:items-end">
+    <div className="min-h-screen bg-white pb-24 pt-5 text-slate-900">
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        {/* Single Clean Header Bar */}
+        <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#0B1220] sm:text-3xl">
-              Your Cart (<span className="font-mono">{itemCount}</span>)
-            </h1>
-            <p className="mt-1 text-xs text-[#5E6675] sm:text-sm">
-              Review selected items, sizes, and delivery estimate before checkout.
-            </p>
+            <nav className="mb-1 flex items-center gap-1.5 text-xs text-slate-500">
+              <Link to="/" className="hover:text-slate-900">
+                Home
+              </Link>
+              <CaretRight size={11} />
+              <span className="font-medium text-slate-800">Shopping Bag</span>
+            </nav>
+            <div className="flex items-baseline gap-2.5">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                Shopping Bag
+              </h1>
+              <span className="text-xs font-medium text-slate-500">
+                ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+              </span>
+            </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-[6px] border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs font-semibold text-[#0B1220]">
-            <ShieldCheck size={16} weight="fill" className="text-[#1049EB]" />
-            <span>Upfront pricing &amp; verified checkout</span>
-          </div>
+          {activeCartList.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                clearCart()
+                toast.info('Shopping bag cleared')
+              }}
+              className="self-start text-xs font-medium text-slate-400 transition-colors hover:text-rose-600 sm:self-auto"
+            >
+              Clear bag
+            </button>
+          ) : null}
         </div>
 
         {activeCartList.length === 0 ? (
           <div className="mb-14">
             <EmptyState
               icon={<ShoppingBag size={24} weight="regular" />}
-              title="Your Shopping Cart is Empty"
-              detail="Explore the Noma catalog for verified electronics, kitchen hardware, and home appliances."
+              title="Your shopping bag is empty"
+              detail="Explore shoes, fashion, kitchen appliances, and electronics with upfront nationwide delivery."
               action={
                 <Link
                   to="/catalog"
-                  className="inline-flex items-center justify-center rounded-[6px] bg-[#0B1220] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                 >
                   Start Shopping
                 </Link>
@@ -118,9 +184,63 @@ export function CartPage() {
           </div>
         ) : (
           <div className="mb-16 grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-            {/* Left 7 Cols: Line Items & Nigerian Delivery Preview */}
-            <div className="space-y-4 lg:col-span-7">
-              <div className="divide-y divide-[#E5E7EB] rounded-[8px] border border-[#E5E7EB] bg-white">
+            {/* Left 8 Cols: Bag Items & Delivery Estimator */}
+            <div className="space-y-4 lg:col-span-8">
+              {/* Free Shipping Progress Strip */}
+              <div className="rounded-2xl bg-[#F4F4F5] p-4 sm:px-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <MapPin size={14} weight="fill" className="text-slate-800" />
+                    <span className="text-slate-600">Delivering to:</span>
+                    <select
+                      value={deliveryState}
+                      onChange={(e) => setDeliveryState(e.target.value)}
+                      aria-label="Select delivery state"
+                      className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-900 focus:border-slate-900 focus:outline-none"
+                    >
+                      {NIGERIAN_STATES.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <span className="text-xs text-slate-500">{deliveryEstimate.zoneLabel}</span>
+                </div>
+
+                {!hasBulkyItem ? (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-xs">
+                      {deliveryEstimate.isFreeStandard ? (
+                        <span className="font-semibold text-emerald-700">
+                          You&apos;ve unlocked free standard delivery!
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">
+                          Add{' '}
+                          <strong className="font-bold text-slate-900">
+                            {formatNaira(remainingForFreeShipping)}
+                          </strong>{' '}
+                          more for free standard delivery
+                        </span>
+                      )}
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        {freeShippingProgress}%
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div
+                        className="h-full rounded-full bg-slate-900 transition-all duration-300"
+                        style={{ width: `${freeShippingProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Line Items Card */}
+              <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white">
                 {activeCartList.map((entry) => {
                   const { product, quantity, size, key } = entry
                   return (
@@ -131,7 +251,7 @@ export function CartPage() {
                       <div className="flex min-w-0 flex-1 items-center gap-4">
                         <Link
                           to={`/product/${product.slug || product.id}`}
-                          className="h-20 w-20 shrink-0 overflow-hidden rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-2 sm:h-24 sm:w-24"
+                          className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#F4F4F5] p-2 sm:h-24 sm:w-24"
                         >
                           <img
                             src={product.image}
@@ -143,65 +263,58 @@ export function CartPage() {
                         <div className="min-w-0 flex-1 space-y-1">
                           <Link
                             to={`/product/${product.slug || product.id}`}
-                            className="line-clamp-2 text-sm font-bold text-[#0B1220] transition-colors hover:text-[#1049EB] sm:text-base"
+                            className="line-clamp-2 text-sm font-bold text-slate-900 transition-colors hover:underline sm:text-base"
                           >
                             {product.name}
                           </Link>
 
                           <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="capitalize text-[#5E6675]">
+                            <span className="capitalize text-slate-500">
                               {product.brand || product.category.replace(/-/g, ' ')}
                             </span>
                             {size ? (
-                              <span className="rounded-[4px] border border-[#1049EB]/25 bg-[#EEF3FE] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#1049EB]">
+                              <span className="rounded-md bg-[#F4F4F5] px-2 py-0.5 text-[11px] font-semibold text-slate-800">
                                 Size: {size}
                               </span>
                             ) : null}
                             {product.bulky ? (
-                              <span className="rounded-[4px] border border-[#FDE68A] bg-[#FFFBEB] px-2 py-0.5 text-[10px] font-semibold text-[#B45309]">
-                                Heavy Freight
+                              <span className="rounded-md bg-[#F4F4F5] px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                                Bulky Item
                               </span>
                             ) : null}
                           </div>
 
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#15803D]">
-                            <span className="h-1.5 w-1.5 rounded-[2px] bg-[#15803D]" />
-                            <span>In stock</span>
+                          <div className="text-xs font-medium text-slate-500">
+                            {formatNaira(product.finalPrice)} each
                           </div>
                         </div>
                       </div>
 
-                      {/* Controls & Line Price */}
-                      <div className="flex items-center justify-between gap-4 border-t border-[#E5E7EB] pt-3 sm:justify-end sm:border-t-0 sm:pt-0">
-                        <div className="hidden text-right md:block">
-                          <span className="font-mono text-xs text-[#5E6675]">
-                            {formatNaira(product.finalPrice)} each
-                          </span>
-                        </div>
-
-                        <div className="flex items-center rounded-[6px] border border-[#E5E7EB] bg-white">
+                      {/* Quantity Stepper & Line Total */}
+                      <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-3 sm:justify-end sm:border-t-0 sm:pt-0">
+                        <div className="inline-flex items-center rounded-full border border-slate-200 bg-white">
                           <button
                             type="button"
                             onClick={() => setItemQuantity(key, quantity - 1)}
                             aria-label={`Decrease quantity for ${product.name}`}
-                            className="p-2 text-[#5E6675] hover:text-[#0B1220]"
+                            className="flex h-8 w-8 items-center justify-center text-slate-600 hover:text-slate-950"
                           >
-                            <Minus size={13} weight="regular" />
+                            <Minus size={12} weight="bold" />
                           </button>
-                          <span className="w-8 text-center font-mono text-xs font-bold text-[#0B1220]">
+                          <span className="w-8 text-center text-xs font-bold tabular-nums text-slate-900">
                             {quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => setItemQuantity(key, quantity + 1)}
                             aria-label={`Increase quantity for ${product.name}`}
-                            className="p-2 text-[#5E6675] hover:text-[#0B1220]"
+                            className="flex h-8 w-8 items-center justify-center text-slate-600 hover:text-slate-950"
                           >
-                            <Plus size={13} weight="regular" />
+                            <Plus size={12} weight="bold" />
                           </button>
                         </div>
 
-                        <strong className="min-w-[84px] text-right font-mono text-sm font-bold text-[#0B1220]">
+                        <strong className="min-w-[92px] text-right text-sm font-bold tabular-nums text-slate-900">
                           {formatNaira(product.finalPrice * quantity)}
                         </strong>
 
@@ -209,10 +322,10 @@ export function CartPage() {
                           type="button"
                           onClick={() => {
                             removeLine(key)
-                            toast.info(`Removed ${product.name} from cart`)
+                            toast.info(`Removed ${product.name}`)
                           }}
                           aria-label={`Remove ${product.name}`}
-                          className="rounded-[6px] p-2 text-[#5E6675] transition-colors hover:bg-[#FEF2F2] hover:text-[#B91C1C]"
+                          className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-rose-600"
                         >
                           <Trash size={16} weight="regular" />
                         </button>
@@ -221,58 +334,10 @@ export function CartPage() {
                   )
                 })}
               </div>
-
-              {/* Delivery Fee Preview Strip */}
-              <div className="rounded-[8px] border border-[#E5E7EB] bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 text-xs">
-                    <Truck size={18} weight="regular" className="text-[#1049EB]" />
-                    <div>
-                      <span className="font-semibold text-[#0B1220]">
-                        Estimated delivery to {previewState}:{' '}
-                      </span>
-                      <strong className="font-mono text-[#0B1220]">
-                        {formatNaira(deliveryFee)}
-                      </strong>
-                      <span className="ml-1.5 text-[#5E6675]">({selectedEstimate.eta})</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setChangingLocation((prev) => !prev)}
-                    className="text-xs font-semibold text-[#1049EB] hover:underline"
-                  >
-                    {changingLocation ? 'Done' : 'Change state'}
-                  </button>
-                </div>
-
-                {changingLocation ? (
-                  <div className="mt-3 flex items-center gap-2 border-t border-[#E5E7EB] pt-3">
-                    <label htmlFor="cart-preview-state" className="text-xs font-medium text-[#5E6675]">
-                      Destination:
-                    </label>
-                    <select
-                      id="cart-preview-state"
-                      value={previewState}
-                      onChange={(e) => {
-                        setPreviewState(e.target.value)
-                        setChangingLocation(false)
-                      }}
-                      className="flex-1 rounded-[6px] border border-[#D1D5DB] bg-white px-3 py-1.5 text-xs font-semibold text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
-                    >
-                      {PREVIEW_STATES.map((st) => (
-                        <option key={st.label} value={st.label}>
-                          {st.label} ({formatNaira(st.standardFee + (hasBulkyItem ? 4000 : 0))})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : null}
-              </div>
             </div>
 
-            {/* Right 5 Cols: Sticky OrderSummary & Reassurance */}
-            <div className="space-y-4 lg:sticky lg:top-24 lg:col-span-5">
+            {/* Right 4 Cols: Sticky Order Summary & Reassurance */}
+            <div className="space-y-4 lg:sticky lg:top-24 lg:col-span-4">
               <OrderSummary
                 subtotal={subtotal}
                 delivery={deliveryFee}
@@ -282,12 +347,12 @@ export function CartPage() {
               />
 
               {/* Promo Code Option */}
-              <div className="rounded-[8px] border border-[#E5E7EB] bg-white p-4">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
                 {!showPromoInput ? (
                   <button
                     type="button"
                     onClick={() => setShowPromoInput(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB] hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-950 hover:underline"
                   >
                     <Tag size={14} weight="regular" />
                     <span>Have a promo code?</span>
@@ -299,7 +364,7 @@ export function CartPage() {
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
                       placeholder="Enter promo code"
-                      className="flex-1 rounded-[6px] border border-[#D1D5DB] bg-white px-3 py-1.5 font-mono text-xs uppercase text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
+                      className="flex-1 rounded-full border border-slate-200 bg-[#F4F4F5] px-3.5 py-1.5 text-xs uppercase text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none"
                     />
                     <button
                       type="button"
@@ -311,7 +376,7 @@ export function CartPage() {
                         toast.info('No active discount applies to this code.')
                         setShowPromoInput(false)
                       }}
-                      className="rounded-[6px] bg-[#0B1220] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#1E293B]"
+                      className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
                     >
                       Apply
                     </button>
@@ -319,50 +384,50 @@ export function CartPage() {
                 )}
               </div>
 
-              {/* Trust Reassurance */}
-              <div className="space-y-2.5 rounded-[8px] border border-[#E5E7EB] bg-white p-4 text-xs font-medium text-[#374151]">
+              {/* Clean Monochrome Reassurance */}
+              <div className="space-y-2.5 rounded-2xl bg-[#F4F4F5] p-4 text-xs font-medium text-slate-600">
                 <div className="flex items-center gap-2.5">
-                  <Truck size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
+                  <Truck size={15} weight="regular" className="shrink-0 text-slate-800" />
                   <span>Delivery fee confirmed before you pay</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Clock size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
-                  <span>2-5 business days tracked nationwide dispatch</span>
+                  <Clock size={15} weight="regular" className="shrink-0 text-slate-800" />
+                  <span>2–5 business days tracked nationwide dispatch</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <ArrowsCounterClockwise
                     size={15}
                     weight="regular"
-                    className="shrink-0 text-[#1049EB]"
+                    className="shrink-0 text-slate-800"
                   />
-                  <span>30-day return eligibility on verified condition</span>
+                  <span>Easy return &amp; exchange eligibility</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <ShieldCheck size={15} weight="fill" className="shrink-0 text-[#1049EB]" />
-                  <span>Card, transfer, USSD &amp; Pay on Delivery supported</span>
+                  <ShieldCheck size={15} weight="regular" className="shrink-0 text-slate-800" />
+                  <span>Card, Transfer, USSD &amp; Pay on Delivery supported</span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Recommendations */}
+        {/* Smart Category-Matched Recommendations */}
         {recommendedProducts.length > 0 ? (
-          <div className="border-t border-[#E5E7EB] pt-10">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold tracking-tight text-[#0B1220] md:text-2xl">
-                You might also like
+          <div className="border-t border-slate-200 pt-10">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                You Might Also Like
               </h2>
               <Link
                 to="/catalog"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#1049EB] hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-950 hover:underline"
               >
-                <span>View all</span>
-                <CaretRight size={14} weight="regular" />
+                <span>See all</span>
+                <CaretRight size={14} weight="bold" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
               {recommendedProducts.map((rec) => (
                 <ProductCard key={rec.id} product={rec} />
               ))}

@@ -168,10 +168,56 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
   }, [product.image, product.images])
 
   const relatedProducts = useMemo(() => {
+    const SPACE_CLUSTERS: string[][] = [
+      ['electronics', 'appliances', 'phones', 'power', 'solar'],
+      ['kitchen', 'cooking', 'home-essentials', 'wines'],
+      ['clothing', 'fashion', 'shoes'],
+      ['outdoor', 'bicycles'],
+    ]
+
+    const currentCat = (product.category || '').toLowerCase()
+    const currentSub = (product.subCategory || product.subcategory || '').toLowerCase()
+    const currentBrand = (product.brand || '').toLowerCase()
+    const currentCluster = SPACE_CLUSTERS.find((cluster) => cluster.includes(currentCat)) || [
+      currentCat,
+    ]
+    const titleWords = product.name
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 3)
+
     return allStoreProducts
-      .filter((p) => p.id !== product.id && p.category === product.category)
+      .filter((p) => p.id !== product.id)
+      .map((candidate) => {
+        const candCat = (candidate.category || '').toLowerCase()
+        const candSub = (candidate.subCategory || candidate.subcategory || '').toLowerCase()
+        const candBrand = (candidate.brand || '').toLowerCase()
+        const candName = candidate.name.toLowerCase()
+
+        let score = 0
+        if (currentSub && candSub && currentSub === candSub) {
+          score += 120
+        }
+        if (candCat === currentCat) {
+          score += 80
+        } else if (currentCluster.includes(candCat)) {
+          score += 45
+        }
+        if (currentBrand && candBrand && currentBrand === candBrand) {
+          score += 30
+        }
+        for (const word of titleWords) {
+          if (candName.includes(word)) {
+            score += 15
+          }
+        }
+        return { candidate, score }
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
       .slice(0, 4)
-  }, [allStoreProducts, product.id, product.category])
+      .map((entry) => entry.candidate)
+  }, [allStoreProducts, product.id, product.category, product.subCategory, product.subcategory, product.brand, product.name])
 
   const hasCompareAt = Boolean(
     product.compareAtPrice && product.compareAtPrice > product.finalPrice,

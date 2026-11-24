@@ -54,22 +54,6 @@ function getStepProgress(status: string): number {
   }
 }
 
-function getStatusBadgeClasses(status: string): string {
-  switch (status.toLowerCase()) {
-    case 'delivered':
-      return 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]'
-    case 'dispatched':
-      return 'border-[#1049EB]/25 bg-[#EEF3FE] text-[#1049EB]'
-    case 'processing':
-    case 'packed':
-      return 'border-[#FDE68A] bg-[#FFFBEB] text-[#B45309]'
-    case 'cancelled':
-      return 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
-    default:
-      return 'border-[#E5E7EB] bg-[#F6F7F9] text-[#0B1220]'
-  }
-}
-
 export function MyOrdersPage() {
   const [searchParams] = useSearchParams()
   const initialQueryId = searchParams.get('id')?.trim() || ''
@@ -95,13 +79,13 @@ export function MyOrdersPage() {
       const localMatch = storeOrders.find(
         (o) =>
           o.id.toUpperCase() === cleanId ||
-          (o.paymentRef && o.paymentRef.toUpperCase() === cleanId)
+          (o.paymentRef && o.paymentRef.toUpperCase() === cleanId),
       )
       if (localMatch) return localMatch
 
       return await orderService.findOrderByRef(cleanId)
     },
-    [storeOrders]
+    [storeOrders],
   )
 
   useEffect(() => {
@@ -172,38 +156,30 @@ export function MyOrdersPage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#F6F7F9] pb-24 pt-4 text-[#0B1220]">
-      <div className="mx-auto w-full max-w-5xl px-4 md:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-[#5E6675]">
-          <Link to="/" className="transition-colors hover:text-[#1049EB]">
-            Home
-          </Link>
-          <CaretRight size={12} weight="regular" />
-          <span className="font-semibold text-[#0B1220]">
-            {profile.isGuest ? 'Track Order' : 'My Orders'}
-          </span>
-        </nav>
+    <div className="min-h-screen bg-white pb-24 pt-5 text-slate-900">
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        {/* Single Clean Header Bar */}
+        <div className="mb-8 border-b border-slate-200 pb-4">
+          <nav className="mb-1 flex items-center gap-1.5 text-xs text-slate-500">
+            <Link to="/" className="hover:text-slate-900">
+              Home
+            </Link>
+            <CaretRight size={11} />
+            <span className="font-medium text-slate-800">
+              {profile.isGuest ? 'Track Order' : 'My Orders'}
+            </span>
+          </nav>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            {profile.isGuest ? 'Track Your Order' : 'My Orders'}
+          </h1>
+        </div>
 
         {profile.isGuest ? (
-          <div className="space-y-8">
-            <div className="border-b border-[#E5E7EB] pb-5">
-              <h1 className="text-2xl font-bold tracking-tight text-[#0B1220] sm:text-3xl">
-                Track Order
-              </h1>
-              <p className="mt-1 text-xs text-[#5E6675] sm:text-sm">
-                Enter your Noma Order ID or payment reference to view live dispatch status.
-              </p>
-            </div>
-
-            {/* Guest Lookup Card */}
-            <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-8">
+          <div className="mx-auto max-w-3xl space-y-8">
+            <div className="space-y-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:p-8">
               <form onSubmit={handleGuestLookup} className="space-y-3">
-                <label
-                  htmlFor="guest-order-ref"
-                  className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
-                >
-                  Order ID or Payment Reference
+                <label htmlFor="guest-order-ref" className="block text-xs font-semibold text-slate-700">
+                  Enter Order ID or Payment Reference
                 </label>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -211,22 +187,22 @@ export function MyOrdersPage() {
                     <Package
                       size={17}
                       weight="regular"
-                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5E6675]"
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                     />
                     <input
                       id="guest-order-ref"
                       type="text"
                       value={guestOrderInput}
                       onChange={(e) => setGuestOrderInput(e.target.value)}
-                      placeholder="NMA-123456 or PSK-123456"
-                      className="h-11 w-full rounded-[6px] border border-[#D1D5DB] bg-white pl-10 pr-4 font-mono text-sm font-semibold uppercase tracking-wider text-[#0B1220] placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-[#5E6675]/70 focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
+                      placeholder="e.g. NMA-123456 or TRF-123456"
+                      className="h-11 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-11 pr-4 text-sm font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isLookingUp}
-                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#1049EB] disabled:opacity-60"
+                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60 sm:text-sm"
                   >
                     {isLookingUp ? (
                       <>
@@ -235,122 +211,109 @@ export function MyOrdersPage() {
                       </>
                     ) : (
                       <>
-                        <MagnifyingGlass size={16} weight="regular" />
-                        <span>Track Package</span>
+                        <MagnifyingGlass size={16} weight="bold" />
+                        <span>Track Order</span>
                       </>
                     )}
                   </button>
                 </div>
               </form>
 
-              {/* Result Card */}
               {searchedGuestOrder ? (
-                <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-5 sm:p-6">
-                  <div className="flex flex-col justify-between gap-3 border-b border-[#E5E7EB] pb-4 sm:flex-row sm:items-center">
+                <div className="space-y-6 rounded-2xl bg-[#F4F4F5] p-5 sm:p-6">
+                  <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
                     <div>
-                      <span
-                        className={`inline-block rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusBadgeClasses(
-                          searchedGuestOrder.status
-                        )}`}
-                      >
+                      <span className="inline-block rounded-full bg-slate-900 px-3 py-0.5 text-[11px] font-semibold capitalize text-white">
                         {searchedGuestOrder.status}
                       </span>
-                      <h2 className="mt-1.5 font-mono text-lg font-bold text-[#0B1220]">
+                      <h2 className="mt-2 text-lg font-bold text-slate-900">
                         Order {searchedGuestOrder.id}
                       </h2>
-                      <p className="text-xs text-[#5E6675]">
-                        Recipient: {searchedGuestOrder.customer} -{' '}
+                      <p className="text-xs text-slate-500">
+                        Recipient: {searchedGuestOrder.customer} •{' '}
                         {searchedGuestOrder.deliveryArea || 'Nigeria'}
                       </p>
                     </div>
 
                     <div className="sm:text-right">
-                      <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
-                        Order Total
-                      </span>
-                      <strong className="font-mono text-lg font-bold text-[#0B1220]">
+                      <span className="block text-xs text-slate-500">Order Total</span>
+                      <strong className="text-lg font-bold tabular-nums text-slate-900">
                         {formatNaira(searchedGuestOrder.total)}
                       </strong>
                     </div>
                   </div>
 
-                  {/* 4-Stage Horizontal Stepper */}
                   {searchedGuestOrder.status === 'cancelled' ? (
-                    <div className="rounded-[6px] border border-[#FECACA] bg-[#FEF2F2] p-3.5 text-center text-xs font-semibold text-[#B91C1C]">
+                    <div className="rounded-xl bg-white p-4 text-center text-xs font-semibold text-slate-700">
                       This order has been cancelled. Contact Noma support for assistance.
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-                        Delivery Progress
-                      </span>
-                      <div className="grid grid-cols-4 gap-2 text-center">
-                        {[
-                          { label: 'Order Placed', step: 1, icon: Clock },
-                          { label: 'Processing', step: 2, icon: Package },
-                          { label: 'Dispatched', step: 3, icon: Truck },
-                          { label: 'Delivered', step: 4, icon: CheckCircle },
-                        ].map((item) => {
-                          const currentStep = getStepProgress(searchedGuestOrder.status)
-                          const isDone = item.step <= currentStep
-                          const IconComponent = item.icon
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      {[
+                        { label: 'Placed', step: 1, icon: Clock },
+                        { label: 'Processing', step: 2, icon: Package },
+                        { label: 'Dispatched', step: 3, icon: Truck },
+                        { label: 'Delivered', step: 4, icon: CheckCircle },
+                      ].map((item) => {
+                        const currentStep = getStepProgress(searchedGuestOrder.status)
+                        const isDone = item.step <= currentStep
+                        const IconComponent = item.icon
 
-                          return (
-                            <div key={item.step} className="flex flex-col items-center gap-2">
-                              <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-[8px] border transition-colors ${
-                                  isDone
-                                    ? 'border-[#1049EB] bg-[#1049EB] text-white'
-                                    : 'border-[#E5E7EB] bg-white text-[#5E6675]'
-                                }`}
-                              >
-                                <IconComponent size={18} weight={isDone ? 'fill' : 'regular'} />
-                              </div>
-                              <span
-                                className={`text-[11px] font-semibold ${
-                                  isDone ? 'text-[#0B1220]' : 'text-[#5E6675]'
-                                }`}
-                              >
-                                {item.label}
-                              </span>
+                        return (
+                          <div key={item.step} className="flex flex-col items-center gap-2">
+                            <div
+                              className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                                isDone
+                                  ? 'bg-slate-900 text-white'
+                                  : 'border border-slate-200 bg-white text-slate-400'
+                              }`}
+                            >
+                              <IconComponent size={18} weight={isDone ? 'fill' : 'regular'} />
                             </div>
-                          )
-                        })}
-                      </div>
+                            <span
+                              className={`text-xs font-semibold ${
+                                isDone ? 'text-slate-900' : 'text-slate-400'
+                              }`}
+                            >
+                              {item.label}
+                            </span>
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
 
                   {Array.isArray(searchedGuestOrder.items) &&
                   searchedGuestOrder.items.length > 0 ? (
-                    <div className="space-y-2 border-t border-[#E5E7EB] pt-4">
-                      <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
+                    <div className="space-y-2 border-t border-slate-200 pt-4">
+                      <span className="block text-xs font-semibold text-slate-600">
                         Items in Package
                       </span>
-                      <div className="divide-y divide-[#E5E7EB] rounded-[6px] border border-[#E5E7EB] bg-white">
+                      <div className="divide-y divide-slate-100 rounded-xl bg-white">
                         {searchedGuestOrder.items.map((item, idx) => (
                           <div
                             key={`${item.productId}-${idx}`}
-                            className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-xs"
+                            className="flex items-center justify-between gap-3 px-4 py-3 text-xs"
                           >
-                            <div className="flex min-w-0 items-center gap-2.5">
+                            <div className="flex min-w-0 items-center gap-3">
                               {item.image ? (
                                 <img
                                   src={item.image}
                                   alt={item.name}
-                                  className="h-9 w-9 shrink-0 rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] object-contain p-0.5"
+                                  className="h-10 w-10 shrink-0 rounded-lg bg-[#F4F4F5] object-contain p-1"
                                 />
                               ) : null}
                               <div className="min-w-0">
-                                <span className="block truncate font-semibold text-[#0B1220]">
+                                <span className="block truncate font-semibold text-slate-900">
                                   {item.name}
                                 </span>
-                                <span className="font-mono text-[11px] text-[#5E6675]">
+                                <span className="text-[11px] text-slate-500">
                                   Qty {item.quantity}
-                                  {item.size ? ` - Size ${item.size}` : ''}
+                                  {item.size ? ` • Size ${item.size}` : ''}
                                 </span>
                               </div>
                             </div>
-                            <strong className="shrink-0 font-mono font-semibold text-[#0B1220]">
+                            <strong className="shrink-0 font-bold tabular-nums text-slate-900">
                               {formatNaira(item.unitPrice * item.quantity)}
                             </strong>
                           </div>
@@ -361,108 +324,91 @@ export function MyOrdersPage() {
                 </div>
               ) : null}
 
-              {/* Error State */}
               {guestLookupError ? (
-                <div className="space-y-2 rounded-[8px] border border-[#FECACA] bg-[#FEF2F2] p-5 text-center">
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-[6px] border border-[#FECACA] bg-white text-[#B91C1C]">
+                <div className="space-y-2 rounded-2xl bg-[#F4F4F5] p-6 text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-800 shadow-2xs">
                     <WarningCircle size={20} weight="regular" />
                   </div>
-                  <h3 className="text-sm font-bold text-[#B91C1C]">Order ID Not Found</h3>
-                  <p className="text-xs text-[#B91C1C]/90">
-                    No order was found matching &quot;{guestOrderInput}&quot;. Check your confirmation receipt or sign in if you checked out with an account.
+                  <h3 className="text-sm font-bold text-slate-900">Order Not Found</h3>
+                  <p className="text-xs text-slate-500">
+                    No order was found matching &ldquo;{guestOrderInput}&rdquo;. Double-check your receipt or sign in to view your account history.
                   </p>
                 </div>
               ) : null}
 
-              {/* Empty Prompt */}
               {!hasSearched && !searchedGuestOrder ? (
                 <EmptyState
                   icon={<Package size={24} weight="regular" />}
-                  title="Ready to track your order"
-                  detail="Enter your NMA order reference above to inspect delivery milestones."
+                  title="Track your package"
+                  detail="Enter your order ID above to check real-time delivery status."
                 />
               ) : null}
             </div>
 
-            {/* Flat #0B1220 Account Callout */}
-            <div className="flex flex-col items-start justify-between gap-6 rounded-[10px] border border-[#0B1220] bg-[#0B1220] p-6 text-white sm:p-8 md:flex-row md:items-center">
-              <div className="max-w-xl space-y-2">
-                <span className="inline-block rounded-[4px] border border-white/20 bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Account Sync
-                </span>
-                <h2 className="text-xl font-bold tracking-tight text-white">
-                  Sign in for automatic order history
+            <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-[#F4F4F5] p-6 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Have a Noma account?
                 </h2>
-                <p className="text-xs leading-relaxed text-white/75 sm:text-sm">
-                  Create a Noma account or sign in so future orders, saved Nigerian addresses, and wishlist items sync across devices.
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Sign in to view all your orders and saved delivery addresses automatically.
                 </p>
               </div>
 
               <Link
                 to="/account"
-                className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-[6px] bg-white px-5 py-3 text-xs font-semibold text-[#0B1220] transition-colors hover:bg-[#F6F7F9] md:w-auto"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
               >
-                <UserPlus size={16} weight="regular" className="text-[#1049EB]" />
-                <span>Sign In / Create Account</span>
+                <UserPlus size={15} weight="regular" />
+                <span>Sign In</span>
               </Link>
             </div>
           </div>
         ) : (
-          /* Signed-in Mode: Full Order History */
           <div className="space-y-6">
-            <div className="flex flex-col justify-between gap-4 border-b border-[#E5E7EB] pb-5 sm:flex-row sm:items-end">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-[#0B1220] sm:text-3xl">
-                  My Orders
-                </h1>
-                <p className="mt-1 text-xs text-[#5E6675] sm:text-sm">
-                  Signed in as <strong className="text-[#0B1220]">{profile.name || profile.email}</strong>
-                </p>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
+                {ORDER_TABS.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                      activeTab === tab
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
 
               <div className="relative w-full sm:w-64">
                 <MagnifyingGlass
                   size={14}
                   weight="regular"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5E6675]"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                 />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search order ID or ref"
-                  className="h-9 w-full rounded-[6px] border border-[#D1D5DB] bg-white pl-8 pr-3 text-xs font-medium text-[#0B1220] focus:border-[#1049EB] focus:outline-none"
+                  placeholder="Search order ID..."
+                  className="h-9 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-9 pr-3 text-xs text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none"
                 />
               </div>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {ORDER_TABS.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`shrink-0 rounded-[6px] border px-3.5 py-2 transition-colors ${
-                    activeTab === tab
-                      ? 'border-[#0B1220] bg-[#0B1220] text-white'
-                      : 'border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#EEF0F4]'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
             </div>
 
             {filteredOrders.length === 0 ? (
               <EmptyState
                 icon={<ClipboardText size={24} weight="regular" />}
-                title="No Orders Found"
-                detail="Orders placed while signed into this account will appear here automatically."
+                title="No orders found"
+                detail="Orders placed while signed into your account will appear here."
                 action={
                   <Link
                     to="/catalog"
-                    className="inline-flex items-center gap-2 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1049EB]"
+                    className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white hover:bg-slate-800"
                   >
                     Start Shopping
                   </Link>
@@ -473,31 +419,23 @@ export function MyOrdersPage() {
                 {filteredOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="space-y-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#0B1220]/30"
+                    className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 transition-shadow hover:shadow-md"
                   >
-                    <div className="flex flex-col justify-between gap-2 border-b border-[#E5E7EB] pb-3 text-xs sm:flex-row sm:items-center">
+                    <div className="flex flex-col justify-between gap-2 border-b border-slate-100 pb-3 text-xs sm:flex-row sm:items-center">
                       <div className="flex flex-wrap items-center gap-3">
-                        <span className="font-mono font-bold text-[#0B1220]">
-                          Order {order.id}
-                        </span>
-                        <span className="font-mono text-[#5E6675]">
-                          {order.paymentRef || 'PSK-ONLINE'}
-                        </span>
+                        <span className="font-bold text-slate-900">Order {order.id}</span>
+                        <span className="text-slate-400">{order.paymentRef || 'ONLINE'}</span>
                       </div>
 
-                      <span
-                        className={`inline-block self-start rounded-[4px] border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider sm:self-auto ${getStatusBadgeClasses(
-                          order.status
-                        )}`}
-                      >
+                      <span className="inline-block self-start rounded-full bg-[#F4F4F5] px-3 py-0.5 text-[11px] font-semibold capitalize text-slate-800 sm:self-auto">
                         {order.status}
                       </span>
                     </div>
 
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                      <div className="space-y-0.5 text-xs text-[#5E6675]">
+                      <div className="space-y-0.5 text-xs text-slate-500">
                         <div>
-                          Recipient: <strong className="text-[#0B1220]">{order.customer}</strong>
+                          Recipient: <strong className="text-slate-900">{order.customer}</strong>
                         </div>
                         <div>
                           Destination: <span>{order.deliveryArea || 'Nigeria'}</span>
@@ -506,10 +444,8 @@ export function MyOrdersPage() {
 
                       <div className="flex items-center justify-between gap-5 sm:justify-end">
                         <div>
-                          <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
-                            Total
-                          </span>
-                          <strong className="font-mono text-base font-bold text-[#0B1220]">
+                          <span className="block text-[11px] text-slate-400">Total</span>
+                          <strong className="text-base font-bold tabular-nums text-slate-900">
                             {formatNaira(order.total)}
                           </strong>
                         </div>
@@ -517,7 +453,7 @@ export function MyOrdersPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedOrder(order)}
-                          className="rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-4 py-2 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
+                          className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                         >
                           View Details
                         </button>
@@ -531,56 +467,43 @@ export function MyOrdersPage() {
         )}
       </div>
 
-      {/* Signed-In Order Details Modal */}
+      {/* Order Details Modal */}
       {selectedOrder ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1220]/50 p-4">
-          <div className="relative max-h-[90vh] w-full max-w-xl space-y-5 overflow-y-auto rounded-[10px] border border-[#E5E7EB] bg-white p-6 shadow-[0_8px_24px_rgba(11,18,32,0.08)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+          <div className="relative max-h-[90vh] w-full max-w-xl space-y-5 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
             <button
               type="button"
               onClick={() => setSelectedOrder(null)}
               aria-label="Close order details"
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#5E6675] hover:text-[#0B1220]"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700"
             >
-              <X size={16} weight="regular" />
+              <X size={16} weight="bold" />
             </button>
 
-            <div className="border-b border-[#E5E7EB] pb-4">
-              <span
-                className={`inline-block rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusBadgeClasses(
-                  selectedOrder.status
-                )}`}
-              >
+            <div className="border-b border-slate-100 pb-4">
+              <span className="inline-block rounded-full bg-[#F4F4F5] px-3 py-0.5 text-[11px] font-semibold capitalize text-slate-800">
                 {selectedOrder.status}
               </span>
-              <h3 className="mt-2 font-mono text-lg font-bold text-[#0B1220]">
-                Order {selectedOrder.id}
-              </h3>
-              <p className="mt-0.5 text-xs text-[#5E6675]">
-                Ref:{' '}
-                <span className="font-mono">{selectedOrder.paymentRef || 'N/A'}</span>
-                {selectedOrder.paymentMethod ? ` - ${selectedOrder.paymentMethod.toUpperCase()}` : ''}
+              <h3 className="mt-2 text-lg font-bold text-slate-900">Order {selectedOrder.id}</h3>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Ref: {selectedOrder.paymentRef || 'N/A'}
+                {selectedOrder.paymentMethod ? ` • ${selectedOrder.paymentMethod.toUpperCase()}` : ''}
               </p>
             </div>
 
-            {/* Shipping Details */}
-            <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-4 text-xs">
-              <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
-                Delivery Details
-              </span>
-              <p className="font-semibold text-[#0B1220]">{selectedOrder.customer}</p>
-              <p className="font-mono text-[#5E6675]">{selectedOrder.phone}</p>
-              <p className="mt-1 text-[#374151]">
+            <div className="rounded-xl bg-[#F4F4F5] p-4 text-xs">
+              <span className="mb-1 block font-bold text-slate-900">Delivery Address</span>
+              <p className="font-medium text-slate-800">{selectedOrder.customer}</p>
+              <p className="text-slate-500">{selectedOrder.phone}</p>
+              <p className="mt-1 text-slate-600">
                 {[selectedOrder.address, selectedOrder.deliveryArea].filter(Boolean).join(', ')}
               </p>
             </div>
 
-            {/* Line Items */}
             {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
               <div className="space-y-2">
-                <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-                  Items
-                </span>
-                <div className="divide-y divide-[#E5E7EB] rounded-[8px] border border-[#E5E7EB]">
+                <span className="block text-xs font-bold text-slate-900">Items</span>
+                <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
                   {selectedOrder.items.map((item, idx) => (
                     <div
                       key={`${item.productId}-${idx}`}
@@ -591,20 +514,20 @@ export function MyOrdersPage() {
                           <img
                             src={item.image}
                             alt={item.name}
-                            className="h-10 w-10 shrink-0 rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] object-contain p-0.5"
+                            className="h-10 w-10 shrink-0 rounded-lg bg-[#F4F4F5] object-contain p-1"
                           />
                         ) : null}
                         <div className="min-w-0">
-                          <span className="block truncate font-semibold text-[#0B1220]">
+                          <span className="block truncate font-semibold text-slate-900">
                             {item.name}
                           </span>
-                          <span className="font-mono text-[11px] text-[#5E6675]">
+                          <span className="text-[11px] text-slate-500">
                             Qty {item.quantity}
-                            {item.size ? ` - Size ${item.size}` : ''}
+                            {item.size ? ` • Size ${item.size}` : ''}
                           </span>
                         </div>
                       </div>
-                      <strong className="shrink-0 font-mono font-semibold text-[#0B1220]">
+                      <strong className="shrink-0 font-bold tabular-nums text-slate-900">
                         {formatNaira(item.unitPrice * item.quantity)}
                       </strong>
                     </div>
@@ -613,17 +536,16 @@ export function MyOrdersPage() {
               </div>
             ) : null}
 
-            {/* Summary */}
-            <div className="space-y-2 border-t border-[#E5E7EB] pt-4 text-xs">
-              <div className="flex items-center justify-between text-[#5E6675]">
+            <div className="space-y-2 border-t border-slate-100 pt-4 text-xs">
+              <div className="flex items-center justify-between text-slate-500">
                 <span>Delivery Fee</span>
-                <span className="font-mono font-semibold text-[#0B1220]">
+                <span className="font-semibold tabular-nums text-slate-900">
                   {formatNaira(selectedOrder.deliveryFee)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-bold text-[#0B1220]">Grand Total</span>
-                <strong className="font-mono text-lg font-bold text-[#0B1220]">
+                <span className="font-bold text-slate-900">Total</span>
+                <strong className="text-lg font-bold tabular-nums text-slate-900">
                   {formatNaira(selectedOrder.total)}
                 </strong>
               </div>
