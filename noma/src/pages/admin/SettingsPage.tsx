@@ -242,10 +242,10 @@ export function SettingsPage() {
           <section className="space-y-3 border-t border-slate-200 pt-6">
             <div>
               <h2 className="text-sm font-bold text-slate-950">
-                Gemini AI Product Studio Pipeline
+                Gemini AI Product Studio Pipeline (4-Key Smart Shuffle Active)
               </h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Used when snapping or uploading raw shop photos in the Product Editor to generate clean studio white-background mockups and auto-write product descriptions.
+                4 encrypted Gemini API keys are configured on your Cloudflare Worker (`noma-r2-api`) with smart round-robin shuffling and automatic 60-second rate-limit failover so no single key exhausts itself.
               </p>
             </div>
 
@@ -254,7 +254,7 @@ export function SettingsPage() {
                 htmlFor="gemini-api-key"
                 className="mb-1 block text-xs font-medium text-slate-600"
               >
-                Gemini API Key (Optional if configured in Cloudflare Worker `GEMINI_API_KEY` or `.env`)
+                Optional Override Key (Leave blank to use the 4-key Cloudflare Worker pool)
               </label>
               <input
                 id="gemini-api-key"
@@ -263,7 +263,7 @@ export function SettingsPage() {
                 onChange={(e) =>
                   setDraft((prev) => ({ ...prev, geminiApiKey: e.target.value }))
                 }
-                placeholder="AIzaSy..."
+                placeholder="Using 4-key Cloudflare Worker smart-shuffle pool..."
                 className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
               />
             </div>
