@@ -6,7 +6,6 @@ import { storageService } from '../../services/firebase/storageService'
 import {
   useAdminStore,
   type SiteSettings,
-  type StorageProviderType,
 } from '../../store/adminStore'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
@@ -45,16 +44,11 @@ export function SettingsPage() {
   const whatsappNumber = draft.whatsappNumber ?? settings.whatsappNumber
   const supportPhone = draft.supportPhone ?? settings.supportPhone
   const supportEmail = draft.supportEmail ?? settings.supportEmail ?? 'support@shopnoma.com'
-  const storageProvider: StorageProviderType =
-    draft.storageProvider ?? settings.storageProvider ?? 'cloudflare_r2'
   const cloudflareUploadEndpoint =
     draft.cloudflareUploadEndpoint ??
     settings.cloudflareUploadEndpoint ??
     '/api/media/upload'
   const cloudflarePublicUrl = draft.cloudflarePublicUrl ?? settings.cloudflarePublicUrl ?? ''
-  const cloudinaryCloudName = draft.cloudinaryCloudName ?? settings.cloudinaryCloudName ?? ''
-  const cloudinaryUploadPreset =
-    draft.cloudinaryUploadPreset ?? settings.cloudinaryUploadPreset ?? ''
   const geminiApiKey = draft.geminiApiKey ?? settings.geminiApiKey ?? ''
 
   // Banner form state
@@ -135,23 +129,18 @@ export function SettingsPage() {
   const handleSaveStorageAndAi = (e: React.FormEvent) => {
     e.preventDefault()
     updateSettings({
-      storageProvider,
+      storageProvider: 'cloudflare_r2',
       cloudflareUploadEndpoint: cloudflareUploadEndpoint.trim() || '/api/media/upload',
       cloudflarePublicUrl: cloudflarePublicUrl.trim(),
-      cloudinaryCloudName: cloudinaryCloudName.trim(),
-      cloudinaryUploadPreset: cloudinaryUploadPreset.trim(),
       geminiApiKey: geminiApiKey.trim(),
     })
     setDraft((prev) => ({
       ...prev,
-      storageProvider: undefined,
       cloudflareUploadEndpoint: undefined,
       cloudflarePublicUrl: undefined,
-      cloudinaryCloudName: undefined,
-      cloudinaryUploadPreset: undefined,
       geminiApiKey: undefined,
     }))
-    toast.success('Cloudflare R2 storage & Gemini AI pipeline settings saved.')
+    toast.success('Cloudflare R2 & Gemini AI pipeline settings saved.')
   }
 
   return (
@@ -192,150 +181,61 @@ export function SettingsPage() {
       {/* TAB 1: CLOUDFLARE R2 & GEMINI AI PIPELINE */}
       {activeTab === 'storage' ? (
         <form onSubmit={handleSaveStorageAndAi} className="max-w-3xl space-y-8">
-          {/* Storage Engine Selector */}
+          {/* Cloudflare R2 Configuration (Only Storage Engine) */}
           <section className="space-y-4">
             <div>
-              <h2 className="text-sm font-bold text-slate-950">Media Storage Engine</h2>
+              <h2 className="text-sm font-bold text-slate-950">
+                Cloudflare R2 Media Storage (`noma-media`)
+              </h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Cloudflare R2 (`noma-media` bucket) is the active image storage engine while Cloud Firestore remains the primary database.
+                All product photos, studio mockups, category covers, and banners are stored strictly in Cloudflare R2 with zero egress fees, while Cloud Firestore stores catalog and order data.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {(
-                [
-                  {
-                    id: 'cloudflare_r2',
-                    title: 'Cloudflare R2',
-                    subtitle: 'Primary • Zero egress R2 bucket (noma-media)',
-                  },
-                  {
-                    id: 'cloudinary',
-                    title: 'Cloudinary',
-                    subtitle: 'Alternative CDN preset',
-                  },
-                  {
-                    id: 'firebase',
-                    title: 'Firebase Storage',
-                    subtitle: 'Legacy bucket fallback',
-                  },
-                ] as const
-              ).map((opt) => {
-                const selected = storageProvider === opt.id
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() =>
-                      setDraft((prev) => ({ ...prev, storageProvider: opt.id }))
-                    }
-                    className={`flex flex-col justify-between rounded-xl border p-4 text-left transition-colors ${
-                      selected
-                        ? 'border-slate-950 bg-[#F4F4F5]/70'
-                        : 'border-slate-200 bg-white hover:border-slate-400'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-950">{opt.title}</span>
-                      {selected ? (
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-950 text-white">
-                          <Check size={10} weight="bold" />
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                      {opt.subtitle}
-                    </p>
-                  </button>
-                )
-              })}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="cf-upload-endpoint"
+                  className="mb-1 block text-xs font-medium text-slate-600"
+                >
+                  Worker Upload Endpoint
+                </label>
+                <input
+                  id="cf-upload-endpoint"
+                  type="text"
+                  value={cloudflareUploadEndpoint}
+                  onChange={(e) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      cloudflareUploadEndpoint: e.target.value,
+                    }))
+                  }
+                  placeholder="/api/media/upload"
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="cf-public-url"
+                  className="mb-1 block text-xs font-medium text-slate-600"
+                >
+                  Public R2 Domain / CDN URL (Optional)
+                </label>
+                <input
+                  id="cf-public-url"
+                  type="text"
+                  value={cloudflarePublicUrl}
+                  onChange={(e) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      cloudflarePublicUrl: e.target.value,
+                    }))
+                  }
+                  placeholder="https://media.shopnoma.com (or blank for /media/*)"
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
+                />
+              </div>
             </div>
-
-            {storageProvider === 'cloudflare_r2' ? (
-              <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="cf-upload-endpoint"
-                    className="mb-1 block text-xs font-medium text-slate-600"
-                  >
-                    Worker Upload Endpoint
-                  </label>
-                  <input
-                    id="cf-upload-endpoint"
-                    type="text"
-                    value={cloudflareUploadEndpoint}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        cloudflareUploadEndpoint: e.target.value,
-                      }))
-                    }
-                    placeholder="/api/media/upload"
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="cf-public-url"
-                    className="mb-1 block text-xs font-medium text-slate-600"
-                  >
-                    Public R2 Domain / CDN URL (Optional)
-                  </label>
-                  <input
-                    id="cf-public-url"
-                    type="text"
-                    value={cloudflarePublicUrl}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        cloudflarePublicUrl: e.target.value,
-                      }))
-                    }
-                    placeholder="https://media.shopnoma.com (or blank for /media/*)"
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
-                  />
-                </div>
-              </div>
-            ) : null}
-
-            {storageProvider === 'cloudinary' ? (
-              <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">
-                    Cloudinary Cloud Name
-                  </label>
-                  <input
-                    type="text"
-                    value={cloudinaryCloudName}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        cloudinaryCloudName: e.target.value,
-                      }))
-                    }
-                    placeholder="noma-store"
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">
-                    Unsigned Upload Preset
-                  </label>
-                  <input
-                    type="text"
-                    value={cloudinaryUploadPreset}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        cloudinaryUploadPreset: e.target.value,
-                      }))
-                    }
-                    placeholder="noma_unsigned"
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
-                  />
-                </div>
-              </div>
-            ) : null}
           </section>
 
           {/* Gemini AI Product Studio Configuration */}

@@ -54,7 +54,7 @@ export class CloudflareR2StorageProvider implements IStorageProvider {
     const rawPublic =
       publicBaseUrl?.trim() ||
       import.meta.env.VITE_CLOUDFLARE_R2_PUBLIC_URL ||
-      ''
+      'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev'
     this.publicBaseUrl = rawPublic.replace(/\/+$/, '')
   }
 

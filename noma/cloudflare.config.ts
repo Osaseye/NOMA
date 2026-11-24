@@ -40,7 +40,7 @@ export default defineConfig({
         name: 'noma-media',
       }),
       FIREBASE_PROJECT_ID: bindings.text('nokenko-1ab8b'),
-      R2_PUBLIC_URL: bindings.text(''),
+      R2_PUBLIC_URL: bindings.text('https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev'),
       ALLOWED_ORIGIN: bindings.text('https://shopnoma.com'),
     },
   },

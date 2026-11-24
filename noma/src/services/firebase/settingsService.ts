@@ -16,11 +16,9 @@ export const initialSiteSettings: SiteSettings = {
   supportEmail: 'support@shopnoma.com',
   whatsappNumber: '2348030006662',
   storageProvider: 'cloudflare_r2',
-  cloudinaryCloudName: '',
-  cloudinaryUploadPreset: '',
   cloudflareBucketUrl: '',
   cloudflareUploadEndpoint: '/api/media/upload',
-  cloudflarePublicUrl: '',
+  cloudflarePublicUrl: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev',
   geminiApiKey: '',
 }
 
@@ -56,13 +54,12 @@ export const settingsService = {
             supportPhone: data.supportPhone || initialSiteSettings.supportPhone,
             supportEmail: data.supportEmail || initialSiteSettings.supportEmail,
             whatsappNumber: data.whatsappNumber || initialSiteSettings.whatsappNumber,
-            storageProvider: data.storageProvider || 'cloudflare_r2',
-            cloudinaryCloudName: data.cloudinaryCloudName || '',
-            cloudinaryUploadPreset: data.cloudinaryUploadPreset || '',
+            storageProvider: 'cloudflare_r2',
             cloudflareBucketUrl: data.cloudflareBucketUrl || '',
             cloudflareUploadEndpoint:
               data.cloudflareUploadEndpoint || initialSiteSettings.cloudflareUploadEndpoint,
-            cloudflarePublicUrl: data.cloudflarePublicUrl || '',
+            cloudflarePublicUrl:
+              data.cloudflarePublicUrl || initialSiteSettings.cloudflarePublicUrl,
             geminiApiKey: data.geminiApiKey || '',
           })
         } else {

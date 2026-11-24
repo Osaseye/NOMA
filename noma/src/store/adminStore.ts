@@ -14,7 +14,7 @@ export interface HeroBanner {
   active: boolean
 }
 
-export type StorageProviderType = 'firebase' | 'cloudinary' | 'cloudflare_r2'
+export type StorageProviderType = 'cloudflare_r2'
 
 export interface SiteSettings {
   allProductsBannerImage?: string
@@ -28,8 +28,6 @@ export interface SiteSettings {
   supportEmail: string
   whatsappNumber: string
   storageProvider?: StorageProviderType
-  cloudinaryCloudName?: string
-  cloudinaryUploadPreset?: string
   cloudflareBucketUrl?: string
   cloudflareUploadEndpoint?: string
   cloudflarePublicUrl?: string
@@ -169,8 +167,6 @@ export const useAdminStore = create<AdminState>()(
           supportEmail: '',
           whatsappNumber: '',
           storageProvider: 'cloudflare_r2',
-          cloudinaryCloudName: '',
-          cloudinaryUploadPreset: '',
           cloudflareBucketUrl: '',
           cloudflareUploadEndpoint: '/api/media/upload',
           cloudflarePublicUrl: '',
