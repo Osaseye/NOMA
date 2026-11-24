@@ -153,9 +153,9 @@ export function StorefrontLayout() {
               />
             </button>
 
-            {/* Custom Designed Nigerian States Dropdown Popover */}
+            {/* Custom Designed Nigerian States Dropdown Popover (Right-aligned on mobile, centered on sm+) */}
             {stateMenuOpen ? (
-              <div className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl sm:w-80">
+              <div className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[300px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl sm:left-1/2 sm:right-auto sm:w-80 sm:max-w-none sm:-translate-x-1/2">
                 <div className="mb-2.5 flex items-center justify-between px-1">
                   <div className="flex items-center gap-1.5">
                     <NigeriaFlagIcon />
