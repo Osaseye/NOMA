@@ -7,20 +7,18 @@ export function ProfitPage() {
   const { orders } = useProductStore()
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
+    <div className="flex flex-col gap-8 pb-12">
       <AdminTitle
-        title="Operator Profit & Margin Reconciliation"
-        detail="Keep supplier cost separate from earned markup margins to preserve accurate business take-home income."
+        title="Profit & Margin"
+        detail="Reconcile supplier wholesale costs against earned retail markup margins."
       />
       <ProfitSummary orders={orders} />
-      <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
-        <div className="border-b border-[#E5E7EB] pb-4">
-          <h2 className="text-base font-bold tracking-tight text-[#0B1220]">
-            Daily Profit Margin Distribution
+      <section>
+        <div className="mb-3">
+          <h2 className="text-sm font-bold text-slate-950">
+            Profit Margin Distribution (NGN)
           </h2>
-          <p className="mt-0.5 text-xs text-[#5E6675]">
-            Net operator markup per day (NGN)
-          </p>
+          <p className="text-xs text-slate-500">Net markup earned per order</p>
         </div>
         <ProfitBarChart orders={orders} />
       </section>

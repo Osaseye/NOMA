@@ -1,255 +1,237 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import {
-  ArrowRight,
-  Envelope,
-  Key,
-  Phone,
-  ShieldCheck,
-  SpinnerGap,
-  User,
-} from '@phosphor-icons/react'
+import { ArrowRight, Eye, EyeSlash, SpinnerGap } from '@phosphor-icons/react'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { authService } from '../../services/firebase/authService'
 import { useAdminStore } from '../../store/adminStore'
 
-export function AdminRegisterPage() {
-  const navigate = useNavigate()
-  const { login } = useAdminStore()
+const ADMIN_SECRET_CODE = import.meta.env.VITE_ADMIN_SECRET_CODE || 'NOMA-ADMIN-2025'
 
+export function AdminRegisterPage() {
   const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [secretCode, setSecretCode] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
 
-    if (!name || !email || !password) {
-      toast.error('Please fill in all required fields')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match')
+    if (!name || !email || !password || !confirmPassword || !secretCode) {
+      setError('Please complete all fields.')
       return
     }
 
     if (password.length < 6) {
-      toast.error('Password must be at least 6 characters')
+      setError('Password must be at least 6 characters.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    if (secretCode.trim() !== ADMIN_SECRET_CODE) {
+      setError('Invalid authorization key.')
+      toast.error('Invalid admin authorization key.')
       return
     }
 
     setLoading(true)
     try {
-      const { user, profile } = await authService.registerAdmin(email, password, name, phone)
-
-      login(user.email || email)
+      const { user, profile } = await authService.registerAdmin(email, password, name, '')
       useAdminStore.setState({
         isLoggedIn: true,
         operatorUser: {
-          name: profile.name,
-          email: profile.email,
+          name: profile.name || name,
+          email: user.email || email,
           role: 'Master Admin',
         },
       })
-
-      toast.success('Admin account created. Welcome to Noma Operations.')
+      toast.success('Admin account created.')
       navigate('/admin')
     } catch (err: unknown) {
-      const error = err as { message?: string }
-      console.error('Admin registration error:', error)
-      toast.error(error.message || 'Failed to create admin account')
+      console.error('Admin Registration Error:', err)
+      const firebaseError = err as { code?: string; message?: string }
+      if (firebaseError.code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Sign in instead.')
+      } else {
+        setError(firebaseError.message || 'Failed to register admin account.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F6F7F9] p-4 font-sans text-[#0B1220]">
-      <div className="w-full max-w-md rounded-[10px] border border-[#E5E7EB] bg-white p-8">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-2">
+    <div className="flex min-h-screen flex-col justify-center bg-white px-5 py-10 text-slate-900">
+      <div className="mx-auto w-full max-w-[440px]">
+        {/* Brand Header — Floating directly on screen */}
+        <div className="mb-7 flex flex-col items-start">
+          <Link to="/" className="mb-5 inline-flex items-center gap-2.5">
             <img
               src="/icon.png"
               alt="Noma"
-              className="h-full w-full object-contain"
+              className="h-9 w-9 object-contain"
               onError={(e) => {
-                e.currentTarget.src = '/fav.png'
+                ;(e.target as HTMLImageElement).src = '/logo.PNG'
               }}
             />
-          </div>
+            <span className="text-lg font-bold tracking-tight text-slate-950">Noma Admin</span>
+          </Link>
 
-          <span className="mb-2 rounded-[4px] bg-[#EEF3FE] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#1049EB]">
-            Operator Provisioning
-          </span>
-
-          <h1 className="text-2xl font-bold tracking-tight text-[#0B1220]">
-            Admin Registration
-          </h1>
-          <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-[#5E6675]">
-            Create an administrator account for Noma store operations and reconciliation.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">Create admin account</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Set up an administrator profile for Noma.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="admin-reg-name"
-              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
-            >
-              Full Name *
-            </label>
-            <div className="relative flex items-center">
-              <User
-                size={16}
-                weight="regular"
-                className="pointer-events-none absolute left-3.5 text-[#5E6675]"
-              />
+        {/* Compact 2-Column Floating Form */}
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          {error ? (
+            <p className="text-xs font-medium text-rose-600">{error}</p>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="reg-full-name"
+                className="mb-1 block text-xs font-medium text-slate-600"
+              >
+                Full name
+              </label>
               <input
-                id="admin-reg-name"
+                id="reg-full-name"
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Chief Operator"
-                className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2.5 pl-10 pr-3.5 text-sm text-[#0B1220] placeholder:text-[#5E6675]/60 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
+                placeholder="Adebola Glory"
+                className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
               />
             </div>
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="admin-reg-phone"
-              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
-            >
-              Phone Number
-            </label>
-            <div className="relative flex items-center">
-              <Phone
-                size={16}
-                weight="regular"
-                className="pointer-events-none absolute left-3.5 text-[#5E6675]"
-              />
+            <div>
+              <label
+                htmlFor="reg-work-email"
+                className="mb-1 block text-xs font-medium text-slate-600"
+              >
+                Work email
+              </label>
               <input
-                id="admin-reg-phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="08030006662"
-                className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2.5 pl-10 pr-3.5 font-mono text-sm text-[#0B1220] placeholder:text-[#5E6675]/60 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="admin-reg-email"
-              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
-            >
-              Admin Email *
-            </label>
-            <div className="relative flex items-center">
-              <Envelope
-                size={16}
-                weight="regular"
-                className="pointer-events-none absolute left-3.5 text-[#5E6675]"
-              />
-              <input
-                id="admin-reg-email"
+                id="reg-work-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@shopnoma.com"
-                className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2.5 pl-10 pr-3.5 text-sm text-[#0B1220] placeholder:text-[#5E6675]/60 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
+                className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="admin-reg-password"
-              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
-            >
-              Password *
-            </label>
-            <div className="relative flex items-center">
-              <Key
-                size={16}
-                weight="regular"
-                className="pointer-events-none absolute left-3.5 text-[#5E6675]"
-              />
-              <input
-                id="admin-reg-password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 6 characters"
-                className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2.5 pl-10 pr-3.5 text-sm text-[#0B1220] placeholder:text-[#5E6675]/60 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
-              />
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="reg-password"
+                className="mb-1 block text-xs font-medium text-slate-600"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="reg-password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 6 characters"
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-9 text-sm text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeSlash size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="admin-reg-confirm"
-              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]"
-            >
-              Confirm Password *
-            </label>
-            <div className="relative flex items-center">
-              <Key
-                size={16}
-                weight="regular"
-                className="pointer-events-none absolute left-3.5 text-[#5E6675]"
-              />
+            <div>
+              <label
+                htmlFor="reg-confirm-password"
+                className="mb-1 block text-xs font-medium text-slate-600"
+              >
+                Confirm password
+              </label>
               <input
-                id="admin-reg-confirm"
-                type="password"
+                id="reg-confirm-password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
-                className="w-full rounded-[6px] border border-[#D1D5DB] bg-white py-2.5 pl-10 pr-3.5 text-sm text-[#0B1220] placeholder:text-[#5E6675]/60 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
+                placeholder="Repeat password"
+                className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="reg-secret-code"
+              className="mb-1 block text-xs font-medium text-slate-600"
+            >
+              Authorization key
+            </label>
+            <input
+              id="reg-secret-code"
+              type="password"
+              required
+              value={secretCode}
+              onChange={(e) => setSecretCode(e.target.value)}
+              placeholder="Enter admin key"
+              className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
+            />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] text-sm font-semibold text-white transition-colors hover:bg-[#1E293B] active:scale-[0.99] disabled:opacity-50"
+            className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
           >
             {loading ? (
               <>
-                <SpinnerGap size={16} weight="regular" className="animate-spin" />
-                <span>Creating Account...</span>
+                <SpinnerGap size={15} className="animate-spin" />
+                <span>Creating account...</span>
               </>
             ) : (
               <>
-                <span>Register as Master Admin</span>
-                <ArrowRight size={15} weight="regular" />
+                <span>Create Admin Account</span>
+                <ArrowRight size={14} weight="bold" />
               </>
             )}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-[#5E6675]">
-          Already registered?{' '}
-          <Link to="/admin/login" className="font-semibold text-[#1049EB] hover:underline">
-            Back to Admin Login
+        {/* Minimal Footer Links */}
+        <div className="mt-7 flex items-center justify-between text-xs text-slate-500">
+          <Link to="/admin/login" className="font-medium text-slate-900 hover:underline">
+            Sign in instead
+          </Link>
+          <Link to="/" className="hover:text-slate-900">
+            Back to store
           </Link>
         </div>
-
-        <div className="mt-6 flex w-full items-center justify-center gap-2 border-t border-[#E5E7EB] pt-5 font-mono text-[11px] uppercase tracking-wider text-[#5E6675]">
-          <ShieldCheck size={15} weight="regular" className="text-[#15803D]" />
-          <span>Protected Operator Environment</span>
-        </div>
       </div>
-    </main>
+    </div>
   )
 }

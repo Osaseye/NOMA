@@ -4,6 +4,7 @@ export interface Env {
   R2_PUBLIC_URL?: string
   FIREBASE_PROJECT_ID?: string
   ALLOWED_ORIGIN?: string
+  GEMINI_API_KEY?: string
 }
 
 interface VerifiedFirebaseUser {
@@ -92,7 +93,7 @@ function buildCorsHeaders(request: Request, requestUrl: URL, env: Env): Headers 
     }
   }
   headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
-  headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+  headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Gemini-Api-Key')
   headers.set('Access-Control-Max-Age', '86400')
   return headers
 }
@@ -344,6 +345,139 @@ function computeDeliveryEstimate(stateParam: string, bulky: boolean): {
   return { standardFee, expressFee, etaDays, zone }
 }
 
+async function handleGeminiProductStudio(
+  request: Request,
+  requestUrl: URL,
+  env: Env
+): Promise<Response> {
+  const apiKey = (
+    request.headers.get('x-gemini-api-key') ||
+    env.GEMINI_API_KEY ||
+    ''
+  ).trim()
+
+  if (!apiKey) {
+    return jsonResponse(
+      { error: 'GEMINI_API_KEY not configured on worker.' },
+      503,
+      request,
+      requestUrl,
+      env
+    )
+  }
+
+  const body = (await request.json().catch(() => null)) as {
+    imageBase64?: string
+    mimeType?: string
+    prompt?: string
+  } | null
+
+  if (!body || !body.imageBase64 || !body.prompt) {
+    return jsonResponse(
+      { error: 'Missing imageBase64 or prompt in request payload.' },
+      400,
+      request,
+      requestUrl,
+      env
+    )
+  }
+
+  const mimeType = body.mimeType || 'image/jpeg'
+
+  const copyRes = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
+      apiKey
+    )}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: body.prompt },
+              { inlineData: { mimeType, data: body.imageBase64 } },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.3,
+          responseMimeType: 'application/json',
+        },
+      }),
+    }
+  )
+
+  let copy: Record<string, unknown> | undefined
+  if (copyRes.ok) {
+    const copyJson = (await copyRes.json().catch(() => null)) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+    } | null
+    const rawText = copyJson?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    if (rawText) {
+      try {
+        const cleaned = rawText
+          .replace(/^```json\s*/i, '')
+          .replace(/```\s*$/, '')
+          .trim()
+        copy = JSON.parse(cleaned) as Record<string, unknown>
+      } catch {
+        copy = undefined
+      }
+    }
+  }
+
+  let studioImage: { data: string; mimeType: string } | undefined
+  try {
+    const imgRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${encodeURIComponent(
+        apiKey
+      )}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: 'Place this exact product on a pure, clean solid white e-commerce photography studio background (#FFFFFF) with soft natural studio lighting and a subtle contact shadow. Remove all background clutter.',
+                },
+                { inlineData: { mimeType, data: body.imageBase64 } },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        }),
+      }
+    )
+
+    if (imgRes.ok) {
+      const imgJson = (await imgRes.json().catch(() => null)) as {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }>
+          }
+        }>
+      } | null
+      const parts = imgJson?.candidates?.[0]?.content?.parts || []
+      const found = parts.find((p) => p.inlineData?.data)
+      if (found?.inlineData?.data) {
+        studioImage = {
+          data: found.inlineData.data,
+          mimeType: found.inlineData.mimeType || 'image/png',
+        }
+      }
+    }
+  } catch {
+    studioImage = undefined
+  }
+
+  return jsonResponse({ copy, studioImage }, 200, request, requestUrl, env)
+}
+
 async function handleMediaUpload(
   request: Request,
   requestUrl: URL,
@@ -556,6 +690,10 @@ export default {
 
       if (request.method === 'POST' && requestUrl.pathname === '/api/media/upload') {
         return await handleMediaUpload(request, requestUrl, env, ctx)
+      }
+
+      if (request.method === 'POST' && requestUrl.pathname === '/api/ai/product-studio') {
+        return await handleGeminiProductStudio(request, requestUrl, env)
       }
 
       if (request.method === 'DELETE' && requestUrl.pathname.startsWith('/api/media/')) {

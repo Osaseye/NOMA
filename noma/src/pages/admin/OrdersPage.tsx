@@ -6,10 +6,10 @@ export function OrdersPage() {
   const { orders } = useProductStore()
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
+    <div className="flex flex-col gap-5 pb-12">
       <AdminTitle
-        title="Orders & Shipping Logistics"
-        detail="Track real-time order status, customer delivery locations, payment references, and net markup revenue."
+        title="Orders"
+        detail="Track customer orders, delivery destinations, and fulfillment status."
       />
       <OrdersTable orders={orders} />
     </div>

@@ -3,10 +3,10 @@ import { ReportCards } from '../../features/admin-reports/ReportCards'
 
 export function ReportsPage() {
   return (
-    <div className="flex flex-col gap-6 pb-12">
+    <div className="flex flex-col gap-5 pb-12">
       <AdminTitle
-        title="Business Intelligence & Operational Reports"
-        detail="Generate export-ready financial audit reports, inventory valuation tables, and category sales breakdowns."
+        title="Reports"
+        detail="Export financial ledgers, inventory valuations, and user directories as CSV."
       />
       <ReportCards />
     </div>

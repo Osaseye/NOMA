@@ -6,30 +6,26 @@ export function MonthlySummaryCards({ orders }: { orders: Order[] }) {
   const summary = monthlySummary(orders)
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 border-b border-slate-200 pb-4 sm:grid-cols-4">
       <KpiCard
-        label="Gross Sales Total"
+        label="Gross Sales"
         value={formatNaira(summary.totalSales)}
-        tone="cobalt"
-        subtitle="All customer orders"
+        subtitle="Total order volume"
       />
       <KpiCard
-        label="Owed to Supplier"
+        label="Supplier Cost"
         value={formatNaira(summary.owedToSupplier)}
-        tone="ink"
         subtitle="Wholesale base cost"
       />
       <KpiCard
-        label="Net Markup Earned"
+        label="Net Profit"
         value={formatNaira(summary.markupEarned)}
-        tone="success"
-        subtitle="Pure operator margin"
+        subtitle="Earned store margin"
       />
       <KpiCard
-        label="Fixed Allocation"
-        value={formatNaira(summary.salary)}
-        tone="amber"
-        subtitle="Operations fund"
+        label="Total Orders"
+        value={`${orders.length}`}
+        subtitle="All recorded orders"
       />
     </div>
   )

@@ -33,6 +33,7 @@ export interface SiteSettings {
   cloudflareBucketUrl?: string
   cloudflareUploadEndpoint?: string
   cloudflarePublicUrl?: string
+  geminiApiKey?: string
 }
 
 interface AdminState {
@@ -167,12 +168,13 @@ export const useAdminStore = create<AdminState>()(
           supportPhone: '',
           supportEmail: '',
           whatsappNumber: '',
-          storageProvider: 'firebase',
+          storageProvider: 'cloudflare_r2',
           cloudinaryCloudName: '',
           cloudinaryUploadPreset: '',
           cloudflareBucketUrl: '',
           cloudflareUploadEndpoint: '/api/media/upload',
           cloudflarePublicUrl: '',
+          geminiApiKey: '',
         }
         set({ settings: emptySettings })
         settingsService.updateSiteSettings(emptySettings).catch((err) => {

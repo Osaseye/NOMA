@@ -13,41 +13,7 @@ import type { Supplier } from '../../types/commerce'
 
 const SUPPLIERS_COLLECTION = 'suppliers'
 
-export const initialSuppliers: Supplier[] = [
-  {
-    id: 'sup-1',
-    name: 'Sumec Firman Nigeria Ltd',
-    contactPerson: 'Chief Emeka Okafor',
-    phone: '0803 111 2233',
-    email: 'sales@firman-ng.com',
-    address: 'Alaba International Market, Ojo, Lagos',
-    paymentTerms: 'Net 30 Days',
-    notes: 'Primary supplier for generators and heavy power equipment.',
-    logo: '/images/cat-power.png',
-  },
-  {
-    id: 'sup-2',
-    name: 'Guangzhou Home Appliances Co.',
-    contactPerson: 'Mr. Chen Wei',
-    phone: '0802 444 5566',
-    email: 'imports@gz-appliances.com',
-    address: 'Trade Fair Complex, Badagry Expressway, Lagos',
-    paymentTerms: 'Pay on Stock Delivery',
-    notes: 'Direct importer of air fryers, blenders, and nonstick cookware sets.',
-    logo: '/images/cat-kitchen.png',
-  },
-  {
-    id: 'sup-3',
-    name: 'Binatone West Africa',
-    contactPerson: 'Mrs. Funke Adebayo',
-    phone: '0805 777 8899',
-    email: 'orders@binatone-wa.com',
-    address: 'Ikeja Industrial Estate, Lagos',
-    paymentTerms: 'Consignment / Monthly Settlement',
-    notes: 'Authorized distributor for fans, standing coolers, and microwaves.',
-    logo: '/images/cat-appliances.png',
-  },
-]
+export const initialSuppliers: Supplier[] = []
 
 export const supplierService = {
   subscribeSuppliers: (callback: (suppliers: Supplier[]) => void) => {

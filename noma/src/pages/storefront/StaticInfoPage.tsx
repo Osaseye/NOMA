@@ -2,6 +2,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   CaretRight,
+  Check,
   MagnifyingGlass,
   Minus,
   Plus,
@@ -9,8 +10,10 @@ import {
 } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { brand } from '../../constants/brand'
 import { useAdminStore } from '../../store/adminStore'
+import { useFeedbackStore } from '../../store/feedbackStore'
 
 export type StaticPageType =
   | 'about'
@@ -129,6 +132,40 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0)
   const [trackingInput, setTrackingInput] = useState('')
   const [activeLegalSection, setActiveLegalSection] = useState<string>('overview')
+
+  // Feedback form state
+  const submitFeedback = useFeedbackStore((state) => state.submitFeedback)
+  const [fbName, setFbName] = useState('')
+  const [fbPhone, setFbPhone] = useState('')
+  const [fbEmail, setFbEmail] = useState('')
+  const [fbTopic, setFbTopic] = useState('Wholesale & Bulk Inquiry')
+  const [fbMessage, setFbMessage] = useState('')
+  const [fbSubmitting, setFbSubmitting] = useState(false)
+  const [fbSent, setFbSent] = useState(false)
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!fbName.trim() || !fbMessage.trim()) return
+    setFbSubmitting(true)
+    try {
+      await submitFeedback({
+        name: fbName.trim(),
+        phone: fbPhone.trim() || undefined,
+        email: fbEmail.trim() || undefined,
+        topic: fbTopic,
+        message: fbMessage.trim(),
+      })
+      setFbName('')
+      setFbPhone('')
+      setFbEmail('')
+      setFbMessage('')
+      setFbSent(true)
+      toast.success('Thank you! Your message has been sent to our team.')
+      setTimeout(() => setFbSent(false), 5000)
+    } finally {
+      setFbSubmitting(false)
+    }
+  }
 
   const supportPhone = settings.supportPhone || brand.phone
   const supportEmail = settings.supportEmail || brand.supportEmail || brand.email
@@ -678,6 +715,88 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                   </a>
                 </div>
               </div>
+            </div>
+
+            {/* Send Feedback / Inquiry Form (Syncs directly to Admin /admin/feedback) */}
+            <div className="pt-4">
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                Send a Message or Feedback
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Have a question, wholesale shoe bale request, or feedback? Send it directly to our team.
+              </p>
+
+              <form onSubmit={handleFeedbackSubmit} className="mt-4 space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <input
+                    type="text"
+                    required
+                    value={fbName}
+                    onChange={(e) => setFbName(e.target.value)}
+                    placeholder="Your name *"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={fbPhone}
+                    onChange={(e) => setFbPhone(e.target.value)}
+                    placeholder="Phone / WhatsApp number"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <input
+                    type="email"
+                    value={fbEmail}
+                    onChange={(e) => setFbEmail(e.target.value)}
+                    placeholder="Email address (optional)"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+                  />
+                  <select
+                    value={fbTopic}
+                    onChange={(e) => setFbTopic(e.target.value)}
+                    aria-label="Inquiry topic"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-900 focus:border-slate-900 focus:outline-none"
+                  >
+                    <option value="Wholesale & Bulk Inquiry">Wholesale &amp; Bulk Inquiry</option>
+                    <option value="Order Delivery Support">Order Delivery Support</option>
+                    <option value="Returns & Size Exchange">Returns &amp; Size Exchange</option>
+                    <option value="Store Feedback">Store Feedback</option>
+                  </select>
+                </div>
+
+                <textarea
+                  rows={3}
+                  required
+                  value={fbMessage}
+                  onChange={(e) => setFbMessage(e.target.value)}
+                  placeholder="How can we help you? *"
+                  className="w-full rounded-xl border border-slate-200 bg-white p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+                />
+
+                <div className="flex items-center justify-between gap-3">
+                  {fbSent ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                      <Check size={14} weight="bold" />
+                      <span>Sent to Noma Support</span>
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-slate-400">
+                      Replies within 1 business hour
+                    </span>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={fbSubmitting}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    <span>{fbSubmitting ? 'Sending...' : 'Send Message'}</span>
+                    <ArrowRight size={13} weight="bold" />
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

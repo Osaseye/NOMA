@@ -2,7 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { StorefrontLayout } from '../layouts/StorefrontLayout'
 import { HomePage } from '../pages/storefront/HomePage'
-import { StorefrontErrorPage } from '../pages/storefront/StorefrontErrorPage'
+import { RouteErrorPage } from '../pages/RouteErrorPage'
 
 function lazyView<P extends object = Record<string, never>>(
   loader: () => Promise<ComponentType<P>>,
@@ -19,7 +19,7 @@ function lazyView<P extends object = Record<string, never>>(
 export const router = createBrowserRouter([
   {
     element: <StorefrontLayout />,
-    errorElement: <StorefrontErrorPage />,
+    errorElement: <RouteErrorPage />,
     children: [
       { path: '/', element: <HomePage /> },
       {
@@ -164,22 +164,26 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin/login',
+    errorElement: <RouteErrorPage />,
     element: lazyView(() => import('../pages/admin/LoginPage').then((m) => m.LoginPage)),
   },
   {
     path: '/admin/register',
+    errorElement: <RouteErrorPage />,
     element: lazyView(() =>
       import('../pages/admin/AdminRegisterPage').then((m) => m.AdminRegisterPage),
     ),
   },
   {
     path: '/admin',
+    errorElement: <RouteErrorPage />,
     element: lazyView(() =>
       import('../components/auth/AdminProtectedRoute').then((m) => m.AdminProtectedRoute),
     ),
     children: [
       {
         element: lazyView(() => import('../layouts/AdminLayout').then((m) => m.AdminLayout)),
+        errorElement: <RouteErrorPage />,
         children: [
           {
             index: true,
@@ -230,9 +234,27 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: 'categories/new',
+            element: lazyView(() =>
+              import('../pages/admin/CategoryEditorPage').then((m) => m.CategoryEditorPage),
+            ),
+          },
+          {
+            path: 'categories/:categoryId/edit',
+            element: lazyView(() =>
+              import('../pages/admin/CategoryEditorPage').then((m) => m.CategoryEditorPage),
+            ),
+          },
+          {
             path: 'customers',
             element: lazyView(() =>
               import('../pages/admin/CustomersPage').then((m) => m.CustomersPage),
+            ),
+          },
+          {
+            path: 'feedback',
+            element: lazyView(() =>
+              import('../pages/admin/FeedbackPage').then((m) => m.FeedbackPage),
             ),
           },
           {
@@ -251,6 +273,18 @@ export const router = createBrowserRouter([
             path: 'suppliers',
             element: lazyView(() =>
               import('../pages/admin/SuppliersPage').then((m) => m.SuppliersPage),
+            ),
+          },
+          {
+            path: 'suppliers/new',
+            element: lazyView(() =>
+              import('../pages/admin/SupplierEditorPage').then((m) => m.SupplierEditorPage),
+            ),
+          },
+          {
+            path: 'suppliers/:supplierId/edit',
+            element: lazyView(() =>
+              import('../pages/admin/SupplierEditorPage').then((m) => m.SupplierEditorPage),
             ),
           },
           {

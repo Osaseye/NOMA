@@ -1,216 +1,221 @@
 import { useState } from 'react'
-import {
-  CheckCircle,
-  Cube,
-  Minus,
-  Plus,
-  Warning,
-  XCircle,
-} from '@phosphor-icons/react'
+import { MagnifyingGlass, Minus, Plus, Warehouse } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import { EmptyState } from '../../design-system/components/EmptyState'
+import { KpiCard } from '../../design-system/components/KpiCard'
 import { useProductStore } from '../../store/productStore'
 import type { Product } from '../../types/commerce'
+import { formatNaira } from '../../utils/pricing'
 
 export function InventoryTable({ products }: { products: Product[] }) {
-  const { updateStockQuantity } = useProductStore()
-  const [filterHealth, setFilterHealth] = useState<'all' | 'low' | 'out' | 'healthy'>('all')
+  const { updateStockQuantity, toggleStockStatus } = useProductStore()
+  const [search, setSearch] = useState('')
+  const [stockFilter, setStockFilter] = useState<'all' | 'healthy' | 'low' | 'out'>('all')
 
-  const totalSKUs = products.length
-  const lowStockProducts = products.filter((p) => p.stockQty > 0 && p.stockQty < 10)
-  const outOfStockProducts = products.filter((p) => p.stockQty === 0)
-  const healthyProducts = products.filter((p) => p.stockQty >= 10)
+  const totalSkus = products.length
+  const totalUnits = products.reduce((acc, p) => acc + (p.stockQty ?? 0), 0)
+  const lowStockCount = products.filter(
+    (p) => (p.stockQty ?? 0) > 0 && (p.stockQty ?? 0) <= 5
+  ).length
+  const outOfStockCount = products.filter((p) => (p.stockQty ?? 0) === 0).length
 
   const filtered = products.filter((p) => {
-    if (filterHealth === 'low') return p.stockQty > 0 && p.stockQty < 10
-    if (filterHealth === 'out') return p.stockQty === 0
-    if (filterHealth === 'healthy') return p.stockQty >= 10
+    const qty = p.stockQty ?? 0
+    if (stockFilter === 'healthy' && qty <= 5) return false
+    if (stockFilter === 'low' && (qty === 0 || qty > 5)) return false
+    if (stockFilter === 'out' && qty > 0) return false
+
+    if (search) {
+      const q = search.toLowerCase()
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        (p.brand || '').toLowerCase().includes(q)
+      )
+    }
     return true
   })
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Clickable Health Threshold Tiles */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <button
-          type="button"
-          onClick={() => setFilterHealth('all')}
-          className={`relative overflow-hidden rounded-[8px] border bg-white p-4 text-left transition-colors sm:p-5 ${
-            filterHealth === 'all'
-              ? 'border-[#1049EB] bg-[#EEF3FE]/40 ring-1 ring-[#1049EB]'
-              : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
-          }`}
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-[#0B1220]" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-              Catalog SKUs
-            </span>
-            <Cube size={16} weight="regular" className="text-[#0B1220]" />
-          </div>
-          <div className="mt-2 font-mono tabular-nums text-2xl font-bold text-[#0B1220]">
-            {totalSKUs}
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilterHealth('healthy')}
-          className={`relative overflow-hidden rounded-[8px] border bg-white p-4 text-left transition-colors sm:p-5 ${
-            filterHealth === 'healthy'
-              ? 'border-[#1049EB] bg-[#EEF3FE]/40 ring-1 ring-[#1049EB]'
-              : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
-          }`}
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-[#15803D]" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-              Healthy (10+)
-            </span>
-            <CheckCircle size={16} weight="regular" className="text-[#15803D]" />
-          </div>
-          <div className="mt-2 font-mono tabular-nums text-2xl font-bold text-[#15803D]">
-            {healthyProducts.length}
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilterHealth('low')}
-          className={`relative overflow-hidden rounded-[8px] border bg-white p-4 text-left transition-colors sm:p-5 ${
-            filterHealth === 'low'
-              ? 'border-[#1049EB] bg-[#EEF3FE]/40 ring-1 ring-[#1049EB]'
-              : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
-          }`}
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-[#FEB719]" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-              Low Alert (&lt;10)
-            </span>
-            <Warning size={16} weight="regular" className="text-[#B45309]" />
-          </div>
-          <div className="mt-2 font-mono tabular-nums text-2xl font-bold text-[#B45309]">
-            {lowStockProducts.length}
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilterHealth('out')}
-          className={`relative overflow-hidden rounded-[8px] border bg-white p-4 text-left transition-colors sm:p-5 ${
-            filterHealth === 'out'
-              ? 'border-[#1049EB] bg-[#EEF3FE]/40 ring-1 ring-[#1049EB]'
-              : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
-          }`}
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-[#B91C1C]" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-              Out of Stock
-            </span>
-            <XCircle size={16} weight="regular" className="text-[#B91C1C]" />
-          </div>
-          <div className="mt-2 font-mono tabular-nums text-2xl font-bold text-[#B91C1C]">
-            {outOfStockProducts.length}
-          </div>
-        </button>
+      {/* Open Monochrome Metrics Row — Zero Colored Stripes */}
+      <div className="grid grid-cols-2 border-b border-slate-200 pb-4 sm:grid-cols-4">
+        <KpiCard label="Total SKUs" value={`${totalSkus}`} subtitle="Active catalog items" />
+        <KpiCard label="Total Units" value={`${totalUnits}`} subtitle="Combined stock count" />
+        <KpiCard label="Low Stock" value={`${lowStockCount}`} subtitle="5 or fewer units" />
+        <KpiCard label="Out of Stock" value={`${outOfStockCount}`} subtitle="0 units available" />
       </div>
 
-      {/* Stock Adjustment Cards Grid or Empty State */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          icon={<Cube size={24} weight="regular" />}
-          title="No Inventory SKUs Found"
-          detail="Warehouse stock levels for the selected health threshold will appear here."
-        />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {filtered.map((p) => {
-            const isOut = p.stockQty === 0
-            const isLow = p.stockQty > 0 && p.stockQty < 10
-
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-3 sm:flex-row sm:items-center">
+        <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
+          {(
+            [
+              { id: 'all', label: 'All', count: totalSkus },
+              {
+                id: 'healthy',
+                label: 'In Stock',
+                count: totalSkus - lowStockCount - outOfStockCount,
+              },
+              { id: 'low', label: 'Low Stock', count: lowStockCount },
+              { id: 'out', label: 'Out of Stock', count: outOfStockCount },
+            ] as const
+          ).map((tab) => {
+            const active = stockFilter === tab.id
             return (
-              <article
-                key={p.id}
-                className="flex flex-col justify-between rounded-[8px] border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#D1D5DB]"
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStockFilter(tab.id)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  active
+                    ? 'bg-slate-950 text-white'
+                    : 'text-slate-500 hover:bg-[#F4F4F5] hover:text-slate-950'
+                }`}
               >
-                <div className="flex items-start gap-3.5">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-1.5">
-                    <img
-                      src={p.image || '/images/catalog-banner-all.png'}
-                      alt={p.name}
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] px-2 py-0.5 text-[10px] font-semibold uppercase text-[#374151]">
-                        {p.category}
-                      </span>
-                      {isOut ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[#FECACA] bg-[#FEF2F2] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-[#B91C1C]">
-                          <XCircle size={12} weight="regular" />
-                          <span>Out of Stock</span>
-                        </span>
-                      ) : isLow ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[#FDE68A] bg-[#FFFBEB] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-[#B45309]">
-                          <Warning size={12} weight="regular" />
-                          <span>Low Stock</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[#BBF7D0] bg-[#F0FDF4] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-[#15803D]">
-                          <CheckCircle size={12} weight="regular" />
-                          <span>Healthy</span>
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="mt-1.5 line-clamp-2 text-xs font-bold leading-snug text-[#0B1220] sm:text-sm">
-                      {p.name}
-                    </h3>
-                    <span className="mt-0.5 block font-mono text-[11px] text-[#5E6675]">
-                      ID: {p.id}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Stock Controls Row */}
-                <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#E5E7EB] pt-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-                      Stock:
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      aria-label={`Stock quantity for ${p.name}`}
-                      value={p.stockQty}
-                      onChange={(e) => updateStockQuantity(p.id, Math.max(0, Number(e.target.value) || 0))}
-                      className="w-20 rounded-[6px] border border-[#D1D5DB] bg-white px-2.5 py-1 text-center font-mono tabular-nums text-xs font-bold text-[#0B1220] focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => updateStockQuantity(p.id, Math.max(0, p.stockQty - 1))}
-                      className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#374151] transition-colors hover:bg-[#F6F7F9] hover:text-[#0B1220]"
-                      title="Subtract 1"
-                    >
-                      <Minus size={14} weight="regular" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateStockQuantity(p.id, p.stockQty + 5)}
-                      className="inline-flex h-8 items-center gap-1 rounded-[6px] bg-[#0B1220] px-3 font-mono text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
-                    >
-                      <Plus size={13} weight="regular" />
-                      <span>+5 Restock</span>
-                    </button>
-                  </div>
-                </div>
-              </article>
+                {tab.label} ({tab.count})
+              </button>
             )
           })}
+        </div>
+
+        <div className="relative w-full sm:w-72">
+          <MagnifyingGlass
+            size={15}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filter inventory by name or category..."
+            className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Compact Single-Surface Inventory Table */}
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<Warehouse size={22} weight="regular" />}
+          title="No matching inventory items"
+          detail="Try clearing your search or selecting another stock filter."
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <th className="py-2.5 pr-4">Item</th>
+                <th className="hidden py-2.5 px-3 sm:table-cell">Category</th>
+                <th className="hidden py-2.5 px-3 text-right md:table-cell">Retail Price</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3 text-center">Quantity</th>
+                <th className="py-2.5 pl-3 text-right">Quick Toggle</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {filtered.map((p) => {
+                const stockQty = p.stockQty ?? 0
+                const statusText =
+                  stockQty === 0 ? 'Out of stock' : stockQty <= 5 ? 'Low stock' : 'In stock'
+
+                return (
+                  <tr key={p.id} className="transition-colors hover:bg-[#F4F4F5]/50">
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="h-10 w-10 shrink-0 rounded-lg bg-[#F4F4F5] object-contain p-1"
+                        />
+                        <div className="min-w-0">
+                          <Link
+                            to={`/admin/products/${p.id}/edit`}
+                            className="line-clamp-1 font-bold text-slate-950 hover:underline"
+                          >
+                            {p.name}
+                          </Link>
+                          <span className="text-[11px] text-slate-400">{p.brand}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="hidden py-3 px-3 capitalize text-slate-600 sm:table-cell">
+                      {p.category}
+                    </td>
+
+                    <td className="hidden py-3 px-3 text-right font-semibold tabular-nums text-slate-900 md:table-cell">
+                      {formatNaira(p.finalPrice)}
+                    </td>
+
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <span
+                        className={`text-[11px] font-semibold ${
+                          stockQty === 0
+                            ? 'text-slate-400'
+                            : stockQty <= 5
+                            ? 'text-slate-700 underline decoration-slate-400 underline-offset-4'
+                            : 'text-slate-900'
+                        }`}
+                      >
+                        {statusText}
+                      </span>
+                    </td>
+
+                    <td className="py-3 px-3">
+                      <div className="mx-auto flex w-fit items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateStockQuantity(p.id, Math.max(0, stockQty - 1))}
+                          aria-label={`Decrease stock for ${p.name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-slate-950"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <input
+                          type="number"
+                          aria-label={`Stock quantity for ${p.name}`}
+                          min={0}
+                          value={stockQty}
+                          onChange={(e) =>
+                            updateStockQuantity(p.id, Math.max(0, Number(e.target.value)))
+                          }
+                          className="h-7 w-14 rounded-md border border-slate-200 bg-white text-center text-xs font-bold tabular-nums text-slate-950 focus:border-slate-950 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateStockQuantity(p.id, stockQty + 1)}
+                          aria-label={`Increase stock for ${p.name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-slate-950"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                    </td>
+
+                    <td className="py-3 pl-3 text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toggleStockStatus(p.id)
+                          toast.info(
+                            stockQty > 0
+                              ? `"${p.name}" marked out of stock`
+                              : `"${p.name}" restocked to 10 units`
+                          )
+                        }}
+                        className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-950 hover:text-slate-950"
+                      >
+                        {stockQty > 0 ? 'Set 0' : 'Restock +10'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

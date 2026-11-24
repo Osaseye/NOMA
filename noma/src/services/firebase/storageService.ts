@@ -15,12 +15,14 @@ function resolveProvider(settings: {
   const providerType = (
     settings.storageProvider ||
     import.meta.env.VITE_STORAGE_PROVIDER ||
-    'firebase'
+    'cloudflare_r2'
   ).toLowerCase()
 
   if (providerType === 'cloudflare_r2') {
     const endpoint =
-      settings.cloudflareUploadEndpoint || import.meta.env.VITE_CLOUDFLARE_UPLOAD_ENDPOINT
+      settings.cloudflareUploadEndpoint ||
+      import.meta.env.VITE_CLOUDFLARE_UPLOAD_ENDPOINT ||
+      '/api/media/upload'
     const publicUrl =
       settings.cloudflarePublicUrl ||
       settings.cloudflareBucketUrl ||
@@ -49,26 +51,18 @@ function resolveProvider(settings: {
 
 export const storageService = {
   uploadImage: async (file: File, folder: string = 'images'): Promise<string> => {
-    let resolvedType = 'firebase'
     try {
-      // Dynamically import store at runtime to avoid circular dependency with adminStore
       const { useAdminStore } = await import('../../store/adminStore')
       const storeSettings = useAdminStore.getState().settings
-      const { providerType, provider } = resolveProvider(storeSettings)
-      resolvedType = providerType
+      const { provider } = resolveProvider(storeSettings)
 
       return await provider.uploadImage(file, folder)
     } catch (err: unknown) {
-      const canFallback = resolvedType !== 'cloudflare_r2' || import.meta.env.DEV
-      if (!canFallback) {
-        throw err
-      }
       console.warn(
-        'Remote storage upload failed or endpoint unavailable. Falling back to compressed client-side image:',
+        'Cloudflare R2 / remote upload endpoint not reachable in current environment. Using compressed image fallback:',
         err
       )
-      // Fail-safe: compress image to <100KB JPEG data URL so local dev or fallback writes succeed cleanly
-      return await compressImageFile(file, 800, 0.75)
+      return await compressImageFile(file, 900, 0.82)
     }
   },
 

@@ -15,12 +15,13 @@ export const initialSiteSettings: SiteSettings = {
   supportPhone: '+234 803 000 6662',
   supportEmail: 'support@shopnoma.com',
   whatsappNumber: '2348030006662',
-  storageProvider: 'firebase',
+  storageProvider: 'cloudflare_r2',
   cloudinaryCloudName: '',
   cloudinaryUploadPreset: '',
   cloudflareBucketUrl: '',
   cloudflareUploadEndpoint: '/api/media/upload',
   cloudflarePublicUrl: '',
+  geminiApiKey: '',
 }
 
 function sanitizeAnnouncementText(raw?: string): string {
@@ -55,13 +56,14 @@ export const settingsService = {
             supportPhone: data.supportPhone || initialSiteSettings.supportPhone,
             supportEmail: data.supportEmail || initialSiteSettings.supportEmail,
             whatsappNumber: data.whatsappNumber || initialSiteSettings.whatsappNumber,
-            storageProvider: data.storageProvider || 'firebase',
+            storageProvider: data.storageProvider || 'cloudflare_r2',
             cloudinaryCloudName: data.cloudinaryCloudName || '',
             cloudinaryUploadPreset: data.cloudinaryUploadPreset || '',
             cloudflareBucketUrl: data.cloudflareBucketUrl || '',
             cloudflareUploadEndpoint:
               data.cloudflareUploadEndpoint || initialSiteSettings.cloudflareUploadEndpoint,
             cloudflarePublicUrl: data.cloudflarePublicUrl || '',
+            geminiApiKey: data.geminiApiKey || '',
           })
         } else {
           setDoc(SETTINGS_DOC_REF, {

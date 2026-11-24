@@ -42,10 +42,10 @@ export function CustomersPage() {
   }, [customers, orders])
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
+    <div className="flex flex-col gap-5 pb-12">
       <AdminTitle
-        title="Customer CRM & Accounts Directory"
-        detail="Segmented customer directory separating registered Noma accounts from guest checkout orders."
+        title="Users"
+        detail="Registered accounts and guest checkout profiles."
       />
       <CustomersTable customers={mergedCustomers} />
     </div>

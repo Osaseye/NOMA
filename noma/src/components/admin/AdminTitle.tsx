@@ -6,23 +6,22 @@ export function AdminTitle({
   action,
 }: {
   title: string
-  detail: string
+  detail?: string
   action?: ReactNode
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 border-b border-[#E5E7EB] pb-5 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
-      <div className="flex flex-col gap-1">
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1049EB]">
-          NOMA OPERATIONS
-        </span>
-        <h1 className="text-2xl font-bold leading-tight tracking-tight text-[#0B1220] sm:text-[1.75rem]">
+    <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end">
+      <div>
+        <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
           {title}
         </h1>
-        <p className="max-w-2xl text-xs leading-relaxed text-[#5E6675] sm:text-sm">
-          {detail}
-        </p>
+        {detail ? (
+          <p className="mt-0.5 max-w-2xl text-xs text-slate-500">
+            {detail}
+          </p>
+        ) : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
     </div>
   )
 }

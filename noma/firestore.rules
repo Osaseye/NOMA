@@ -38,6 +38,13 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Customer feedback & contact form submissions: public create, admin read/update/delete
+    match /feedback/{feedbackId} {
+      allow create: if request.resource.data.name is string &&
+        request.resource.data.message is string;
+      allow read, update, delete: if isAdmin();
+    }
+
     // Product reviews: public sees approved reviews only; rating must be 1..5 on create
     match /reviews/{reviewId} {
       allow read: if resource.data.status == 'approved' || isAdmin();
@@ -62,12 +69,6 @@ service cloud.firestore {
     }
 
     // User profiles:
-    // - Initial admin bootstrap note: `!exists(/databases/$(database)/documents/users/$(userId))`
-    //   permits creating the initial `users/{uid}` profile (including the first admin operator
-    //   via `/admin/register`) when no document exists for that UID yet.
-    // - After initial admin accounts are seeded in production, tighten `allow create` to
-    //   `request.resource.data.role == 'customer'` and provision further admins exclusively
-    //   through Firebase Admin SDK / custom claims or the Firebase Console.
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow create: if isSignedIn() &&

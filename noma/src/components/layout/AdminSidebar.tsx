@@ -1,241 +1,221 @@
-import { useState, type ComponentType } from 'react'
-import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import {
-  CaretDown,
+  Buildings,
   ChartBar,
+  ChartLineUp,
   ChatCenteredText,
-  ClipboardText,
-  Cube,
   FileText,
+  Gear,
+  Package,
   ShoppingBag,
   SignOut,
-  SlidersHorizontal,
   SquaresFour,
-  Storefront,
+  Star,
   Tag,
-  TrendUp,
   Users,
+  Warehouse,
   X,
-  type IconProps,
 } from '@phosphor-icons/react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { authService } from '../../services/firebase/authService'
+import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { useAdminStore } from '../../store/adminStore'
+import { useFeedbackStore } from '../../store/feedbackStore'
+import { useProductStore } from '../../store/productStore'
 
-interface SubItem {
+type NavItem = {
+  to: string
   label: string
-  href: string
-  icon: ComponentType<IconProps>
+  icon: PhosphorIcon
+  end?: boolean
+  badgeKey?: 'orders' | 'inventory' | 'reviews' | 'feedback'
 }
 
-interface NavGroup {
-  title: string
-  items: SubItem[]
-}
-
-const navGroups: NavGroup[] = [
+const navGroups: Array<{ title: string; items: NavItem[] }> = [
   {
     title: 'Overview',
     items: [
-      { label: 'Dashboard', href: '/admin', icon: SquaresFour },
-      { label: 'Orders & Shipping', href: '/admin/orders', icon: ClipboardText },
-      { label: 'Site Settings & Banners', href: '/admin/settings', icon: SlidersHorizontal },
+      { to: '/admin', label: 'Dashboard', icon: SquaresFour, end: true },
+      { to: '/admin/orders', label: 'Orders', icon: ShoppingBag, badgeKey: 'orders' as const },
+      { to: '/admin/settings', label: 'Settings', icon: Gear },
     ],
   },
   {
     title: 'Catalog',
     items: [
-      { label: 'Products', href: '/admin/products', icon: ShoppingBag },
-      { label: 'Inventory', href: '/admin/inventory', icon: Cube },
-      { label: 'Categories & Markups', href: '/admin/categories', icon: Tag },
-      { label: 'Product Reviews', href: '/admin/reviews', icon: ChatCenteredText },
+      { to: '/admin/products', label: 'Products', icon: Package },
+      { to: '/admin/inventory', label: 'Inventory', icon: Warehouse, badgeKey: 'inventory' as const },
+      { to: '/admin/categories', label: 'Categories', icon: Tag },
+      { to: '/admin/reviews', label: 'Reviews', icon: Star, badgeKey: 'reviews' as const },
     ],
   },
   {
-    title: 'Financials & Reports',
+    title: 'Directory & Finance',
     items: [
-      { label: 'Customers', href: '/admin/customers', icon: Users },
-      { label: 'Revenue', href: '/admin/revenue', icon: ChartBar },
-      { label: 'Profit & Margin', href: '/admin/profit', icon: TrendUp },
-      { label: 'Suppliers', href: '/admin/suppliers', icon: Storefront },
-      { label: 'Reports', href: '/admin/reports', icon: FileText },
+      { to: '/admin/customers', label: 'Users', icon: Users },
+      { to: '/admin/feedback', label: 'Feedback', icon: ChatCenteredText, badgeKey: 'feedback' as const },
+      { to: '/admin/revenue', label: 'Revenue', icon: ChartLineUp },
+      { to: '/admin/profit', label: 'Profit & Margin', icon: ChartBar },
+      { to: '/admin/suppliers', label: 'Suppliers', icon: Buildings },
+      { to: '/admin/reports', label: 'Reports', icon: FileText },
     ],
   },
 ]
 
 export function AdminSidebar({
-  mobileOpen: controlledMobileOpen,
-  setMobileOpen: controlledSetMobileOpen,
+  collapsed = false,
+  onClose,
 }: {
-  mobileOpen?: boolean
-  setMobileOpen?: (open: boolean) => void
-} = {}) {
-  const { logout } = useAdminStore()
+  collapsed?: boolean
+  onToggleCollapse?: () => void
+  onClose?: () => void
+}) {
+  const logoutAdmin = useAdminStore((state) => state.logout)
+  const { orders, products, reviews } = useProductStore()
+  const feedbackItems = useFeedbackStore((state) => state.items)
   const navigate = useNavigate()
-  const location = useLocation()
-  const [internalMobileOpen, setInternalMobileOpen] = useState(false)
 
-  const mobileOpen = controlledMobileOpen !== undefined ? controlledMobileOpen : internalMobileOpen
-  const setMobileOpen = controlledSetMobileOpen || setInternalMobileOpen
+  const pendingOrdersCount = orders.filter(
+    (o) => o.status === 'placed' || o.status === 'processing'
+  ).length
+  const lowOrOutStockCount = products.filter((p) => (p.stockQty ?? 0) <= 5).length
+  const pendingReviewsCount = reviews.filter((r) => r.status === 'pending').length
+  const openFeedbackCount = feedbackItems.filter((f) => f.status === 'new').length
 
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    Overview: true,
-    Catalog: true,
-    'Financials & Reports': true,
-  })
-
-  const toggleGroup = (title: string) => {
-    setExpanded((prev) => ({ ...prev, [title]: !prev[title] }))
+  const getBadgeCount = (key?: 'orders' | 'inventory' | 'reviews' | 'feedback') => {
+    if (key === 'orders') return pendingOrdersCount
+    if (key === 'inventory') return lowOrOutStockCount
+    if (key === 'reviews') return pendingReviewsCount
+    if (key === 'feedback') return openFeedbackCount
+    return 0
   }
 
   const handleLogout = async () => {
-    await authService.logout().catch(() => undefined)
-    logout()
+    try {
+      await authService.logout()
+    } catch (e) {
+      console.error('Firebase logout error:', e)
+    }
+    logoutAdmin()
+    toast.success('Signed out')
+    if (onClose) onClose()
     navigate('/admin/login')
   }
 
-  const sidebarContent = (
-    <div className="flex h-full w-full flex-col justify-between bg-white p-3.5 font-sans text-[#0B1220]">
-      <div className="flex min-h-0 flex-col gap-4">
-        {/* Brand Header */}
-        <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3.5">
-          <Link
-            to="/admin"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2.5"
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-1">
-              <img
-                src="/icon.png"
-                alt="Noma"
-                className="h-5 w-5 object-contain"
-                onError={(e) => {
-                  e.currentTarget.src = '/fav.png'
-                }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold tracking-tight text-[#0B1220]">NOMA</span>
-                <span className="rounded-[4px] bg-[#EEF3FE] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1049EB]">
-                  OPS
-                </span>
-              </div>
-              <span className="text-[11px] font-medium text-[#5E6675]">Operator Studio</span>
-            </div>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close navigation menu"
-            className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#5E6675] hover:bg-[#F6F7F9] hover:text-[#0B1220] md:hidden"
-          >
-            <X size={16} weight="regular" />
-          </button>
-        </div>
-
-        {/* Navigation Groups */}
-        <nav className="flex flex-1 flex-col gap-3 overflow-y-auto pr-0.5" aria-label="Admin Navigation">
-          {navGroups.map((group) => {
-            const isOpen = expanded[group.title]
-
-            return (
-              <div key={group.title} className="flex flex-col">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.title)}
-                  className="flex items-center justify-between rounded-[6px] px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675] transition-colors hover:bg-[#F6F7F9] hover:text-[#0B1220]"
-                >
-                  <span>{group.title}</span>
-                  <CaretDown
-                    size={12}
-                    weight="regular"
-                    className={`transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-
-                {isOpen ? (
-                  <div className="ml-2.5 mt-1 flex flex-col gap-0.5 border-l border-[#E5E7EB] pl-2.5">
-                    {group.items.map((item) => {
-                      const Icon = item.icon
-                      const isActive =
-                        item.href === '/admin'
-                          ? location.pathname === '/admin'
-                          : location.pathname.startsWith(item.href)
-
-                      return (
-                        <NavLink
-                          key={item.href}
-                          to={item.href}
-                          end={item.href === '/admin'}
-                          onClick={() => setMobileOpen(false)}
-                          className={`flex items-center gap-2.5 rounded-[6px] px-2.5 py-2 text-xs transition-colors ${
-                            isActive
-                              ? 'bg-[#EEF3FE] font-semibold text-[#1049EB]'
-                              : 'font-medium text-[#374151] hover:bg-[#F6F7F9] hover:text-[#0B1220]'
-                          }`}
-                        >
-                          <Icon
-                            size={16}
-                            weight="regular"
-                            className={`shrink-0 ${isActive ? 'text-[#1049EB]' : 'text-[#5E6675]'}`}
-                          />
-                          <span className="truncate">{item.label}</span>
-                        </NavLink>
-                      )
-                    })}
-                  </div>
-                ) : null}
-              </div>
-            )
-          })}
-        </nav>
-      </div>
-
-      {/* Footer Actions */}
-      <div className="mt-3 border-t border-[#E5E7EB] pt-3">
-        <div className="grid grid-cols-2 gap-2">
-          <Link
-            to="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 rounded-[6px] border border-[#E5E7EB] bg-white py-2 text-xs font-semibold text-[#0B1220] transition-colors hover:bg-[#F6F7F9]"
-          >
-            <Storefront size={14} weight="regular" className="text-[#5E6675]" />
-            <span>Storefront</span>
-          </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center justify-center gap-1.5 rounded-[6px] border border-[#FECACA] bg-[#FEF2F2] py-2 text-xs font-semibold text-[#B91C1C] transition-colors hover:bg-[#FEE2E2]"
-          >
-            <SignOut size={14} weight="regular" />
-            <span>Sign out</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-
   return (
-    <>
-      {/* Desktop Sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-[#E5E7EB] bg-white md:flex">
-        {sidebarContent}
-      </aside>
-
-      {/* Mobile Drawer Overlay */}
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div
-            className="fixed inset-0 bg-[#0B1220]/45 backdrop-blur-xs"
-            onClick={() => setMobileOpen(false)}
+    <aside className="flex h-full w-full flex-col border-r border-slate-200 bg-white text-slate-900 select-none">
+      {/* Brand Header — Prominent Icon without Container Box, "Noma Admin" only */}
+      <div
+        className={`flex h-14 items-center border-b border-slate-200 ${
+          collapsed ? 'justify-center px-2' : 'justify-between px-5'
+        }`}
+      >
+        <Link
+          to="/admin"
+          onClick={onClose}
+          className="flex items-center gap-2.5"
+          title="Noma Admin"
+        >
+          <img
+            src="/icon.png"
+            alt="Noma"
+            className="h-8 w-8 shrink-0 object-contain"
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).src = '/logo.PNG'
+            }}
           />
-          <div className="relative z-10 h-full w-64 max-w-[85vw] overflow-hidden rounded-r-[10px] border-r border-[#E5E7EB] bg-white">
-            {sidebarContent}
+          {!collapsed ? (
+            <span className="text-base font-bold tracking-tight text-slate-950">
+              Noma Admin
+            </span>
+          ) : null}
+        </Link>
+
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close sidebar"
+            className="rounded-lg p-1 text-slate-500 transition-colors hover:text-slate-950 lg:hidden"
+          >
+            <X size={18} weight="regular" />
+          </button>
+        ) : null}
+      </div>
+
+      {/* Navigation Links — Zero Scrollbar, Zero Colored Containers */}
+      <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto px-3 py-5">
+        {navGroups.map((group) => (
+          <div key={group.title}>
+            {!collapsed ? (
+              <div className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                {group.title}
+              </div>
+            ) : null}
+            <nav className="flex flex-col gap-0.5">
+              {group.items.map(({ to, label, icon: Icon, end, badgeKey }) => {
+                const count = getBadgeCount(badgeKey)
+                return (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={end}
+                    onClick={onClose}
+                    title={collapsed ? label : undefined}
+                    className={({ isActive }) =>
+                      `group relative flex items-center ${
+                        collapsed ? 'justify-center px-2 py-2.5' : 'justify-between px-2.5 py-2'
+                      } text-[13px] transition-colors ${
+                        isActive
+                          ? 'font-bold text-slate-950 before:absolute before:bottom-1.5 before:left-0 before:top-1.5 before:w-[2.5px] before:rounded-full before:bg-slate-950'
+                          : 'font-medium text-slate-500 hover:text-slate-950'
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <div className="flex items-center gap-2.5">
+                          <Icon
+                            size={18}
+                            weight={isActive ? 'bold' : 'regular'}
+                            className={
+                              isActive
+                                ? 'text-slate-950'
+                                : 'text-slate-400 transition-colors group-hover:text-slate-950'
+                            }
+                          />
+                          {!collapsed ? <span>{label}</span> : null}
+                        </div>
+
+                        {!collapsed && count > 0 ? (
+                          <span className="text-[11px] font-bold tabular-nums text-slate-900">
+                            {count}
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </NavLink>
+                )
+              })}
+            </nav>
           </div>
-        </div>
-      ) : null}
-    </>
+        ))}
+      </div>
+
+      {/* Footer — Sign Out Only (No Storefront Button, No Red Container) */}
+      <div className="border-t border-slate-200 p-3">
+        <button
+          type="button"
+          onClick={handleLogout}
+          title={collapsed ? 'Sign out' : undefined}
+          className={`flex w-full items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium text-slate-500 transition-colors hover:text-slate-950 ${
+            collapsed ? 'justify-center' : ''
+          }`}
+        >
+          <SignOut size={18} weight="regular" />
+          {!collapsed ? <span>Sign out</span> : null}
+        </button>
+      </div>
+    </aside>
   )
 }

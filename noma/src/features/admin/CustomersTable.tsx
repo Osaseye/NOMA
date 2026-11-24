@@ -1,239 +1,194 @@
 import { useState } from 'react'
-import {
-  ShoppingBag,
-  User,
-  UserMinus,
-  UserPlus,
-  Users,
-  WhatsappLogo,
-  Phone,
-} from '@phosphor-icons/react'
+import { MagnifyingGlass, Trash, User, WhatsappLogo } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 import { brand } from '../../constants/brand'
 import { EmptyState } from '../../design-system/components/EmptyState'
+import { KpiCard } from '../../design-system/components/KpiCard'
+import { useProductStore } from '../../store/productStore'
 import type { Customer } from '../../types/commerce'
 import { formatNaira } from '../../utils/pricing'
 
 export function CustomersTable({ customers }: { customers: Customer[] }) {
+  const { setCustomers } = useProductStore()
   const [filterType, setFilterType] = useState<'all' | 'registered' | 'guest'>('all')
+  const [search, setSearch] = useState('')
+  const [dismissedIds, setDismissedIds] = useState<string[]>([])
 
-  const registeredCustomers = customers.filter((c) => !c.isGuest)
-  const guestCustomers = customers.filter((c) => c.isGuest)
+  const visibleCustomers = customers.filter((c) => !dismissedIds.includes(c.id))
+  const registeredCustomers = visibleCustomers.filter((c) => !c.isGuest)
+  const guestCustomers = visibleCustomers.filter((c) => c.isGuest)
 
-  const filtered = customers.filter((c) => {
-    if (filterType === 'registered') return !c.isGuest
-    if (filterType === 'guest') return Boolean(c.isGuest)
+  const filtered = visibleCustomers.filter((c) => {
+    if (filterType === 'registered' && c.isGuest) return false
+    if (filterType === 'guest' && !c.isGuest) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return (
+        c.name.toLowerCase().includes(q) ||
+        (c.email && c.email.toLowerCase().includes(q)) ||
+        c.phone.includes(search)
+      )
+    }
     return true
   })
 
   const whatsappBaseDigits = brand.whatsappNumber.replace(/\D/g, '')
 
+  const handleDeleteUser = (user: Customer) => {
+    setDismissedIds((prev) => [...prev, user.id])
+    setCustomers(customers.filter((c) => c.id !== user.id))
+    toast.success(`Removed "${user.name}"`)
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Clickable Summary Filter Tiles */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-        <button
-          type="button"
-          onClick={() => setFilterType('all')}
-          className={`relative overflow-hidden rounded-[8px] border bg-white p-4 text-left transition-colors sm:p-5 ${
-            filterType === 'all'
-              ? 'border-[#1049EB] bg-[#EEF3FE]/40 ring-1 ring-[#1049EB]'
-              : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
-          }`}
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-[#0B1220]" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-              Total Customers
-            </span>
-            <Users size={16} weight="regular" className="text-[#0B1220]" />
-          </div>
-          <div className="mt-2 font-mono tabular-nums text-2xl font-bold text-[#0B1220]">
-            {customers.length}
-          </div>
-          <span className="mt-1 block truncate text-xs text-[#5E6675]">All shoppers</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilterType('registered')}
-          className={`relative overflow-hidden rounded-[8px] border bg-white p-4 text-left transition-colors sm:p-5 ${
-            filterType === 'registered'
-              ? 'border-[#1049EB] bg-[#EEF3FE]/40 ring-1 ring-[#1049EB]'
-              : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
-          }`}
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-[#15803D]" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-              Registered Accounts
-            </span>
-            <UserPlus size={16} weight="regular" className="text-[#15803D]" />
-          </div>
-          <div className="mt-2 font-mono tabular-nums text-2xl font-bold text-[#0B1220]">
-            {registeredCustomers.length}
-          </div>
-          <span className="mt-1 block truncate text-xs text-[#5E6675]">Signed-up shoppers</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilterType('guest')}
-          className={`relative col-span-2 overflow-hidden rounded-[8px] border bg-white p-4 text-left transition-colors sm:p-5 lg:col-span-1 ${
-            filterType === 'guest'
-              ? 'border-[#1049EB] bg-[#EEF3FE]/40 ring-1 ring-[#1049EB]'
-              : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
-          }`}
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-[#FEB719]" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-              Guest Checkouts
-            </span>
-            <UserMinus size={16} weight="regular" className="text-[#B45309]" />
-          </div>
-          <div className="mt-2 font-mono tabular-nums text-2xl font-bold text-[#0B1220]">
-            {guestCustomers.length}
-          </div>
-          <span className="mt-1 block truncate text-xs text-[#5E6675]">One-time checkouts</span>
-        </button>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#E5E7EB] pb-3">
-        {(
-          [
-            { key: 'all', label: 'All', count: customers.length },
-            { key: 'registered', label: 'Registered', count: registeredCustomers.length },
-            { key: 'guest', label: 'Guest', count: guestCustomers.length },
-          ] as const
-        ).map((tab) => {
-          const isActive = filterType === tab.key
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setFilterType(tab.key)}
-              className={`rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-colors ${
-                isActive
-                  ? 'bg-[#0B1220] text-white'
-                  : 'border border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F6F7F9] hover:text-[#0B1220]'
-              }`}
-            >
-              {tab.label}{' '}
-              <span className={`font-mono ${isActive ? 'text-white/80' : 'text-[#5E6675]'}`}>
-                ({tab.count})
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Directory 2-Column Cards Grid */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          icon={<User size={24} weight="regular" />}
-          title="No Customer Records Found"
-          detail="Incoming shopper signups and completed storefront checkouts will populate this directory automatically."
+      {/* Open Monochrome Metrics Row */}
+      <div className="grid grid-cols-3 border-b border-slate-200 pb-4">
+        <KpiCard
+          label="Total Users"
+          value={`${visibleCustomers.length}`}
+          subtitle="All shoppers"
         />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {filtered.map((c) => {
-            const customerPhoneDigits = c.phone?.replace(/\D/g, '')
-            const waTarget =
-              customerPhoneDigits && customerPhoneDigits.length >= 10
-                ? customerPhoneDigits.startsWith('0')
-                  ? `234${customerPhoneDigits.slice(1)}`
-                  : customerPhoneDigits
-                : whatsappBaseDigits
+        <KpiCard
+          label="Registered"
+          value={`${registeredCustomers.length}`}
+          subtitle="Account holders"
+        />
+        <KpiCard
+          label="Guests"
+          value={`${guestCustomers.length}`}
+          subtitle="Guest checkouts"
+        />
+      </div>
+
+      {/* Filter Tabs + Search */}
+      <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-3 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-1.5">
+          {(
+            [
+              { key: 'all', label: 'All', count: visibleCustomers.length },
+              { key: 'registered', label: 'Registered', count: registeredCustomers.length },
+              { key: 'guest', label: 'Guest', count: guestCustomers.length },
+            ] as const
+          ).map((tab) => {
+            const isActive = filterType === tab.key
             return (
-              <article
-                key={c.id}
-                className="flex flex-col justify-between rounded-[8px] border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#D1D5DB]"
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setFilterType(tab.key)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-slate-950 text-white'
+                    : 'text-slate-500 hover:bg-[#F4F4F5] hover:text-slate-950'
+                }`}
               >
-                <div className="flex flex-col gap-3.5">
-                  {/* Header: Avatar, Name, Email, Badge */}
-                  <div className="flex items-start justify-between gap-2 border-b border-[#E5E7EB] pb-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] border font-mono text-sm font-bold ${
-                          c.isGuest
-                            ? 'border-[#FDE68A] bg-[#FFFBEB] text-[#B45309]'
-                            : 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]'
-                        }`}
-                      >
-                        {c.name ? c.name[0].toUpperCase() : 'U'}
-                      </div>
-                      <div className="flex min-w-0 flex-col">
-                        <h3 className="truncate text-sm font-bold text-[#0B1220]">{c.name}</h3>
-                        <span className="truncate text-xs text-[#5E6675]">
-                          {c.email || 'No email registered'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {c.isGuest ? (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[#FDE68A] bg-[#FFFBEB] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-[#B45309]">
-                        <UserMinus size={11} weight="regular" />
-                        <span>Guest</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[#BBF7D0] bg-[#F0FDF4] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-[#15803D]">
-                        <UserPlus size={11} weight="regular" />
-                        <span>Account</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Info Stats */}
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-                        Phone Number
-                      </span>
-                      <span className="mt-0.5 flex items-center gap-1 font-mono font-semibold text-[#0B1220]">
-                        <Phone size={12} weight="regular" className="shrink-0 text-[#5E6675]" />
-                        <span className="truncate">{c.phone}</span>
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-                        Orders Completed
-                      </span>
-                      <span className="mt-0.5 flex items-center gap-1 font-mono tabular-nums font-semibold text-[#0B1220]">
-                        <ShoppingBag size={12} weight="regular" className="shrink-0 text-[#5E6675]" />
-                        <span>{c.orders} Orders</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Spend value */}
-                  <div className="flex items-center justify-between rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]">
-                      Lifetime Spend
-                    </span>
-                    <span className="font-mono tabular-nums text-base font-bold text-[#15803D]">
-                      {formatNaira(c.lifetimeValue)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <div className="mt-4 border-t border-[#E5E7EB] pt-3">
-                  <a
-                    href={`https://wa.me/${waTarget}?text=${encodeURIComponent(
-                      `Hello ${c.name}, thank you for shopping with Noma.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-[6px] bg-[#0B1220] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
-                  >
-                    <WhatsappLogo size={15} weight="fill" className="text-[#25D366]" />
-                    <span>Message on WhatsApp</span>
-                  </a>
-                </div>
-              </article>
+                {tab.label} ({tab.count})
+              </button>
             )
           })}
+        </div>
+
+        <div className="relative w-full sm:w-64">
+          <MagnifyingGlass
+            size={15}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, email, or phone..."
+            className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Compact Single-Layer Users Table */}
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<User size={22} weight="regular" />}
+          title="No user records found"
+          detail="Shopper signups and completed storefront checkouts populate this directory automatically."
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <th className="py-2.5 pr-4">User</th>
+                <th className="py-2.5 px-3">Phone</th>
+                <th className="hidden py-2.5 px-3 sm:table-cell">Type</th>
+                <th className="py-2.5 px-3 text-right">Orders</th>
+                <th className="py-2.5 px-3 text-right">Lifetime Spend</th>
+                <th className="py-2.5 pl-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {filtered.map((c) => {
+                const customerPhoneDigits = c.phone?.replace(/\D/g, '')
+                const waTarget =
+                  customerPhoneDigits && customerPhoneDigits.length >= 10
+                    ? customerPhoneDigits.startsWith('0')
+                      ? `234${customerPhoneDigits.slice(1)}`
+                      : customerPhoneDigits
+                    : whatsappBaseDigits
+
+                return (
+                  <tr key={c.id} className="transition-colors hover:bg-[#F4F4F5]/50">
+                    <td className="py-3 pr-4">
+                      <div className="font-bold text-slate-950">{c.name}</div>
+                      <div className="text-[11px] text-slate-400">
+                        {c.email || 'No email on file'}
+                      </div>
+                    </td>
+
+                    <td className="py-3 px-3 font-medium text-slate-700 whitespace-nowrap">
+                      {c.phone}
+                    </td>
+
+                    <td className="hidden py-3 px-3 sm:table-cell">
+                      <span className="text-[11px] font-medium text-slate-500">
+                        {c.isGuest ? 'Guest' : 'Account'}
+                      </span>
+                    </td>
+
+                    <td className="py-3 px-3 text-right font-semibold tabular-nums text-slate-700">
+                      {c.orders}
+                    </td>
+
+                    <td className="py-3 px-3 text-right font-bold tabular-nums text-slate-950">
+                      {formatNaira(c.lifetimeValue)}
+                    </td>
+
+                    <td className="py-3 pl-3 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5">
+                        <a
+                          href={`https://wa.me/${waTarget}?text=${encodeURIComponent(
+                            `Hello ${c.name}, thank you for shopping with Noma.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Message on WhatsApp"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:border-slate-950 hover:text-slate-950"
+                        >
+                          <WhatsappLogo size={14} />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteUser(c)}
+                          title="Remove user record"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:border-slate-950 hover:text-slate-950"
+                        >
+                          <Trash size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

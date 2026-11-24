@@ -1,11 +1,5 @@
 import { useState } from 'react'
-import {
-  CheckCircle,
-  DownloadSimple,
-  FileText,
-  Funnel,
-  SpinnerGap,
-} from '@phosphor-icons/react'
+import { DownloadSimple, SpinnerGap } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useProductStore } from '../../store/productStore'
 
@@ -14,8 +8,15 @@ function escapeCsvCell(value: string | number | undefined) {
   return `"${str.replace(/"/g, '""')}"`
 }
 
-function downloadCsv(filename: string, headers: string[], rows: Array<Array<string | number | undefined>>) {
-  const lines = [headers.map(escapeCsvCell).join(','), ...rows.map((r) => r.map(escapeCsvCell).join(','))]
+function downloadCsv(
+  filename: string,
+  headers: string[],
+  rows: Array<Array<string | number | undefined>>
+) {
+  const lines = [
+    headers.map(escapeCsvCell).join(','),
+    ...rows.map((r) => r.map(escapeCsvCell).join(',')),
+  ]
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -29,10 +30,9 @@ function downloadCsv(filename: string, headers: string[], rows: Array<Array<stri
 
 export function ReportCards() {
   const { orders, products, categories, customers } = useProductStore()
-  const [startDate, setStartDate] = useState('2026-08-01')
-  const [endDate, setEndDate] = useState('2026-08-31')
+  const [startDate, setStartDate] = useState('2026-01-01')
+  const [endDate, setEndDate] = useState('2026-12-31')
   const [downloadingReport, setDownloadingReport] = useState<string | null>(null)
-  const [successReport, setSuccessReport] = useState<string | null>(null)
 
   const handleDownload = (reportId: string) => {
     setDownloadingReport(reportId)
@@ -42,13 +42,29 @@ export function ReportCards() {
         if (reportId === 'monthly-financials') {
           downloadCsv(
             `noma-financials-${startDate}-to-${endDate}.csv`,
-            ['Order ID', 'Customer', 'Status', 'Total (NGN)', 'Supplier Owed (NGN)', 'Markup Profit (NGN)', 'Payment Ref'],
-            orders.map((o) => [o.id, o.customer, o.status, o.total, o.baseAmountOwed, o.markupEarned, o.paymentRef])
+            [
+              'Order ID',
+              'Customer',
+              'Status',
+              'Total (NGN)',
+              'Supplier Cost (NGN)',
+              'Net Margin (NGN)',
+              'Payment Ref',
+            ],
+            orders.map((o) => [
+              o.id,
+              o.customer,
+              o.status,
+              o.total,
+              o.baseAmountOwed,
+              o.markupEarned,
+              o.paymentRef,
+            ])
           )
         } else if (reportId === 'category-performance') {
           downloadCsv(
             `noma-categories-${startDate}-to-${endDate}.csv`,
-            ['Category ID', 'Label', 'Default Markup (%)', 'SKU Count', 'Merchandising Line'],
+            ['Category ID', 'Label', 'Default Markup (%)', 'SKU Count', 'Description'],
             categories.map((c) => [
               c.id,
               c.label,
@@ -60,133 +76,146 @@ export function ReportCards() {
         } else if (reportId === 'inventory-valuation') {
           downloadCsv(
             `noma-inventory-${startDate}-to-${endDate}.csv`,
-            ['Product ID', 'Name', 'Category', 'Supplier', 'Stock Qty', 'Base Cost (NGN)', 'Retail Price (NGN)'],
-            products.map((p) => [p.id, p.name, p.category, p.supplierName || p.brand, p.stockQty, p.basePrice, p.finalPrice])
+            [
+              'Product ID',
+              'Name',
+              'Category',
+              'Supplier',
+              'Stock Qty',
+              'Base Cost (NGN)',
+              'Retail Price (NGN)',
+            ],
+            products.map((p) => [
+              p.id,
+              p.name,
+              p.category,
+              p.supplierName || p.brand,
+              p.stockQty,
+              p.basePrice,
+              p.finalPrice,
+            ])
           )
         } else {
           const customerRows =
             customers.length > 0
-              ? customers.map((c) => [c.id, c.name, c.phone, c.email || '', c.orders, c.lifetimeValue, c.isGuest ? 'Guest' : 'Account'])
-              : orders.map((o) => [o.userId || o.id, o.customer, o.phone, o.email || '', 1, o.total, o.userId ? 'Account' : 'Guest'])
+              ? customers.map((c) => [
+                  c.id,
+                  c.name,
+                  c.phone,
+                  c.email || '',
+                  c.orders,
+                  c.lifetimeValue,
+                  c.isGuest ? 'Guest' : 'Account',
+                ])
+              : orders.map((o) => [
+                  o.userId || o.id,
+                  o.customer,
+                  o.phone,
+                  o.email || '',
+                  1,
+                  o.total,
+                  o.userId ? 'Account' : 'Guest',
+                ])
           downloadCsv(
-            `noma-customers-${startDate}-to-${endDate}.csv`,
+            `noma-users-${startDate}-to-${endDate}.csv`,
             ['ID', 'Name', 'Phone', 'Email', 'Orders', 'Spend (NGN)', 'Type'],
             customerRows
           )
         }
 
-        setSuccessReport(reportId)
         toast.success('Report exported as CSV.')
-        setTimeout(() => setSuccessReport(null), 2500)
       } finally {
         setDownloadingReport(null)
       }
-    }, 300)
+    }, 200)
   }
 
   const reports = [
     {
       id: 'monthly-financials',
-      title: 'Monthly Financial Audit & Markup Breakdown',
-      desc: 'Complete ledger of gross sales, supplier wholesale cost, markup profit earned, and fixed salary allocation.',
-      badge: 'CSV / XLSX',
-      count: `${orders.length} Order Records`,
+      title: 'Financial Audit & Margin Breakdown',
+      desc: 'Gross sales, supplier wholesale cost, and net profit earned per order.',
+      format: 'CSV',
+      count: `${orders.length} orders`,
     },
     {
       id: 'category-performance',
-      title: 'Category Sales & Margin Performance',
-      desc: 'Product catalog breakdown by category with average markup percentages and default pricing rules.',
-      badge: 'CSV / PDF',
-      count: `${categories.length} Retail Categories`,
+      title: 'Category & Markup Summary',
+      desc: 'Catalog breakdown by department with default markup rules and SKU counts.',
+      format: 'CSV',
+      count: `${categories.length} categories`,
     },
     {
       id: 'inventory-valuation',
-      title: 'Warehouse Stock & Inventory Valuation',
-      desc: 'Current stock levels, low-stock warning items, base cost valuation, and retail listing totals.',
-      badge: 'CSV / XLSX',
-      count: `${products.length} Active SKUs`,
+      title: 'Stock & Inventory Valuation',
+      desc: 'Current unit counts, base cost valuation, and retail listing prices.',
+      format: 'CSV',
+      count: `${products.length} SKUs`,
     },
     {
       id: 'customer-crm',
-      title: 'Customer Lifetime Value & Contact Directory',
-      desc: 'Buyer phone numbers, delivery destination areas, total orders completed, and total spend.',
-      badge: 'CSV',
-      count: 'Full CRM Export',
+      title: 'Users & Lifetime Spend Directory',
+      desc: 'Shopper contact numbers, delivery states, total orders, and cumulative spend.',
+      format: 'CSV',
+      count: 'Full export',
     },
   ]
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Date Range Selector */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-4">
-        <div className="flex items-center gap-2 text-xs font-semibold text-[#0B1220]">
-          <Funnel size={16} weight="regular" className="text-[#1049EB]" />
-          <span>Report Timeframe</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+      {/* Compact Date Range Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4 text-xs">
+        <span className="font-semibold text-slate-600">Export Period</span>
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="date"
+            aria-label="Report start date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-[6px] border border-[#D1D5DB] bg-white px-3 py-1.5 font-mono text-xs text-[#0B1220] focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
+            className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
           />
-          <span className="text-xs text-[#5E6675]">to</span>
+          <span className="text-slate-400">to</span>
           <input
             type="date"
+            aria-label="Report end date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-[6px] border border-[#D1D5DB] bg-white px-3 py-1.5 font-mono text-xs text-[#0B1220] focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
+            className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
           />
         </div>
       </div>
 
-      {/* Reports Cards Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {/* Single-Layer Open Reports List */}
+      <div className="divide-y divide-slate-200 border-b border-slate-200">
         {reports.map((report) => (
-          <article
+          <div
             key={report.id}
-            className="flex flex-col justify-between rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6"
+            className="flex flex-col justify-between gap-4 py-4 sm:flex-row sm:items-center"
           >
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="rounded-[4px] border border-[#E5E7EB] bg-[#F6F7F9] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#374151]">
-                  {report.badge}
-                </span>
-                <span className="font-mono text-xs font-semibold text-[#1049EB]">
-                  {report.count}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-sm font-bold text-slate-950">{report.title}</h3>
+                <span className="text-[11px] font-medium text-slate-400">
+                  {report.count} &bull; {report.format}
                 </span>
               </div>
-              <h3 className="flex items-center gap-2 text-base font-bold tracking-tight text-[#0B1220]">
-                <FileText size={18} weight="regular" className="shrink-0 text-[#5E6675]" />
-                <span>{report.title}</span>
-              </h3>
-              <p className="text-xs leading-relaxed text-[#5E6675]">{report.desc}</p>
+              <p className="text-xs text-slate-500">{report.desc}</p>
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-[#E5E7EB] pt-4">
-              {successReport === report.id ? (
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-[#15803D]">
-                  <CheckCircle size={15} weight="regular" />
-                  <span>Download Complete</span>
-                </span>
+            <button
+              type="button"
+              onClick={() => handleDownload(report.id)}
+              disabled={downloadingReport === report.id}
+              className="inline-flex h-9 w-fit shrink-0 items-center gap-1.5 rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+            >
+              {downloadingReport === report.id ? (
+                <SpinnerGap size={14} className="animate-spin" />
               ) : (
-                <span className="text-[11px] text-[#5E6675]">Ready for export</span>
+                <DownloadSimple size={14} />
               )}
-              <button
-                type="button"
-                onClick={() => handleDownload(report.id)}
-                disabled={downloadingReport === report.id}
-                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B] disabled:opacity-50"
-              >
-                {downloadingReport === report.id ? (
-                  <SpinnerGap size={14} weight="regular" className="animate-spin" />
-                ) : (
-                  <DownloadSimple size={14} weight="regular" />
-                )}
-                <span>{downloadingReport === report.id ? 'Generating...' : 'Export Report'}</span>
-              </button>
-            </div>
-          </article>
+              <span>{downloadingReport === report.id ? 'Exporting...' : 'Export CSV'}</span>
+            </button>
+          </div>
         ))}
       </div>
     </div>

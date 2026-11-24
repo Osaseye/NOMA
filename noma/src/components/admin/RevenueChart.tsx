@@ -1,4 +1,3 @@
-import { ChartLineUp } from '@phosphor-icons/react'
 import {
   Area,
   AreaChart,
@@ -10,142 +9,119 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { EmptyState } from '../../design-system/components/EmptyState'
-import { useProductStore } from '../../store/productStore'
 import type { Order } from '../../types/commerce'
-import { computeOrderAnalytics } from '../../utils/analytics'
-import { formatNaira } from '../../utils/pricing'
 
-function ChartTooltip({
-  active,
-  payload,
-  label,
-  seriesLabel,
-}: {
-  active?: boolean
-  payload?: Array<{ value?: number; payload?: { orderCount?: number } }>
-  label?: string
-  seriesLabel: string
-}) {
-  if (!active || !payload || payload.length === 0) {
-    return null
+function buildTimeSeriesFromOrders(orders: Order[]) {
+  if (orders.length === 0) {
+    return [{ date: 'No Data', revenue: 0, profit: 0 }]
   }
 
-  const val = Number(payload[0]?.value ?? 0)
-  const orderCount = payload[0]?.payload?.orderCount
+  return orders
+    .slice()
+    .reverse()
+    .map((order, index) => ({
+      date: order.id || `#${index + 1}`,
+      revenue: Number(order.total) || 0,
+      profit: Number(order.markupEarned) || 0,
+    }))
+}
+
+export function RevenueAreaChart({ orders }: { orders: Order[] }) {
+  const chartData = buildTimeSeriesFromOrders(orders)
 
   return (
-    <div className="rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-2 shadow-[0_8px_24px_rgba(11,18,32,0.08)]">
-      <div className="font-mono text-[11px] font-semibold text-[#5E6675]">{label}</div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-xs font-medium text-[#374151]">{seriesLabel}:</span>
-        <span className="font-mono tabular-nums text-xs font-bold text-[#0B1220]">
-          {formatNaira(val)}
-        </span>
-      </div>
-      {typeof orderCount === 'number' ? (
-        <div className="mt-0.5 font-mono tabular-nums text-[10px] text-[#5E6675]">
-          {orderCount} {orderCount === 1 ? 'order' : 'orders'}
-        </div>
-      ) : null}
+    <div className="h-[260px] w-full pt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#0F172A" stopOpacity={0.14} />
+              <stop offset="95%" stopColor="#0F172A" stopOpacity={0.0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+          <XAxis
+            dataKey="date"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fill: '#64748B', fontWeight: 500 }}
+            dy={8}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fill: '#64748B', fontWeight: 500 }}
+            tickFormatter={(val) =>
+              val >= 1000 ? `₦${(val / 1000).toFixed(0)}k` : `₦${val}`
+            }
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#0F172A',
+              borderRadius: '8px',
+              border: 'none',
+              color: '#FFFFFF',
+              fontSize: '12px',
+              fontWeight: 600,
+              padding: '8px 12px',
+            }}
+            itemStyle={{ color: '#FFFFFF' }}
+            formatter={(value) => [`₦${Number(value ?? 0).toLocaleString()}`, 'Revenue']}
+          />
+          <Area
+            type="monotone"
+            dataKey="revenue"
+            stroke="#0F172A"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorRev)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   )
 }
 
-function formatAxisNaira(value: number) {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1000) return `${Math.round(value / 1000)}k`
-  return `${value}`
-}
-
-export function RevenueAreaChart({ orders: propOrders }: { orders?: Order[] }) {
-  const storeOrders = useProductStore((state) => state.orders)
-  const orders = propOrders ?? storeOrders
-  const data = computeOrderAnalytics(orders)
-
-  if (data.length === 0) {
-    return (
-      <EmptyState
-        icon={<ChartLineUp size={24} weight="regular" />}
-        title="No sales trajectory yet"
-        detail="Once customer orders are recorded, daily gross revenue points will render here automatically."
-      />
-    )
-  }
+export function ProfitBarChart({ orders }: { orders: Order[] }) {
+  const chartData = buildTimeSeriesFromOrders(orders)
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid stroke="#E5E7EB" vertical={false} />
-        <XAxis
-          dataKey="day"
-          tick={{ fill: '#5E6675', fontSize: 11, fontFamily: '"JetBrains Mono", monospace' }}
-          axisLine={{ stroke: '#E5E7EB' }}
-          tickLine={false}
-        />
-        <YAxis
-          tickFormatter={formatAxisNaira}
-          tick={{ fill: '#5E6675', fontSize: 11, fontFamily: '"JetBrains Mono", monospace' }}
-          axisLine={false}
-          tickLine={false}
-          width={48}
-        />
-        <Tooltip content={<ChartTooltip seriesLabel="Gross Sales" />} />
-        <Area
-          type="monotone"
-          dataKey="sales"
-          stroke="#1049EB"
-          strokeWidth={2}
-          fill="#EEF3FE"
-          fillOpacity={0.95}
-          activeDot={{ r: 4, fill: '#1049EB', stroke: '#FFFFFF', strokeWidth: 2 }}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  )
-}
-
-export function ProfitBarChart({ orders: propOrders }: { orders?: Order[] }) {
-  const storeOrders = useProductStore((state) => state.orders)
-  const orders = propOrders ?? storeOrders
-  const data = computeOrderAnalytics(orders)
-
-  if (data.length === 0) {
-    return (
-      <EmptyState
-        icon={<ChartLineUp size={24} weight="regular" />}
-        title="No profit distribution yet"
-        detail="Operator markup margin bars will populate once orders are recorded."
-      />
-    )
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid stroke="#E5E7EB" vertical={false} />
-        <XAxis
-          dataKey="day"
-          tick={{ fill: '#5E6675', fontSize: 11, fontFamily: '"JetBrains Mono", monospace' }}
-          axisLine={{ stroke: '#E5E7EB' }}
-          tickLine={false}
-        />
-        <YAxis
-          tickFormatter={formatAxisNaira}
-          tick={{ fill: '#5E6675', fontSize: 11, fontFamily: '"JetBrains Mono", monospace' }}
-          axisLine={false}
-          tickLine={false}
-          width={48}
-        />
-        <Tooltip content={<ChartTooltip seriesLabel="Net Profit" />} />
-        <Bar
-          dataKey="profit"
-          fill="#0B1220"
-          activeBar={{ fill: '#FEB719' }}
-          radius={[4, 4, 0, 0]}
-          maxBarSize={44}
-        />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="h-[260px] w-full pt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+          <XAxis
+            dataKey="date"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fill: '#64748B', fontWeight: 500 }}
+            dy={8}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fill: '#64748B', fontWeight: 500 }}
+            tickFormatter={(val) =>
+              val >= 1000 ? `₦${(val / 1000).toFixed(0)}k` : `₦${val}`
+            }
+          />
+          <Tooltip
+            cursor={{ fill: '#F8FAFC' }}
+            contentStyle={{
+              backgroundColor: '#0F172A',
+              borderRadius: '8px',
+              border: 'none',
+              color: '#FFFFFF',
+              fontSize: '12px',
+              fontWeight: 600,
+              padding: '8px 12px',
+            }}
+            itemStyle={{ color: '#FFFFFF' }}
+            formatter={(value) => [`₦${Number(value ?? 0).toLocaleString()}`, 'Net Margin']}
+          />
+          <Bar dataKey="profit" fill="#0F172A" radius={[4, 4, 0, 0]} maxBarSize={32} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   )
 }

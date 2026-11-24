@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Baby,
+  Camera,
   Check,
   CheckCircle,
   Image as ImageIcon,
   Plus,
   Sneaker,
+  Sparkle,
   SpinnerGap,
   Star,
   Trash,
@@ -16,23 +18,30 @@ import {
   X,
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import {
+  runGeminiProductStudio,
+  type StudioMockupVariant,
+} from '../../services/ai/geminiProductStudio'
 import { storageService } from '../../services/firebase/storageService'
+import { useAdminStore } from '../../store/adminStore'
 import { useProductStore } from '../../store/productStore'
 import { useSupplierStore } from '../../store/supplierStore'
 import type { CategoryId, Product, ProductSizeVariant } from '../../types/commerce'
 import { formatNaira, getMarkupAmount } from '../../utils/pricing'
 
 const inputBaseClass =
-  'w-full rounded-[6px] border border-[#D1D5DB] bg-white p-2.5 text-xs font-medium text-[#0B1220] placeholder:text-[#5E6675]/70 transition-colors focus:border-[#1049EB] focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15'
+  'w-full rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-medium text-slate-950 placeholder:text-slate-400 transition-colors focus:border-slate-950 focus:outline-none'
 
 const labelBaseClass =
-  'text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5E6675]'
+  'text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500'
 
 export function ProductEditorForm({ product }: { product?: Product }) {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const studioInputRef = useRef<HTMLInputElement>(null)
   const { addProduct, updateProduct, categories } = useProductStore()
   const { suppliers } = useSupplierStore()
+  const { settings } = useAdminStore()
 
   const isEditing = Boolean(product?.id)
 
@@ -101,6 +110,71 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   const [featureInput, setFeatureInput] = useState('')
   const [successMsg, setSuccessMsg] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Gemini AI Product Photo Studio & Copy Pipeline State
+  const [studioRawFile, setStudioRawFile] = useState<File | null>(null)
+  const [studioRawPreview, setStudioRawPreview] = useState<string>('')
+  const [studioNotes, setStudioNotes] = useState('')
+  const [studioRunning, setStudioRunning] = useState(false)
+  const [studioMockups, setStudioMockups] = useState<StudioMockupVariant[]>([])
+
+  const handleSelectStudioPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setStudioRawFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setStudioRawPreview(String(reader.result || ''))
+    reader.readAsDataURL(file)
+  }
+
+  const handleRunGeminiStudioPipeline = async () => {
+    if (!studioRawFile) {
+      toast.error('Snap or upload a product photo first.')
+      return
+    }
+    setStudioRunning(true)
+    const toastId = toast.loading(
+      'Gemini AI cleaning background, generating studio mockups & writing product copy...'
+    )
+    try {
+      const result = await runGeminiProductStudio({
+        file: studioRawFile,
+        adminNotes: studioNotes,
+        categories,
+        apiKey: settings.geminiApiKey,
+      })
+
+      setStudioMockups(result.mockups)
+
+      // Upload generated clean white-background studio mockups directly to Cloudflare R2
+      const uploadedUrls = await Promise.all(
+        result.mockups.map((m) => storageService.uploadImage(m.file, 'products'))
+      )
+
+      setImages((prev) => [...uploadedUrls, ...prev])
+      if (result.name) setName(result.name)
+      if (result.brand) setBrand(result.brand)
+      if (result.category && categories.some((c) => c.id === result.category)) {
+        handleCategoryChange(result.category as CategoryId)
+      }
+      if (result.subCategory) setSubCategoryInput(result.subCategory)
+      if (result.description) setDescription(result.description)
+      if (result.keyFeatures.length > 0) setKeyFeatures(result.keyFeatures)
+      if (result.whatsInTheBox.length > 0) setWhatsInTheBox(result.whatsInTheBox)
+      if (result.badge) setBadge(result.badge)
+
+      toast.success(
+        `Generated ${uploadedUrls.length} clean studio mockups, uploaded to Cloudflare R2 & filled product copy!`,
+        { id: toastId }
+      )
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gemini Studio pipeline failed'
+      toast.error(msg, { id: toastId })
+    } finally {
+      setStudioRunning(false)
+    }
+  }
 
   const selectedCategoryObj = categories.find((c) => c.id === category)
   const availableSubCategories = selectedCategoryObj?.subcategories || []
@@ -320,27 +394,27 @@ export function ProductEditorForm({ product }: { product?: Product }) {
         </div>
       ) : null}
 
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={() => navigate('/admin/products')}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5E6675] transition-colors hover:text-[#0B1220]"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 transition-colors hover:text-slate-950"
         >
           <ArrowLeft size={15} weight="regular" />
-          <span>Back to Products Catalog</span>
+          <span>Back to Products</span>
         </button>
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => navigate('/admin/products')}
-            className="flex-1 rounded-[6px] border border-[#E5E7EB] bg-white px-4 py-2 text-xs font-semibold text-[#374151] transition-colors hover:bg-[#F6F7F9] sm:flex-none"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-950 sm:flex-none"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={uploadingImage || isSubmitting}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B] disabled:opacity-50 sm:flex-none"
+            disabled={uploadingImage || isSubmitting || studioRunning}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-950 px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50 sm:flex-none"
           >
             {isSubmitting ? (
               <>
@@ -348,13 +422,141 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                 <span>Saving...</span>
               </>
             ) : isEditing ? (
-              'Save & Update Product'
+              'Save Changes'
             ) : (
-              'Create Product'
+              'Publish Product'
             )}
           </button>
         </div>
       </div>
+
+      {/* GEMINI AI PRODUCT STUDIO PIPELINE (Raw Shop Photo -> Clean White Studio Mockups + Copy -> Cloudflare R2) */}
+      <section className="rounded-xl border border-slate-200 bg-[#F4F4F5]/60 p-5">
+        <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-3.5 sm:flex-row sm:items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkle size={16} weight="fill" className="text-slate-950" />
+              <h2 className="text-sm font-bold text-slate-950">
+                Gemini AI Product Studio &amp; Copy Pipeline
+              </h2>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Snap or upload a raw shop photo with any background. Gemini isolates the product onto clean white studio mockup variations, uploads them to Cloudflare R2, and writes the title, description, and features automatically.
+            </p>
+          </div>
+
+          <input
+            ref={studioInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleSelectStudioPhoto}
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={() => studioInputRef.current?.click()}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-950 transition-colors hover:border-slate-950"
+          >
+            <Camera size={15} weight="bold" />
+            <span>{studioRawFile ? 'Change Raw Photo' : 'Snap / Select Shop Photo'}</span>
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {/* Raw Photo Input + Optional Brief Note */}
+          <div className="flex flex-col gap-3 lg:col-span-7">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              {studioRawPreview ? (
+                <img
+                  src={studioRawPreview}
+                  alt="Raw shop upload"
+                  className="h-20 w-20 shrink-0 rounded-lg border border-slate-200 bg-white object-cover"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => studioInputRef.current?.click()}
+                  className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white text-[10px] font-semibold text-slate-500 hover:border-slate-950 hover:text-slate-950"
+                >
+                  <UploadSimple size={16} />
+                  <span>Raw Photo</span>
+                </button>
+              )}
+
+              <div className="flex-1">
+                <label className="mb-1 block text-[11px] font-semibold text-slate-600">
+                  Optional Product Notes / Hint for Gemini
+                </label>
+                <input
+                  type="text"
+                  value={studioNotes}
+                  onChange={(e) => setStudioNotes(e.target.value)}
+                  placeholder="e.g. Nike Air Force 1 white sneakers, sizes 40-45, wholesale bale available..."
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={!studioRawFile || studioRunning}
+                onClick={handleRunGeminiStudioPipeline}
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-40"
+              >
+                {studioRunning ? (
+                  <>
+                    <SpinnerGap size={15} className="animate-spin" />
+                    <span>Generating Studio Mockups &amp; Copy...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkle size={14} weight="fill" />
+                    <span>Generate White-Background Mockups &amp; Auto-Fill Copy</span>
+                  </>
+                )}
+              </button>
+              <span className="text-[11px] text-slate-500">
+                Storage Engine: <strong className="text-slate-900">Cloudflare R2</strong> &bull; Database: <strong className="text-slate-900">Firestore</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Generated Clean Studio Mockup Variations Preview */}
+          <div className="lg:col-span-5">
+            {studioMockups.length > 0 ? (
+              <div>
+                <span className="mb-1.5 block text-[11px] font-semibold text-slate-600">
+                  Generated Studio Mockups ({studioMockups.length} added to gallery)
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {studioMockups.map((m) => (
+                    <div
+                      key={m.id}
+                      className="overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5 text-center"
+                    >
+                      <img
+                        src={m.previewUrl}
+                        alt={m.label}
+                        className="mx-auto h-16 w-full object-contain"
+                      />
+                      <span className="mt-1 block truncate text-[10px] font-medium text-slate-500">
+                        {m.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-full min-h-[84px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white/70 px-4 text-center text-xs text-slate-400">
+                3 clean studio white-background mockup variations will appear here after generation.
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left 2 Cols: Basic Details, Pricing, Packaging & Highlights */}
