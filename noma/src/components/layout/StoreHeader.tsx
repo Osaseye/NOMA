@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  ArrowUpRight,
-  CaretDown,
+  ArrowRight,
+  CaretRight,
   Heart,
   List,
   MagnifyingGlass,
@@ -17,38 +17,7 @@ import { useProductStore } from '../../store/productStore'
 import { useUserStore } from '../../store/userStore'
 import { formatNaira } from '../../utils/pricing'
 
-const QUICK_SEARCH_CHIPS = ['Smart TV', 'Inverter AC', 'Power Station', 'Air Fryer', 'Soundbar']
-
-const NIGERIAN_STATES = [
-  'Lagos',
-  'FCT - Abuja',
-  'Oyo',
-  'Ogun',
-  'Rivers',
-  'Edo',
-  'Delta',
-  'Enugu',
-  'Anambra',
-  'Kano',
-  'Kaduna',
-  'Akwa Ibom',
-  'Cross River',
-  'Imo',
-  'Kwara',
-  'Osun',
-  'Ondo',
-  'Ekiti',
-  'Plateau',
-  'Abia',
-]
-
-const EXPOSED_DEPARTMENTS = [
-  { label: 'ALL CATALOG', href: '/catalog' },
-  { label: 'ELECTRONICS', href: '/category/electronics' },
-  { label: 'APPLIANCES', href: '/category/appliances' },
-  { label: 'KITCHEN', href: '/category/kitchen' },
-  { label: 'PHONES', href: '/category/phones' },
-]
+const QUICK_SEARCH_CHIPS = ['Shoes', 'Sneakers', 'Smart TV', 'Air Fryer', 'Soundbar', 'Cookware']
 
 export const StoreHeader: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -64,7 +33,6 @@ export const StoreHeader: React.FC = () => {
   const items = useCartStore((state) => state.items)
   const openDrawer = useCartStore((state) => state.openDrawer)
   const deliveryState = useCartStore((state) => state.deliveryState)
-  const setDeliveryState = useCartStore((state) => state.setDeliveryState)
 
   const totalItems = useMemo(
     () => toCartLineEntries(items).reduce((sum, entry) => sum + entry.quantity, 0),
@@ -74,6 +42,15 @@ export const StoreHeader: React.FC = () => {
   const wishlistCount = useUserStore((state) => state.wishlistProductIds.length)
   const products = useProductStore((state) => state.products)
   const categories = useProductStore((state) => state.categories)
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [mobileMenuOpen])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -88,6 +65,7 @@ export const StoreHeader: React.FC = () => {
         setSearchOpen(true)
       } else if (event.key === 'Escape') {
         setSearchOpen(false)
+        setMobileMenuOpen(false)
         searchInputRef.current?.blur()
       }
     }
@@ -126,10 +104,10 @@ export const StoreHeader: React.FC = () => {
 
   const matchingCategories = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return categories.slice(0, 5)
+    if (!q) return categories.slice(0, 6)
     return categories
       .filter((c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
-      .slice(0, 5)
+      .slice(0, 6)
   }, [categories, searchQuery])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -142,384 +120,402 @@ export const StoreHeader: React.FC = () => {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#E4E4E7] bg-white/95 backdrop-blur-md">
-      {/* Primary Exposed 1px Architectural Bar */}
-      <div className="mx-auto flex h-16 max-w-[1600px] items-stretch justify-between border-x border-[#E4E4E7]">
-        {/* Cell 1: Mobile Menu Trigger + Untouched Brand Logo */}
-        <div className="flex shrink-0 items-center border-r border-[#E4E4E7] px-4 sm:px-6">
-          <button
-            type="button"
-            className="mr-3 inline-flex h-9 w-9 items-center justify-center border border-[#E4E4E7] text-[#09090B] transition-colors hover:bg-[#F4F4F5] lg:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Menu"
+    <>
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white">
+        {/* Main Breathable Header Row */}
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-[72px] sm:px-6 lg:px-8">
+          {/* Left: Hamburger + Brand Logo */}
+          <div className="flex shrink-0 items-center gap-3">
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 transition-colors hover:bg-slate-50 lg:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <List size={20} weight="regular" />
+            </button>
+
+            <Link to="/" className="flex shrink-0 items-center">
+              <img
+                src="/logo.PNG"
+                alt="Noma"
+                className="h-8 w-auto object-contain sm:h-9"
+              />
+            </Link>
+          </div>
+
+          {/* Center: Clean Spacious Search Bar (Desktop & Tablet) */}
+          <div
+            ref={searchContainerRef}
+            className="relative hidden max-w-xl flex-1 md:block"
           >
-            {mobileMenuOpen ? <X size={18} weight="regular" /> : <List size={18} weight="regular" />}
-          </button>
-
-          <Link to="/" className="flex shrink-0 items-center">
-            <img
-              src="/logo.PNG"
-              alt="Noma Store"
-              className="h-8 w-auto object-contain sm:h-9"
-            />
-          </Link>
-        </div>
-
-        {/* Cell 2: Exposed Department Links (Desktop) */}
-        <nav className="hidden xl:flex items-stretch divide-x divide-[#E4E4E7] border-r border-[#E4E4E7]">
-          {EXPOSED_DEPARTMENTS.map((dept) => {
-            const isActive =
-              dept.href === '/catalog'
-                ? location.pathname === '/catalog'
-                : location.pathname === dept.href
-            return (
-              <Link
-                key={dept.label}
-                to={dept.href}
-                className={`relative flex items-center px-4 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors ${
-                  isActive
-                    ? 'bg-[#FAFAFA] text-[#09090B]'
-                    : 'text-[#52525B] hover:bg-[#FAFAFA] hover:text-[#09090B]'
-                }`}
+            <form onSubmit={handleSearch} className="relative flex w-full items-center">
+              <MagnifyingGlass
+                size={17}
+                weight="regular"
+                className="pointer-events-none absolute left-4 text-slate-400"
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search shoes, fashion, electronics, kitchen & more..."
+                value={searchQuery}
+                onFocus={() => setSearchOpen(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setSearchOpen(true)
+                }}
+                className="h-11 w-full rounded-full border border-slate-200 bg-slate-50/80 pl-11 pr-20 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-[#1049EB] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#1049EB]/10"
+              />
+              <button
+                type="submit"
+                className="absolute right-1.5 inline-flex h-8 items-center rounded-full bg-[#1049EB] px-3.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
               >
-                {dept.label}
-                {isActive ? (
-                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#1049EB]" />
-                ) : null}
-              </Link>
-            )
-          })}
-        </nav>
+                Search
+              </button>
+            </form>
 
-        {/* Cell 3: Architectural Command Search Cell */}
-        <div
-          ref={searchContainerRef}
-          className="relative hidden md:flex flex-1 items-stretch border-r border-[#E4E4E7]"
-        >
-          <form onSubmit={handleSearch} className="relative flex w-full items-center">
-            <MagnifyingGlass
-              size={15}
-              weight="regular"
-              className="pointer-events-none ml-4 shrink-0 text-[#71717A]"
-            />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search appliances, SKU, brand..."
-              value={searchQuery}
-              onFocus={() => setSearchOpen(true)}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setSearchOpen(true)
-              }}
-              className="h-full w-full bg-transparent pl-3 pr-12 text-xs text-[#09090B] placeholder:text-[#71717A] focus:bg-[#FAFAFA] focus:outline-none"
-            />
-            <kbd className="pointer-events-none mr-4 hidden sm:inline-flex h-5 items-center border border-[#E4E4E7] bg-[#F4F4F5] px-1.5 font-mono text-[10px] font-medium text-[#71717A]">
-              /
-            </kbd>
-          </form>
-
-          {/* 2-Column Predictive Command Palette Dropdown */}
-          {searchOpen ? (
-            <div className="absolute left-0 right-0 top-full z-50 -mt-px border border-[#09090B] bg-white shadow-2xl">
-              <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] lg:grid-cols-12 lg:divide-x lg:divide-y-0">
-                {/* Left Column: Quick Searches & Categories */}
-                <div className="bg-[#FAFAFA] p-4 lg:col-span-5">
-                  <p className="mb-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                    INDEX / QUERIES
-                  </p>
-                  <div className="mb-5 flex flex-wrap gap-1.5">
-                    {QUICK_SEARCH_CHIPS.map((chip) => (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() => {
-                          setSearchQuery(chip)
-                          navigate(`/search?q=${encodeURIComponent(chip)}`)
-                          setSearchOpen(false)
-                        }}
-                        className="border border-[#E4E4E7] bg-white px-2.5 py-1 text-[11px] font-medium text-[#09090B] transition-colors hover:border-[#09090B]"
-                      >
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                    DEPARTMENTS
-                  </p>
-                  <ul className="space-y-0.5">
-                    {matchingCategories.map((cat) => (
-                      <li key={cat.id}>
-                        <Link
-                          to={`/category/${cat.id}`}
-                          onClick={() => setSearchOpen(false)}
-                          className="flex items-center justify-between px-2 py-1.5 text-xs font-medium text-[#09090B] transition-colors hover:bg-white"
-                        >
-                          <span>{cat.label}</span>
-                          <ArrowUpRight size={13} className="text-[#71717A]" />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Right Column: Live Matching Products */}
-                <div className="p-4 lg:col-span-7">
-                  <div className="mb-2.5 flex items-center justify-between">
-                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                      {searchQuery.trim() ? 'MATCHING HARDWARE' : 'CURATED HIGHLIGHTS'}
+            {/* Clean Predictive Search Dropdown */}
+            {searchOpen ? (
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <div className="grid grid-cols-1 divide-y divide-slate-100 lg:grid-cols-12 lg:divide-x lg:divide-y-0">
+                  {/* Left: Popular Searches & Categories */}
+                  <div className="bg-slate-50/60 p-4 lg:col-span-5">
+                    <p className="mb-2.5 text-xs font-semibold text-slate-500">
+                      Popular Searches
                     </p>
-                    {searchQuery.trim() ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-                          setSearchOpen(false)
-                        }}
-                        className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1049EB] hover:underline"
-                      >
-                        VIEW ALL &rarr;
-                      </button>
-                    ) : null}
-                  </div>
-
-                  {searchResults.length === 0 ? (
-                    <p className="py-8 text-center text-xs text-[#71717A]">
-                      No products matching &ldquo;{searchQuery}&rdquo;.
-                    </p>
-                  ) : (
-                    <div className="divide-y divide-[#E4E4E7] border-t border-[#E4E4E7]">
-                      {searchResults.map((item) => (
-                        <Link
-                          key={item.id}
-                          to={`/product/${item.slug || item.id}`}
-                          onClick={() => setSearchOpen(false)}
-                          className="flex items-center gap-3 py-2.5 transition-colors hover:bg-[#FAFAFA]"
+                    <div className="mb-5 flex flex-wrap gap-1.5">
+                      {QUICK_SEARCH_CHIPS.map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery(chip)
+                            navigate(`/search?q=${encodeURIComponent(chip)}`)
+                            setSearchOpen(false)
+                          }}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-[#1049EB] hover:text-[#1049EB]"
                         >
-                          <div className="h-11 w-11 shrink-0 overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5] p-1">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="h-full w-full object-contain mix-blend-multiply"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-medium text-[#09090B]">
-                              {item.name}
-                            </p>
-                            <p className="font-mono text-[10px] uppercase tracking-wider text-[#71717A]">
-                              {item.brand || item.category}
-                            </p>
-                          </div>
-                          <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-[#09090B]">
-                            {formatNaira(item.finalPrice)}
-                          </span>
-                        </Link>
+                          {chip}
+                        </button>
                       ))}
                     </div>
-                  )}
+
+                    <p className="mb-2 text-xs font-semibold text-slate-500">
+                      Categories
+                    </p>
+                    <ul className="space-y-1">
+                      {matchingCategories.map((cat) => (
+                        <li key={cat.id}>
+                          <Link
+                            to={`/category/${cat.id}`}
+                            onClick={() => setSearchOpen(false)}
+                            className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-white hover:text-[#1049EB]"
+                          >
+                            <span>{cat.label}</span>
+                            <CaretRight size={13} className="text-slate-400" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Right: Matching Products */}
+                  <div className="p-4 lg:col-span-7">
+                    <div className="mb-2.5 flex items-center justify-between">
+                      <p className="text-xs font-semibold text-slate-500">
+                        {searchQuery.trim() ? 'Matching Products' : 'Popular Picks'}
+                      </p>
+                      {searchQuery.trim() ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                            setSearchOpen(false)
+                          }}
+                          className="text-xs font-semibold text-[#1049EB] hover:underline"
+                        >
+                          See all &rarr;
+                        </button>
+                      ) : null}
+                    </div>
+
+                    {searchResults.length === 0 ? (
+                      <p className="py-8 text-center text-xs text-slate-500">
+                        No products matching &ldquo;{searchQuery}&rdquo;.
+                      </p>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {searchResults.map((item) => (
+                          <Link
+                            key={item.id}
+                            to={`/product/${item.slug || item.id}`}
+                            onClick={() => setSearchOpen(false)}
+                            className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-slate-50"
+                          >
+                            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-slate-100 p-1">
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-xs font-semibold text-slate-900">
+                                {item.name}
+                              </p>
+                              <p className="text-[11px] capitalize text-slate-500">
+                                {item.brand || item.category.replace(/-/g, ' ')}
+                              </p>
+                            </div>
+                            <span className="shrink-0 text-xs font-bold tabular-nums text-slate-900">
+                              {formatNaira(item.finalPrice)}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
 
-        {/* Cell 4: Nigerian State Delivery Estimator Trigger (Desktop) */}
-        <div className="hidden lg:flex items-center border-r border-[#E4E4E7] bg-[#FAFAFA] px-3.5">
-          <MapPin size={13} weight="bold" className="mr-1.5 shrink-0 text-[#1049EB]" />
-          <div className="relative flex items-center">
-            <span className="mr-1 font-mono text-[10px] uppercase tracking-wider text-[#71717A]">
-              STATE:
-            </span>
-            <select
-              aria-label="Delivery state"
-              value={deliveryState}
-              onChange={(e) => setDeliveryState(e.target.value)}
-              className="cursor-pointer appearance-none bg-transparent pr-4 font-mono text-[11px] font-semibold uppercase text-[#09090B] focus:outline-none"
+          {/* Right: Clean Uncluttered Utility Actions */}
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <Link
+              to="/orders"
+              className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:inline-flex"
             >
-              {NIGERIAN_STATES.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
-            <CaretDown
-              size={11}
-              className="pointer-events-none absolute right-0 text-[#71717A]"
-            />
+              <Truck size={17} weight="regular" />
+              <span>Track Order</span>
+            </Link>
+
+            <Link
+              to="/wishlist"
+              className="relative inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              title="Saved Wishlist"
+            >
+              <Heart
+                size={19}
+                weight={wishlistCount > 0 ? 'fill' : 'regular'}
+                className={wishlistCount > 0 ? 'text-rose-500' : ''}
+              />
+              <span className="hidden sm:inline">Saved</span>
+              {wishlistCount > 0 ? (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold text-slate-800">
+                  {wishlistCount}
+                </span>
+              ) : null}
+            </Link>
+
+            <Link
+              to="/account"
+              className="hidden h-10 w-10 items-center justify-center rounded-full text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
+              title="My Account"
+            >
+              <User size={19} weight="regular" />
+            </Link>
+
+            {/* Clean Cobalt Bag Button (Triggers Slide-Out Drawer) */}
+            <button
+              type="button"
+              onClick={openDrawer}
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1049EB] px-4 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#0D3BC2]"
+              aria-label="Open Shopping Bag"
+            >
+              <ShoppingBag size={17} weight="bold" />
+              <span className="hidden sm:inline">Bag</span>
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-[11px] font-bold tabular-nums text-white">
+                {totalItems}
+              </span>
+            </button>
           </div>
         </div>
 
-        {/* Cell 5: Right Utility Cells (Track, Wishlist, Account, Slide-Out Bag Drawer Trigger) */}
-        <div className="flex items-stretch divide-x divide-[#E4E4E7]">
-          <Link
-            to="/orders"
-            className="hidden sm:flex items-center gap-1.5 px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52525B] transition-colors hover:bg-[#FAFAFA] hover:text-[#09090B]"
-            title="Track Order"
-          >
-            <Truck size={16} weight="regular" />
-            <span className="hidden 2xl:inline">Track</span>
-          </Link>
+        {/* Clean Secondary Category Strip (Desktop) — Breathable & Dynamic */}
+        <div className="hidden border-t border-slate-100 bg-slate-50/70 lg:block">
+          <div className="mx-auto flex h-11 max-w-7xl items-center justify-between px-8">
+            <nav className="flex items-center gap-1 overflow-x-auto">
+              <Link
+                to="/catalog"
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  location.pathname === '/catalog'
+                    ? 'bg-[#1049EB] text-white'
+                    : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                }`}
+              >
+                All Categories
+              </Link>
+              {categories.map((cat) => {
+                const isActive = location.pathname === `/category/${cat.id}`
+                return (
+                  <Link
+                    key={cat.id}
+                    to={`/category/${cat.id}`}
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                      isActive
+                        ? 'bg-[#1049EB] text-white'
+                        : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                    }`}
+                  >
+                    {cat.label}
+                  </Link>
+                )
+              })}
+            </nav>
 
-          <Link
-            to="/wishlist"
-            className="relative flex items-center gap-1.5 px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52525B] transition-colors hover:bg-[#FAFAFA] hover:text-[#09090B]"
-            title="Saved Items"
-          >
-            <Heart size={16} weight={wishlistCount > 0 ? 'fill' : 'regular'} />
-            {wishlistCount > 0 ? (
-              <span className="font-mono text-[10px] font-semibold tabular-nums text-[#09090B]">
-                [{wishlistCount}]
-              </span>
-            ) : null}
-          </Link>
-
-          <Link
-            to="/account"
-            className="hidden sm:flex items-center gap-1.5 px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52525B] transition-colors hover:bg-[#FAFAFA] hover:text-[#09090B]"
-            title="Account"
-          >
-            <User size={16} weight="regular" />
-          </Link>
-
-          {/* Slide-Out Mini-Cart Bag Trigger */}
-          <button
-            type="button"
-            onClick={openDrawer}
-            className="flex items-center gap-2 bg-[#09090B] px-4 sm:px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#1049EB]"
-            aria-label="Open Shopping Bag"
-          >
-            <ShoppingBag size={16} weight="regular" />
-            <span className="hidden sm:inline">BAG</span>
-            <span className="font-mono text-[11px] font-semibold tabular-nums text-[#FEB719]">
-              [{totalItems}]
-            </span>
-          </button>
+            <button
+              type="button"
+              onClick={openDrawer}
+              className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-[#1049EB]"
+            >
+              <MapPin size={14} weight="fill" className="text-[#1049EB]" />
+              <span>Delivering to:</span>
+              <strong className="font-semibold text-slate-800">{deliveryState}</strong>
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Mobile Search Strip (Exposed 1px Sub-Row) */}
-      <div className="border-t border-[#E4E4E7] bg-white px-4 py-2 md:hidden">
-        <form onSubmit={handleSearch} className="relative flex items-center">
-          <MagnifyingGlass
-            size={15}
-            weight="regular"
-            className="pointer-events-none absolute left-3 text-[#71717A]"
-          />
-          <input
-            type="text"
-            placeholder="Search appliances, electronics, SKU..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full border border-[#E4E4E7] bg-[#F4F4F5] pl-9 pr-3 text-xs text-[#09090B] placeholder:text-[#71717A] focus:border-[#1049EB] focus:bg-white focus:outline-none"
-          />
-        </form>
-      </div>
+        {/* Mobile Search Bar */}
+        <div className="border-t border-slate-100 bg-white px-4 py-2.5 md:hidden">
+          <form onSubmit={handleSearch} className="relative flex items-center">
+            <MagnifyingGlass
+              size={16}
+              weight="regular"
+              className="pointer-events-none absolute left-3.5 text-slate-400"
+            />
+            <input
+              type="text"
+              placeholder="Search shoes, fashion, appliances..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-10 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#1049EB] focus:bg-white focus:outline-none"
+            />
+          </form>
+        </div>
+      </header>
 
-      {/* Mobile Exposed-Grid Drawer */}
+      {/* Solid Opaque Mobile Navigation Drawer (Rendered OUTSIDE header so backdrop-blur never makes it transparent!) */}
       {mobileMenuOpen ? (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
+        <div className="fixed inset-0 z-[100] flex lg:hidden" role="dialog" aria-modal="true">
+          {/* Darkened Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/50 transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="relative z-10 flex w-full max-w-xs flex-col justify-between border-r border-[#E4E4E7] bg-white">
-            <div>
-              <div className="flex h-16 items-center justify-between border-b border-[#E4E4E7] px-5">
+
+          {/* 100% Solid White Sidebar Panel */}
+          <div className="relative z-10 flex h-[100dvh] w-[85vw] max-w-xs flex-col bg-white shadow-2xl">
+            {/* Drawer Header */}
+            <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-5">
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center"
+              >
                 <img src="/logo.PNG" alt="Noma" className="h-7 w-auto object-contain" />
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex h-8 w-8 items-center justify-center border border-[#E4E4E7] text-[#09090B]"
-                >
-                  <X size={16} />
-                </button>
-              </div>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-              {/* Mobile Delivery State Selector */}
-              <div className="flex items-center justify-between border-b border-[#E4E4E7] bg-[#FAFAFA] px-5 py-3">
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#71717A]">
-                  DELIVER TO STATE
-                </span>
-                <select
-                  value={deliveryState}
-                  onChange={(e) => setDeliveryState(e.target.value)}
-                  className="border border-[#E4E4E7] bg-white px-2 py-1 font-mono text-xs font-semibold text-[#09090B]"
-                >
-                  {NIGERIAN_STATES.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="divide-y divide-[#E4E4E7] border-b border-[#E4E4E7]">
-                <div className="bg-[#F4F4F5] px-5 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                  01 / DEPARTMENTS
-                </div>
+            {/* Scrollable Categories List */}
+            <div className="flex-1 overflow-y-auto px-4 py-5">
+              <p className="mb-2 px-2 text-xs font-semibold text-slate-400">
+                Shop Categories
+              </p>
+              <div className="space-y-1">
                 <Link
                   to="/catalog"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B] hover:bg-[#FAFAFA]"
+                  className="flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#EEF3FE] hover:text-[#1049EB]"
                 >
-                  <span>ALL CATALOG</span>
-                  <ArrowUpRight size={14} className="text-[#71717A]" />
+                  <span>All Products</span>
+                  <ArrowRight size={15} className="text-slate-400" />
                 </Link>
+
                 {categories.map((cat) => (
                   <Link
                     key={cat.id}
                     to={`/category/${cat.id}`}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-5 py-3 text-xs font-medium uppercase tracking-wider text-[#52525B] hover:bg-[#FAFAFA] hover:text-[#09090B]"
+                    className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
                   >
                     <span>{cat.label}</span>
-                    <ArrowUpRight size={14} className="text-[#71717A]" />
+                    <CaretRight size={15} className="text-slate-400" />
                   </Link>
                 ))}
               </div>
+
+              <div className="my-5 border-t border-slate-100" />
+
+              <p className="mb-2 px-2 text-xs font-semibold text-slate-400">
+                Your Account
+              </p>
+              <div className="space-y-1">
+                <Link
+                  to="/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <Truck size={18} className="text-[#1049EB]" />
+                  <span>Track Your Order</span>
+                </Link>
+                <Link
+                  to="/wishlist"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <span className="flex items-center gap-3">
+                    <Heart size={18} className="text-rose-500" />
+                    <span>Saved Wishlist</span>
+                  </span>
+                  {wishlistCount > 0 ? (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-800">
+                      {wishlistCount}
+                    </span>
+                  ) : null}
+                </Link>
+                <Link
+                  to="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <User size={18} className="text-slate-500" />
+                  <span>My Account</span>
+                </Link>
+              </div>
             </div>
 
-            <div className="divide-y divide-[#E4E4E7] border-t border-[#E4E4E7]">
-              <Link
-                to="/orders"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2.5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B]"
-              >
-                <Truck size={16} /> Track Order
-              </Link>
-              <Link
-                to="/wishlist"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2.5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B]"
-              >
-                <Heart size={16} /> Saved Wishlist [{wishlistCount}]
-              </Link>
-              <Link
-                to="/account"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2.5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B]"
-              >
-                <User size={16} /> Account
-              </Link>
+            {/* Drawer Footer CTA */}
+            <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
               <button
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false)
                   openDrawer()
                 }}
-                className="flex w-full items-center justify-between bg-[#09090B] px-5 py-3.5 text-xs font-semibold uppercase tracking-widest text-white"
+                className="flex w-full items-center justify-between rounded-xl bg-[#1049EB] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0D3BC2]"
               >
-                <span className="flex items-center gap-2">
-                  <ShoppingBag size={16} /> Open Shopping Bag
+                <span className="flex items-center gap-2.5">
+                  <ShoppingBag size={18} weight="bold" />
+                  <span>View Shopping Bag</span>
                 </span>
-                <span className="font-mono text-[#FEB719]">[{totalItems}]</span>
+                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold">
+                  {totalItems} {totalItems === 1 ? 'item' : 'items'}
+                </span>
               </button>
             </div>
           </div>
         </div>
       ) : null}
-    </header>
+    </>
   )
 }

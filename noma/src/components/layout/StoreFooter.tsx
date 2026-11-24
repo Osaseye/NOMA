@@ -1,109 +1,44 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import {
-  ArrowCounterClockwise,
-  ArrowUpRight,
-  EnvelopeSimple,
-  MapPin,
-  ShieldCheck,
-  Truck,
-  WhatsappLogo,
-} from '@phosphor-icons/react'
+import { EnvelopeSimple, MapPin, WhatsappLogo } from '@phosphor-icons/react'
 import { brand } from '../../constants/brand'
 import { useAdminStore } from '../../store/adminStore'
+import { useProductStore } from '../../store/productStore'
 
 export const StoreFooter: React.FC = () => {
   const { settings } = useAdminStore()
+  const categories = useProductStore((state) => state.categories)
   const whatsappDigits = settings.whatsappNumber?.replace(/\D/g, '')
   const whatsappBaseUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : brand.whatsapp
   const whatsappConciergeHref = `${whatsappBaseUrl}?text=${encodeURIComponent(
-    'Hello Noma Concierge, I need assistance with an order.',
+    'Hello Noma, I need assistance with an order.',
   )}`
   const supportEmail = settings.supportEmail || brand.email
 
   return (
-    <footer className="border-t border-[#E4E4E7] bg-white text-[#09090B]">
-      {/* Architectural Trust Matrix Strip */}
-      <div className="mx-auto max-w-[1600px] border-x border-b border-[#E4E4E7]">
-        <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] md:grid-cols-3 md:divide-x md:divide-y-0">
-          <div className="flex items-start gap-4 p-6 lg:p-8">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E4E4E7] bg-[#F4F4F5] text-[#09090B]">
-              <ShieldCheck size={20} weight="regular" />
-            </div>
-            <div>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#1049EB]">
-                01 / AUTHENTICITY
-              </span>
-              <h4 className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#09090B]">
-                Manufacturer Warranty &amp; Sealed Units
-              </h4>
-              <p className="mt-1 text-xs leading-relaxed text-[#71717A]">
-                Every appliance and electronics unit ships factory-sealed with serial verification.
-              </p>
-            </div>
-          </div>
+    <footer className="border-t border-slate-200/80 bg-white text-slate-800">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-12">
+          {/* Col 1: Brand Summary */}
+          <div className="lg:col-span-4">
+            <Link to="/" className="inline-block">
+              <img
+                src="/logo.PNG"
+                alt="Noma"
+                className="h-8 w-auto object-contain"
+              />
+            </Link>
+            <p className="mt-3 max-w-sm text-xs leading-relaxed text-slate-500 sm:text-sm">
+              Your everyday marketplace for quality shoes (retail &amp; bulk), clothing, kitchen appliances, and electronics delivered across Nigeria.
+            </p>
 
-          <div className="flex items-start gap-4 p-6 lg:p-8">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E4E4E7] bg-[#F4F4F5] text-[#09090B]">
-              <Truck size={20} weight="regular" />
-            </div>
-            <div>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#1049EB]">
-                02 / LOGISTICS
-              </span>
-              <h4 className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#09090B]">
-                Nationwide Tracked Dispatch
-              </h4>
-              <p className="mt-1 text-xs leading-relaxed text-[#71717A]">
-                24–48hr delivery across Lagos &amp; Abuja; insured cargo dispatch to all 36 states.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-4 p-6 lg:p-8">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E4E4E7] bg-[#F4F4F5] text-[#09090B]">
-              <ArrowCounterClockwise size={20} weight="regular" />
-            </div>
-            <div>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#1049EB]">
-                03 / PROTECTION
-              </span>
-              <h4 className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#09090B]">
-                7-Day DOA Replacement Guarantee
-              </h4>
-              <p className="mt-1 text-xs leading-relaxed text-[#71717A]">
-                Immediate replacement or refund on verified arrival defects plus Pay-on-Delivery in select zones.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Exposed Grid Footer Links */}
-      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
-        <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] md:grid-cols-2 lg:grid-cols-12 lg:divide-x lg:divide-y-0">
-          {/* Col 1: Brand Identity */}
-          <div className="flex flex-col justify-between bg-[#FAFAFA] p-6 lg:col-span-4 lg:p-10">
-            <div className="space-y-4">
-              <Link to="/" className="inline-block">
-                <img
-                  src="/logo.PNG"
-                  alt="Noma Store"
-                  className="h-8 w-auto object-contain"
-                />
-              </Link>
-              <p className="max-w-sm text-xs leading-relaxed text-[#52525B]">
-                Architectural home electronics, smart living appliances, and lithium power systems curated for modern Nigerian residences.
-              </p>
-            </div>
-
-            <div className="mt-8 space-y-2 border-t border-[#E4E4E7] pt-4 font-mono text-[11px] text-[#52525B]">
+            <div className="mt-4 space-y-1.5 text-xs text-slate-500">
               <div className="flex items-center gap-2">
-                <MapPin size={14} className="text-[#09090B]" />
-                <span>LAGOS &bull; ABUJA &bull; PORT HARCOURT</span>
+                <MapPin size={15} className="text-[#1049EB]" />
+                <span>Lagos • Abuja • Nationwide Delivery</span>
               </div>
               <div className="flex items-center gap-2">
-                <EnvelopeSimple size={14} className="text-[#09090B]" />
+                <EnvelopeSimple size={15} className="text-[#1049EB]" />
                 <a href={`mailto:${supportEmail}`} className="hover:text-[#1049EB]">
                   {supportEmail}
                 </a>
@@ -111,136 +46,84 @@ export const StoreFooter: React.FC = () => {
             </div>
           </div>
 
-          {/* Col 2: Departments */}
-          <div className="p-6 lg:col-span-3 lg:p-10">
-            <h3 className="mb-4 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-              INDEX / DEPARTMENTS
-            </h3>
-            <ul className="space-y-2.5 text-xs font-medium text-[#52525B]">
+          {/* Col 2: Dynamic Categories */}
+          <div className="lg:col-span-3">
+            <h3 className="text-xs font-bold text-slate-900 sm:text-sm">Categories</h3>
+            <ul className="mt-3 space-y-2 text-xs text-slate-600 sm:text-sm">
               <li>
-                <Link to="/catalog" className="flex items-center justify-between hover:text-[#09090B]">
-                  <span>All Catalog</span>
-                  <ArrowUpRight size={12} className="text-[#71717A]" />
+                <Link to="/catalog" className="hover:text-[#1049EB]">
+                  All Products
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/category/electronics"
-                  className="flex items-center justify-between hover:text-[#09090B]"
-                >
-                  <span>Smart Televisions &amp; Audio</span>
-                  <ArrowUpRight size={12} className="text-[#71717A]" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/category/appliances"
-                  className="flex items-center justify-between hover:text-[#09090B]"
-                >
-                  <span>Climate &amp; Large Appliances</span>
-                  <ArrowUpRight size={12} className="text-[#71717A]" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/category/kitchen"
-                  className="flex items-center justify-between hover:text-[#09090B]"
-                >
-                  <span>Precision Kitchen Systems</span>
-                  <ArrowUpRight size={12} className="text-[#71717A]" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/category/phones"
-                  className="flex items-center justify-between hover:text-[#09090B]"
-                >
-                  <span>Phones &amp; Mobile Power</span>
-                  <ArrowUpRight size={12} className="text-[#71717A]" />
-                </Link>
-              </li>
+              {categories.slice(0, 5).map((cat) => (
+                <li key={cat.id}>
+                  <Link to={`/category/${cat.id}`} className="hover:text-[#1049EB]">
+                    {cat.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Col 3: Client Services */}
-          <div className="p-6 lg:col-span-2 lg:p-10">
-            <h3 className="mb-4 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-              CLIENT CARE
-            </h3>
-            <ul className="space-y-2.5 text-xs font-medium text-[#52525B]">
+          {/* Col 3: Customer Care */}
+          <div className="lg:col-span-2">
+            <h3 className="text-xs font-bold text-slate-900 sm:text-sm">Customer Care</h3>
+            <ul className="mt-3 space-y-2 text-xs text-slate-600 sm:text-sm">
               <li>
-                <Link to="/orders" className="hover:text-[#09090B]">
+                <Link to="/orders" className="hover:text-[#1049EB]">
                   Track Your Order
                 </Link>
               </li>
               <li>
-                <Link to="/wishlist" className="hover:text-[#09090B]">
+                <Link to="/wishlist" className="hover:text-[#1049EB]">
                   Saved Wishlist
                 </Link>
               </li>
               <li>
-                <Link to="/account" className="hover:text-[#09090B]">
+                <Link to="/account" className="hover:text-[#1049EB]">
                   My Account
                 </Link>
               </li>
               <li>
-                <Link to="/support" className="hover:text-[#09090B]">
-                  Delivery &amp; Warranty
+                <Link to="/support" className="hover:text-[#1049EB]">
+                  Help &amp; Delivery Info
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="hover:text-[#09090B]">
+                <Link to="/about" className="hover:text-[#1049EB]">
                   About Noma
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="hover:text-[#09090B]">
+                <Link to="/terms" className="hover:text-[#1049EB]">
                   Terms &amp; Privacy
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Col 4: Concierge Desk */}
-          <div className="flex flex-col justify-between p-6 lg:col-span-3 lg:p-10">
-            <div>
-              <h3 className="mb-4 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                CONCIERGE DESK
-              </h3>
-              <p className="mb-5 text-xs leading-relaxed text-[#52525B]">
-                Need specification advice, bulk B2B quoting, or same-day Lagos dispatch confirmation?
-              </p>
-              <a
-                href={whatsappConciergeHref}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex w-full items-center justify-center gap-2 border border-[#09090B] bg-[#09090B] px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:border-[#1049EB] hover:bg-[#1049EB]"
-              >
-                <WhatsappLogo size={16} weight="fill" />
-                WhatsApp Concierge
-              </a>
-            </div>
-
-            <div className="mt-6 border-t border-[#E4E4E7] pt-3">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-[#71717A]">
-                HOURS: MON–SAT / 08:00–20:00 WAT
-              </p>
-            </div>
+          {/* Col 4: Quick WhatsApp Help */}
+          <div className="lg:col-span-3">
+            <h3 className="text-xs font-bold text-slate-900 sm:text-sm">Need Help or Bulk Pricing?</h3>
+            <p className="mt-3 text-xs leading-relaxed text-slate-500">
+              Chat with our team on WhatsApp for wholesale shoe inquiries, order updates, or product questions.
+            </p>
+            <a
+              href={whatsappConciergeHref}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1049EB] px-4 py-3 text-xs font-semibold text-white shadow-2xs transition-colors hover:bg-[#0D3BC2]"
+            >
+              <WhatsappLogo size={17} weight="fill" />
+              <span>Chat on WhatsApp</span>
+            </a>
           </div>
         </div>
 
-        {/* Bottom Copyright & Edge Info Bar */}
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-[#E4E4E7] bg-[#F4F4F5] px-6 py-4 text-[11px] text-[#71717A] sm:flex-row lg:px-10">
-          <p className="font-mono text-[10px] uppercase tracking-wider">
-            &copy; {new Date().getFullYear()} NOMA COMMERCE NIGERIA. ALL RIGHTS RESERVED.
-          </p>
-          <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-wider">
-            <span>NGN (₦)</span>
-            <span>&bull;</span>
-            <span>BANK TRANSFER / CARD / POD</span>
-            <span>&bull;</span>
-            <span>CLOUDFLARE EDGE</span>
-          </div>
+        {/* Compact Bottom Copyright Bar */}
+        <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-slate-100 pt-6 text-xs text-slate-400 sm:flex-row">
+          <p>&copy; {new Date().getFullYear()} Noma Marketplace. All rights reserved.</p>
+          <p>Secure Checkout • Bank Transfer • Card • Pay on Delivery</p>
         </div>
       </div>
     </footer>

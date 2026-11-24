@@ -104,7 +104,6 @@ export function MiniCartDrawer() {
   const remainingForFreeShipping = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal)
   const freeShippingProgress = Math.min(100, Math.round((subtotal / FREE_DELIVERY_THRESHOLD) * 100))
 
-  // Close on Escape and lock body scroll while open
   useEffect(() => {
     if (!isDrawerOpen) return
 
@@ -137,7 +136,7 @@ export function MiniCartDrawer() {
     <AnimatePresence>
       {isDrawerOpen ? (
         <div
-          className="fixed inset-0 z-50 flex justify-end"
+          className="fixed inset-0 z-[100] flex justify-end"
           role="dialog"
           aria-modal="true"
           aria-label="Shopping Bag Drawer"
@@ -148,30 +147,29 @@ export function MiniCartDrawer() {
             animate={{ opacity: 1 }}
             exit={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-[#09090B]/35 backdrop-blur-[2px]"
+            className="fixed inset-0 bg-slate-900/50"
             onClick={closeDrawer}
           />
 
-          {/* Slide-Out Architectural Panel */}
+          {/* 100% Solid White Slide-Out Drawer Panel */}
           <motion.aside
             initial={reduceMotion ? { x: 0 } : { x: '100%' }}
             animate={{ x: 0 }}
             exit={reduceMotion ? { x: 0 } : { x: '100%' }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 flex h-full w-full max-w-[440px] flex-col border-l border-[#E4E4E7] bg-white text-[#09090B]"
+            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 flex h-[100dvh] w-full max-w-md flex-col bg-white text-slate-900 shadow-2xl"
           >
-            {/* Top Architectural Header Bar (Exposed 1px Grid) */}
-            <div className="grid grid-cols-12 border-b border-[#E4E4E7]">
-              <div className="col-span-9 flex items-center justify-between px-5 py-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#09090B]">
-                    Shopping Bag
-                  </span>
-                  <span className="border border-[#E4E4E7] bg-[#F4F4F5] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#09090B]">
-                    {String(totalCount).padStart(2, '0')}
-                  </span>
-                </div>
+            {/* Header Bar */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div className="flex items-center gap-2.5">
+                <ShoppingBag size={20} weight="bold" className="text-[#1049EB]" />
+                <h2 className="text-base font-bold text-slate-900">Your Bag</h2>
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                  {totalCount}
+                </span>
+              </div>
 
+              <div className="flex items-center gap-3">
                 {cartLines.length > 0 ? (
                   <button
                     type="button"
@@ -179,34 +177,34 @@ export function MiniCartDrawer() {
                       clearCart()
                       toast.info('Shopping bag cleared')
                     }}
-                    className="font-mono text-[10px] font-medium uppercase tracking-wider text-[#71717A] transition-colors hover:text-[#B91C1C]"
+                    className="text-xs font-medium text-slate-400 transition-colors hover:text-rose-600"
                   >
-                    Clear All
+                    Clear all
                   </button>
                 ) : null}
-              </div>
 
-              <button
-                type="button"
-                onClick={closeDrawer}
-                aria-label="Close shopping bag"
-                className="col-span-3 flex items-center justify-center border-l border-[#E4E4E7] bg-white py-4 text-xs font-semibold uppercase tracking-widest text-[#09090B] transition-colors hover:bg-[#F4F4F5]"
-              >
-                <X size={16} weight="regular" />
-              </button>
+                <button
+                  type="button"
+                  onClick={closeDrawer}
+                  aria-label="Close shopping bag"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
+                >
+                  <X size={16} weight="bold" />
+                </button>
+              </div>
             </div>
 
-            {/* Free Delivery / Express Threshold Bar + State Selector */}
-            <div className="border-b border-[#E4E4E7] bg-[#F4F4F5]/70 px-5 py-3">
-              <div className="flex items-center justify-between gap-2 text-[11px]">
-                <div className="flex items-center gap-1.5 text-[#09090B]">
-                  <MapPin size={13} weight="regular" className="text-[#1049EB]" />
-                  <span className="font-medium text-[#71717A]">Deliver to:</span>
+            {/* Delivery State & Free Shipping Progress */}
+            <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <MapPin size={14} weight="fill" className="text-[#1049EB]" />
+                  <span className="text-slate-500">Deliver to:</span>
                   <select
                     value={deliveryState}
                     onChange={(e) => setDeliveryState(e.target.value)}
                     aria-label="Select delivery state"
-                    className="cursor-pointer border-b border-[#09090B]/30 bg-transparent py-0.5 font-mono text-[11px] font-semibold text-[#09090B] focus:border-[#1049EB] focus:outline-none"
+                    className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-800 focus:border-[#1049EB] focus:outline-none"
                   >
                     {NIGERIAN_STATES.map((st) => (
                       <option key={st} value={st}>
@@ -216,43 +214,42 @@ export function MiniCartDrawer() {
                   </select>
                 </div>
 
-                <span className="font-mono text-[10px] text-[#71717A]">
+                <span className="text-[11px] font-medium text-slate-500">
                   {deliveryEstimate.zoneLabel.split('(')[1]?.replace(')', '') || '2 - 5 Days'}
                 </span>
               </div>
 
-              {/* Threshold progress bar */}
               {!hasBulkyItem ? (
                 <div className="mt-2.5">
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center justify-between text-xs">
                     {deliveryEstimate.isFreeStandard ? (
-                      <span className="font-medium text-[#15803D]">
-                        Complimentary standard delivery unlocked
+                      <span className="font-semibold text-emerald-700">
+                        You&apos;ve unlocked free standard delivery!
                       </span>
                     ) : (
-                      <span className="text-[#52525B]">
+                      <span className="text-slate-600">
                         Add{' '}
-                        <strong className="font-mono font-semibold text-[#09090B]">
+                        <strong className="font-bold text-slate-900">
                           {formatNaira(remainingForFreeShipping)}
                         </strong>{' '}
-                        for free standard delivery
+                        more for free delivery
                       </span>
                     )}
-                    <span className="font-mono text-[10px] text-[#71717A]">
+                    <span className="text-[11px] font-semibold text-slate-500">
                       {freeShippingProgress}%
                     </span>
                   </div>
-                  <div className="mt-1.5 h-1 w-full overflow-hidden bg-[#E4E4E7]">
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
-                      className="h-full bg-[#09090B] transition-all duration-300"
+                      className="h-full rounded-full bg-[#1049EB] transition-all duration-300"
                       style={{ width: `${freeShippingProgress}%` }}
                     />
                   </div>
                 </div>
               ) : (
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#B45309]">
-                  <Truck size={13} weight="regular" />
-                  <span>Includes bulky freight handling ({formatNaira(deliveryEstimate.standardFee)})</span>
+                <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                  <Truck size={14} weight="regular" />
+                  <span>Bulky delivery rate applies ({formatNaira(deliveryEstimate.standardFee)})</span>
                 </div>
               )}
             </div>
@@ -260,14 +257,12 @@ export function MiniCartDrawer() {
             {/* Bag Items Body */}
             {cartLines.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center border border-[#E4E4E7] bg-[#F4F4F5] text-[#71717A]">
-                  <ShoppingBag size={22} weight="regular" />
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                  <ShoppingBag size={26} weight="regular" />
                 </div>
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#09090B]">
-                  Your Bag is Empty
-                </p>
-                <p className="mt-1.5 max-w-[240px] text-xs leading-relaxed text-[#71717A]">
-                  Explore curated electronics, kitchen hardware, and solar power systems with upfront Naira delivery pricing.
+                <p className="text-base font-bold text-slate-900">Your bag is empty</p>
+                <p className="mt-1 max-w-[240px] text-xs leading-relaxed text-slate-500">
+                  Browse shoes, fashion, home appliances, and everyday essentials.
                 </p>
                 <button
                   type="button"
@@ -275,24 +270,20 @@ export function MiniCartDrawer() {
                     closeDrawer()
                     navigate('/catalog')
                   }}
-                  className="mt-6 inline-flex items-center gap-2 bg-[#09090B] px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#1049EB]"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-6 py-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#0D3BC2]"
                 >
-                  <span>Explore Catalog</span>
-                  <ArrowRight size={14} weight="regular" />
+                  <span>Start Shopping</span>
+                  <ArrowRight size={14} weight="bold" />
                 </button>
               </div>
             ) : (
-              <div className="flex-1 divide-y divide-[#E4E4E7] overflow-y-auto">
+              <div className="flex-1 divide-y divide-slate-100 overflow-y-auto px-5">
                 {cartLines.map((line) => (
-                  <div
-                    key={line.key}
-                    className="grid grid-cols-12 gap-3.5 p-4 transition-colors hover:bg-[#F4F4F5]/40 sm:px-5"
-                  >
-                    {/* Thumbnail Well */}
+                  <div key={line.key} className="flex gap-3.5 py-4">
                     <Link
                       to={`/product/${line.product.slug || line.product.id}`}
                       onClick={closeDrawer}
-                      className="col-span-3 flex aspect-square items-center justify-center border border-[#E4E4E7] bg-[#F4F4F5] p-2"
+                      className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50 p-2"
                     >
                       <img
                         src={line.product.image}
@@ -301,23 +292,19 @@ export function MiniCartDrawer() {
                       />
                     </Link>
 
-                    {/* Item Details */}
-                    <div className="col-span-9 flex flex-col justify-between">
+                    <div className="flex min-w-0 flex-1 flex-col justify-between">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <span className="block font-mono text-[10px] uppercase tracking-wider text-[#71717A]">
-                            {line.product.brand || line.product.category.replace(/-/g, ' ')}
-                          </span>
                           <Link
                             to={`/product/${line.product.slug || line.product.id}`}
                             onClick={closeDrawer}
-                            className="mt-0.5 line-clamp-2 text-xs font-semibold leading-snug text-[#09090B] hover:text-[#1049EB]"
+                            className="line-clamp-2 text-xs font-semibold leading-snug text-slate-900 hover:text-[#1049EB]"
                           >
                             {line.product.name}
                           </Link>
                           {line.size ? (
-                            <span className="mt-1 inline-block border border-[#E4E4E7] bg-[#F4F4F5] px-1.5 py-0.5 font-mono text-[10px] font-medium text-[#09090B]">
-                              SIZE: {line.size}
+                            <span className="mt-1 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                              Size: {line.size}
                             </span>
                           ) : null}
                         </div>
@@ -329,42 +316,41 @@ export function MiniCartDrawer() {
                             toast.info(`Removed ${line.product.name}`)
                           }}
                           aria-label={`Remove ${line.product.name}`}
-                          className="p-1 text-[#71717A] transition-colors hover:text-[#B91C1C]"
+                          className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                         >
-                          <Trash size={14} weight="regular" />
+                          <Trash size={15} weight="regular" />
                         </button>
                       </div>
 
-                      {/* Stepper & Line Subtotal */}
-                      <div className="mt-3 flex items-center justify-between">
-                        <div className="inline-flex items-center border border-[#E4E4E7] bg-white">
+                      <div className="mt-2.5 flex items-center justify-between">
+                        <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white">
                           <button
                             type="button"
                             onClick={() => setItemQuantity(line.key, line.quantity - 1)}
                             aria-label="Decrease quantity"
-                            className="flex h-7 w-7 items-center justify-center text-[#52525B] transition-colors hover:bg-[#F4F4F5] hover:text-[#09090B]"
+                            className="flex h-7 w-7 items-center justify-center text-slate-600 transition-colors hover:bg-slate-50"
                           >
-                            <Minus size={11} weight="regular" />
+                            <Minus size={11} weight="bold" />
                           </button>
-                          <span className="min-w-[28px] border-x border-[#E4E4E7] px-1.5 text-center font-mono text-[11px] font-semibold text-[#09090B]">
+                          <span className="min-w-[28px] px-1.5 text-center text-xs font-bold tabular-nums text-slate-900">
                             {line.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => setItemQuantity(line.key, line.quantity + 1)}
                             aria-label="Increase quantity"
-                            className="flex h-7 w-7 items-center justify-center text-[#52525B] transition-colors hover:bg-[#F4F4F5] hover:text-[#09090B]"
+                            className="flex h-7 w-7 items-center justify-center text-slate-600 transition-colors hover:bg-slate-50"
                           >
-                            <Plus size={11} weight="regular" />
+                            <Plus size={11} weight="bold" />
                           </button>
                         </div>
 
                         <div className="text-right">
-                          <span className="block font-mono text-xs font-bold text-[#09090B]">
+                          <span className="block text-xs font-bold tabular-nums text-slate-900">
                             {formatNaira(line.lineTotal)}
                           </span>
                           {line.quantity > 1 ? (
-                            <span className="block font-mono text-[10px] text-[#71717A]">
+                            <span className="block text-[10px] tabular-nums text-slate-400">
                               {formatNaira(line.product.finalPrice)} each
                             </span>
                           ) : null}
@@ -376,65 +362,61 @@ export function MiniCartDrawer() {
               </div>
             )}
 
-            {/* Sticky Bottom Concierge Summary & Actions */}
+            {/* Sticky Bottom Summary & Actions */}
             {cartLines.length > 0 ? (
-              <div className="border-t border-[#E4E4E7] bg-white">
-                {/* Breakdown Grid */}
-                <div className="space-y-2 border-b border-[#E4E4E7] bg-[#F4F4F5]/50 px-5 py-3.5 text-xs">
-                  <div className="flex items-center justify-between text-[#52525B]">
+              <div className="border-t border-slate-200 bg-white p-5">
+                <div className="mb-4 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-slate-500">
                     <span>Subtotal ({totalCount} items)</span>
-                    <span className="font-mono font-semibold text-[#09090B]">
+                    <span className="font-semibold tabular-nums text-slate-800">
                       {formatNaira(subtotal)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[#52525B]">
-                    <span>Estimated Delivery ({deliveryState})</span>
-                    <span className="font-mono font-semibold text-[#09090B]">
-                      {deliveryEstimate.isFreeStandard ? 'FREE' : formatNaira(deliveryEstimate.standardFee)}
+                  <div className="flex items-center justify-between text-slate-500">
+                    <span>Delivery ({deliveryState})</span>
+                    <span className="font-semibold tabular-nums text-slate-800">
+                      {deliveryEstimate.isFreeStandard
+                        ? 'Free'
+                        : formatNaira(deliveryEstimate.standardFee)}
                     </span>
                   </div>
-                  <div className="flex items-baseline justify-between border-t border-[#E4E4E7] pt-2.5">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#09090B]">
-                      Estimated Total
-                    </span>
-                    <span className="font-mono text-base font-bold text-[#09090B]">
+                  <div className="flex items-baseline justify-between border-t border-slate-100 pt-2.5">
+                    <span className="text-sm font-bold text-slate-900">Estimated Total</span>
+                    <span className="text-lg font-bold tabular-nums text-slate-900">
                       {formatNaira(grandTotal)}
                     </span>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="p-4 sm:px-5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeDrawer()
-                      navigate('/checkout')
-                    }}
-                    className="flex w-full items-center justify-center gap-2 bg-[#09090B] py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#1049EB]"
-                  >
-                    <Lock size={14} weight="regular" />
-                    <span>Proceed to Checkout</span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeDrawer()
+                    navigate('/checkout')
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1049EB] py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0D3BC2]"
+                >
+                  <Lock size={16} weight="bold" />
+                  <span>Proceed to Checkout</span>
+                </button>
 
-                  <div className="mt-2 grid grid-cols-2 gap-px border border-[#E4E4E7] bg-[#E4E4E7]">
-                    <Link
-                      to="/cart"
-                      onClick={closeDrawer}
-                      className="flex items-center justify-center bg-white py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:bg-[#F4F4F5]"
-                    >
-                      View Full Bag
-                    </Link>
-                    <a
-                      href={whatsappOrderHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-1.5 bg-white py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:bg-[#F4F4F5]"
-                    >
-                      <WhatsappLogo size={14} weight="fill" className="text-[#15803D]" />
-                      <span>WhatsApp Order</span>
-                    </a>
-                  </div>
+                <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+                  <Link
+                    to="/cart"
+                    onClick={closeDrawer}
+                    className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                  >
+                    View Full Bag
+                  </Link>
+                  <a
+                    href={whatsappOrderHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/70 py-2.5 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-100"
+                  >
+                    <WhatsappLogo size={16} weight="fill" className="text-emerald-600" />
+                    <span>WhatsApp Order</span>
+                  </a>
                 </div>
               </div>
             ) : null}

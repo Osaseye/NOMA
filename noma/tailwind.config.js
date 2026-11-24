@@ -8,18 +8,18 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        mono: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
         noma: {
-          canvas: '#FFFFFF',
-          surface: '#F6F7F9',
-          subtle: '#EEF0F4',
-          border: '#E5E7EB',
-          'border-strong': '#D1D5DB',
-          ink: '#0B1220',
-          'ink-secondary': '#374151',
-          'ink-muted': '#5E6675',
+          canvas: '#F8FAFC',
+          surface: '#FFFFFF',
+          subtle: '#F1F5F9',
+          border: '#E2E8F0',
+          'border-strong': '#CBD5E1',
+          ink: '#0F172A',
+          'ink-secondary': '#334155',
+          'ink-muted': '#64748B',
           cobalt: '#1049EB',
           'cobalt-hover': '#0D3BC2',
           'cobalt-tint': '#EEF3FE',

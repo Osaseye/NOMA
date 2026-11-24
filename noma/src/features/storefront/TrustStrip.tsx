@@ -1,50 +1,44 @@
-import { ArrowsCounterClockwise, Headset, ShieldCheck, Truck } from '@phosphor-icons/react'
+import { ArrowsCounterClockwise, Package, Truck, WhatsappLogo } from '@phosphor-icons/react'
 
-const trustItems = [
+const highlights = [
   {
-    code: 'SPEC-01',
-    icon: ShieldCheck,
-    title: 'Verified Warranty',
-    detail: '100% genuine items backed by distributor warranty',
+    icon: Package,
+    title: 'Retail & Bulk Orders',
+    detail: 'Buy single items or wholesale quantities',
   },
   {
-    code: 'SPEC-02',
     icon: Truck,
-    title: 'Nationwide Delivery',
-    detail: '2 to 5 business days with upfront Naira shipping rates',
+    title: 'Fast Nationwide Delivery',
+    detail: 'Doorstep shipping across all 36 states',
   },
   {
-    code: 'SPEC-03',
     icon: ArrowsCounterClockwise,
     title: 'Pay on Delivery',
-    detail: 'Available in eligible metro zones across Nigeria',
+    detail: 'Available in eligible metro areas',
   },
   {
-    code: 'SPEC-04',
-    icon: Headset,
-    title: 'WhatsApp Concierge',
-    detail: 'Direct human order tracking and product assistance',
+    icon: WhatsappLogo,
+    title: 'Direct WhatsApp Support',
+    detail: 'Chat with a real person anytime',
   },
 ]
 
 export function TrustStrip() {
   return (
-    <section aria-label="Store guarantees" className="border-b border-[#E4E4E7] bg-[#FAFAFA]">
-      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
-        <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
-          {trustItems.map((item) => (
-            <div key={item.title} className="flex items-start gap-3.5 p-5 lg:p-6">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#E4E4E7] bg-white text-[#09090B]">
-                <item.icon size={18} weight="regular" />
+    <section aria-label="Shopping highlights">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+          {highlights.map((item) => (
+            <div
+              key={item.title}
+              className="flex items-center gap-3.5 rounded-2xl border border-slate-200/70 bg-white px-4 py-3.5 shadow-2xs"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF3FE] text-[#1049EB]">
+                <item.icon size={20} weight="duotone" />
               </div>
               <div className="min-w-0">
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#71717A]">
-                  {item.code}
-                </span>
-                <div className="mt-0.5 text-xs font-bold uppercase tracking-wider text-[#09090B]">
-                  {item.title}
-                </div>
-                <div className="mt-0.5 text-xs leading-relaxed text-[#52525B]">{item.detail}</div>
+                <h3 className="text-xs font-bold text-slate-900 sm:text-sm">{item.title}</h3>
+                <p className="truncate text-xs text-slate-500">{item.detail}</p>
               </div>
             </div>
           ))}

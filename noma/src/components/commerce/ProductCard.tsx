@@ -12,7 +12,7 @@ interface ProductCardProps {
   index?: number
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [added, setAdded] = useState(false)
   const navigate = useNavigate()
   const addItem = useCartStore((state) => state.addItem)
@@ -36,11 +36,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
     product.images && product.images.length > 1
       ? product.images.find((img) => img && img !== product.image && !img.includes('unsplash.com'))
       : undefined
-
-  const primarySpec =
-    product.specs && product.specs.length > 0
-      ? product.specs[0]
-      : product.subCategory || product.brand || product.category
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -69,43 +64,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   return (
     <Link
       to={`/product/${product.slug || product.id}`}
-      className="group relative flex flex-col justify-between bg-white p-4 transition-colors duration-200 hover:bg-[#FAFAFA] sm:p-5"
+      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md sm:p-4"
     >
       <div>
-        {/* Cell Top Technical Meta Bar */}
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            {typeof index === 'number' ? (
-              <span className="font-mono text-[10px] font-medium text-[#71717A]">
-                {String(index + 1).padStart(2, '0')} /
-              </span>
-            ) : null}
-            <span className="truncate font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#71717A]">
-              {product.brand || product.category.replace(/-/g, ' ')}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleWishlist}
-            aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-            className={`inline-flex h-7 w-7 shrink-0 items-center justify-center border transition-colors ${
-              isWishlisted
-                ? 'border-[#09090B] bg-[#09090B] text-white'
-                : 'border-[#E4E4E7] bg-white text-[#71717A] hover:border-[#09090B] hover:text-[#09090B]'
-            }`}
-          >
-            <Heart size={13} weight={isWishlisted ? 'fill' : 'regular'} />
-          </button>
-        </div>
-
-        {/* 4:5 Concrete Studio Image Well with 2nd-Image Hover Swap */}
-        <div className="relative aspect-[4/5] w-full overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5]">
+        {/* Soft Rounded Product Image Well */}
+        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-slate-100/80">
           <img
             src={product.image}
             alt={product.name}
             loading="lazy"
-            className={`h-full w-full object-contain p-5 mix-blend-multiply transition-all duration-500 ${
+            className={`h-full w-full object-contain p-4 transition-all duration-500 ${
               secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
             }`}
           />
@@ -114,90 +82,101 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
               src={secondaryImage}
               alt={`${product.name} alternate view`}
               loading="lazy"
-              className="absolute inset-0 h-full w-full object-contain p-5 mix-blend-multiply opacity-0 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+              className="absolute inset-0 h-full w-full object-contain p-4 opacity-0 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
             />
           ) : null}
 
-          {/* Top-Left Architectural Badge */}
+          {/* Top-Left Clean Badge */}
           <div className="absolute left-2.5 top-2.5 flex flex-col gap-1">
             {isOutOfStock ? (
-              <span className="bg-[#09090B] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
-                SOLD OUT
+              <span className="rounded-full bg-slate-900/85 px-2.5 py-0.5 text-[10px] font-semibold text-white">
+                Out of Stock
               </span>
             ) : discountPercent > 0 ? (
-              <span className="bg-[#FEB719] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#09090B]">
+              <span className="rounded-full bg-[#FEB719] px-2.5 py-0.5 text-[11px] font-bold text-slate-950">
                 -{discountPercent}%
               </span>
             ) : product.discountBadge ? (
-              <span className="bg-[#FEB719] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#09090B]">
+              <span className="rounded-full bg-[#FEB719] px-2.5 py-0.5 text-[11px] font-bold text-slate-950">
                 {product.discountBadge}
               </span>
             ) : product.badge ? (
-              <span className="border border-[#09090B] bg-white px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#09090B]">
+              <span className="rounded-full bg-white/95 px-2.5 py-0.5 text-[10px] font-semibold text-slate-800 shadow-2xs">
                 {product.badge}
               </span>
             ) : null}
           </div>
 
-          {/* Slide-Up Quick Add Bar on Desktop + Always-Accessible Trigger on Mobile */}
-          {!isOutOfStock ? (
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className={`absolute inset-x-0 bottom-0 flex h-10 items-center justify-center gap-1.5 border-t font-mono text-[11px] font-semibold uppercase tracking-[0.12em] transition-all duration-200 ${
-                added
-                  ? 'translate-y-0 border-[#16A34A] bg-[#16A34A] text-white opacity-100'
-                  : 'border-[#09090B] bg-[#09090B]/95 text-white hover:border-[#1049EB] hover:bg-[#1049EB] md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100'
-              }`}
-            >
-              {added ? (
-                <>
-                  <Check size={13} weight="bold" />
-                  <span>ADDED TO BAG</span>
-                </>
-              ) : (
-                <>
-                  <Plus size={13} weight="bold" />
-                  <span>{hasSizes ? 'SELECT SIZE' : 'ADD TO BAG'}</span>
-                </>
-              )}
-            </button>
-          ) : null}
+          {/* Top-Right Wishlist Button */}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+            className={`absolute right-2.5 top-2.5 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+              isWishlisted
+                ? 'bg-rose-50 text-rose-500'
+                : 'bg-white/90 text-slate-500 shadow-2xs hover:bg-white hover:text-rose-500'
+            }`}
+          >
+            <Heart size={15} weight={isWishlisted ? 'fill' : 'regular'} />
+          </button>
         </div>
 
-        {/* Title & Technical Spec Line */}
-        <div className="mt-3.5">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-[#09090B] transition-colors group-hover:text-[#1049EB]">
+        {/* Category & Product Title */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate text-[11px] font-medium capitalize text-slate-400">
+              {product.brand || product.category.replace(/-/g, ' ')}
+            </span>
+            {typeof product.rating === 'number' && product.rating > 0 ? (
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-slate-600">
+                <Star size={12} weight="fill" className="text-[#FEB719]" />
+                {product.rating.toFixed(1)}
+              </span>
+            ) : null}
+          </div>
+
+          <h3 className="mt-1 line-clamp-2 text-xs font-semibold leading-snug text-slate-900 transition-colors group-hover:text-[#1049EB] sm:text-sm">
             {product.name}
           </h3>
-          {primarySpec ? (
-            <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-wider text-[#71717A]">
-              {primarySpec}
-            </p>
-          ) : null}
         </div>
       </div>
 
-      {/* Bottom Price & Rating Row */}
-      <div className="mt-3 flex items-baseline justify-between gap-2 border-t border-[#E4E4E7] pt-2.5">
-        <div className="flex flex-wrap items-baseline gap-1.5">
-          <span className="font-mono text-sm font-bold tabular-nums text-[#09090B]">
+      {/* Price & Add Button */}
+      <div className="mt-3.5 flex items-center justify-between gap-2 pt-2">
+        <div className="min-w-0">
+          <span className="block text-sm font-bold tabular-nums text-slate-900 sm:text-base">
             {formatNaira(product.finalPrice)}
           </span>
           {retailCompareAt ? (
-            <span className="font-mono text-[11px] tabular-nums text-[#71717A] line-through">
+            <span className="block text-[11px] tabular-nums text-slate-400 line-through">
               {formatNaira(retailCompareAt)}
             </span>
           ) : null}
         </div>
 
-        {typeof product.rating === 'number' && product.rating > 0 ? (
-          <div className="flex shrink-0 items-center gap-1">
-            <Star size={11} weight="fill" className="text-[#FEB719]" />
-            <span className="font-mono text-[10px] font-medium tabular-nums text-[#71717A]">
-              {product.rating.toFixed(1)}
-            </span>
-          </div>
+        {!isOutOfStock ? (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition-all ${
+              added
+                ? 'bg-emerald-600 text-white'
+                : 'bg-slate-900 text-white hover:bg-[#1049EB]'
+            }`}
+          >
+            {added ? (
+              <>
+                <Check size={13} weight="bold" />
+                <span>Added</span>
+              </>
+            ) : (
+              <>
+                <Plus size={13} weight="bold" />
+                <span>{hasSizes ? 'Options' : 'Add'}</span>
+              </>
+            )}
+          </button>
         ) : null}
       </div>
     </Link>

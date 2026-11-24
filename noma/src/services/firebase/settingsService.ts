@@ -10,7 +10,7 @@ export const initialSiteSettings: SiteSettings = {
   todaysDealsProductIds: [],
   todaysDealsEndTimestamp: Date.now() + 86400000 * 2,
   trendingProductIds: [],
-  announcementText: 'Transparent Naira pricing across Nigeria - delivery fees confirmed before checkout.',
+  announcementText: 'Nationwide delivery across Nigeria • Retail & bulk orders available',
   announcementActive: true,
   supportPhone: '+234 803 000 6662',
   supportEmail: 'support@shopnoma.com',
@@ -23,6 +23,14 @@ export const initialSiteSettings: SiteSettings = {
   cloudflarePublicUrl: '',
 }
 
+function sanitizeAnnouncementText(raw?: string): string {
+  if (!raw) return initialSiteSettings.announcementText
+  if (/firebase/i.test(raw)) {
+    return initialSiteSettings.announcementText
+  }
+  return raw
+}
+
 export const settingsService = {
   subscribeSiteSettings: (callback: (settings: SiteSettings) => void) => {
     return onSnapshot(
@@ -31,12 +39,18 @@ export const settingsService = {
         if (docSnap.exists()) {
           const data = docSnap.data() as SiteSettings
           callback({
-            allProductsBannerImage: data.allProductsBannerImage || initialSiteSettings.allProductsBannerImage,
+            allProductsBannerImage:
+              data.allProductsBannerImage || initialSiteSettings.allProductsBannerImage,
             heroBanners: Array.isArray(data.heroBanners) ? data.heroBanners : [],
-            todaysDealsProductIds: Array.isArray(data.todaysDealsProductIds) ? data.todaysDealsProductIds : [],
-            todaysDealsEndTimestamp: data.todaysDealsEndTimestamp || initialSiteSettings.todaysDealsEndTimestamp,
-            trendingProductIds: Array.isArray(data.trendingProductIds) ? data.trendingProductIds : [],
-            announcementText: data.announcementText ?? initialSiteSettings.announcementText,
+            todaysDealsProductIds: Array.isArray(data.todaysDealsProductIds)
+              ? data.todaysDealsProductIds
+              : [],
+            todaysDealsEndTimestamp:
+              data.todaysDealsEndTimestamp || initialSiteSettings.todaysDealsEndTimestamp,
+            trendingProductIds: Array.isArray(data.trendingProductIds)
+              ? data.trendingProductIds
+              : [],
+            announcementText: sanitizeAnnouncementText(data.announcementText),
             announcementActive: data.announcementActive ?? initialSiteSettings.announcementActive,
             supportPhone: data.supportPhone || initialSiteSettings.supportPhone,
             supportEmail: data.supportEmail || initialSiteSettings.supportEmail,
@@ -50,7 +64,6 @@ export const settingsService = {
             cloudflarePublicUrl: data.cloudflarePublicUrl || '',
           })
         } else {
-          // Initialize document if missing (only succeeds when signed in as admin)
           setDoc(SETTINGS_DOC_REF, {
             ...initialSiteSettings,
             createdAt: serverTimestamp(),
@@ -62,7 +75,7 @@ export const settingsService = {
       },
       (error) => {
         console.error('Error listening to Firestore siteSettings:', error)
-      }
+      },
     )
   },
 
@@ -73,7 +86,7 @@ export const settingsService = {
         ...newSettings,
         updatedAt: serverTimestamp(),
       },
-      { merge: true }
+      { merge: true },
     )
   },
 }

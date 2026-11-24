@@ -16,7 +16,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ProductCard } from '../../components/commerce/ProductCard'
 import { EmptyState } from '../../design-system/components/EmptyState'
-import { useAdminStore } from '../../store/adminStore'
 import { useCartStore } from '../../store/cartStore'
 import { useProductStore } from '../../store/productStore'
 import { useUserStore } from '../../store/userStore'
@@ -65,23 +64,6 @@ const subCategoryMap: Record<string, { id: string; label: string }[]> = {
   ],
 }
 
-const LOCAL_CATEGORY_BANNERS: Record<string, string> = {
-  electronics: '/images/cat-electronics.png',
-  appliances: '/images/cat-appliances.png',
-  kitchen: '/images/cat-kitchen.png',
-  cooking: '/images/cat-kitchen.png',
-  phones: '/images/cat-phones.png',
-  power: '/images/cat-power.png',
-  solar: '/images/cat-power.png',
-  living: '/images/cat-living.png',
-  'home-essentials': '/images/cat-living.png',
-  bicycles: '/images/cat-living.png',
-  outdoor: '/images/cat-living.png',
-  clothing: '/images/cat-living.png',
-  general: '/images/cat-living.png',
-  default: '/images/catalog-banner-all.png',
-}
-
 function getVisiblePages(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -99,7 +81,6 @@ export function CatalogPage() {
   const { categoryId } = useParams<{ categoryId: string }>()
   const navigate = useNavigate()
   const { products, categories } = useProductStore()
-  const { settings } = useAdminStore()
   const addItem = useCartStore((s) => s.addItem)
   const openDrawer = useCartStore((s) => s.openDrawer)
   const { isInWishlist, toggleWishlist } = useUserStore()
@@ -129,7 +110,7 @@ export function CatalogPage() {
         id: 'all',
         label: 'All Products',
         merchandisingLine:
-          "Explore Noma's architectural index of verified electronics, kitchen appliances, and home power systems.",
+          'Browse shoes (retail & bulk), fashion, kitchen essentials, and home electronics.',
       }
     }
     const cleanKey = categoryId.toLowerCase()
@@ -139,30 +120,10 @@ export function CatalogPage() {
       ) || {
         id: categoryId,
         label: categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace(/-/g, ' '),
-        merchandisingLine:
-          'Quality hardware curated with transparent Naira pricing and receipt-ready support.',
+        merchandisingLine: 'Quality items with fast delivery across Nigeria.',
       }
     )
   }, [categoryId, categories])
-
-  const currentHeroImage = useMemo(() => {
-    if (!categoryId || categoryId === 'all') {
-      if (
-        settings.allProductsBannerImage &&
-        !settings.allProductsBannerImage.includes('unsplash.com')
-      ) {
-        return settings.allProductsBannerImage
-      }
-      return '/images/catalog-banner-all.png'
-    }
-    const adminSetCategory = categories.find(
-      (c) => c.id.toLowerCase() === activeCategory.id.toLowerCase(),
-    )
-    if (adminSetCategory?.image && !adminSetCategory.image.includes('unsplash.com')) {
-      return adminSetCategory.image
-    }
-    return LOCAL_CATEGORY_BANNERS[activeCategory.id.toLowerCase()] || LOCAL_CATEGORY_BANNERS.default
-  }, [activeCategory, categoryId, categories, settings.allProductsBannerImage])
 
   const activeCategorySubcategories = useMemo(() => {
     const adminCat = categories.find(
@@ -255,174 +216,159 @@ export function CatalogPage() {
     (activeSubCategory !== 'all' ? 1 : 0)
 
   return (
-    <div className="min-h-screen bg-white pb-20 text-[#09090B]">
-      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
-        {/* Architectural Breadcrumb Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E4E4E7] bg-[#FAFAFA] px-5 py-2.5 font-mono text-[11px] uppercase tracking-wider text-[#71717A] sm:px-8">
-          <nav className="flex items-center gap-2">
-            <Link to="/" className="transition-colors hover:text-[#09090B]">
-              INDEX
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-[#09090B]">{activeCategory.label}</span>
-            {activeSubCategory !== 'all' ? (
-              <>
-                <span>/</span>
-                <span className="font-semibold text-[#1049EB]">{activeSubCategory}</span>
-              </>
-            ) : null}
-          </nav>
+    <div className="min-h-screen pb-20 pt-5 text-slate-900">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Clean Friendly Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-slate-500">
+          <Link to="/" className="transition-colors hover:text-[#1049EB]">
+            Home
+          </Link>
+          <CaretRight size={12} weight="regular" />
+          <span className="font-semibold text-slate-900">{activeCategory.label}</span>
+          {activeSubCategory !== 'all' ? (
+            <>
+              <CaretRight size={12} weight="regular" />
+              <span className="font-semibold capitalize text-[#1049EB]">{activeSubCategory}</span>
+            </>
+          ) : null}
+        </nav>
 
-          <span>Showing {sortedProducts.length} Units</span>
-        </div>
-
-        {/* Exposed 1px Split Header Banner */}
-        <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] border-b border-[#E4E4E7] md:grid-cols-12 md:divide-x md:divide-y-0">
-          <div className="flex flex-col justify-between p-6 sm:p-10 md:col-span-7 lg:col-span-8">
+        {/* Clean Header & Category Pills */}
+        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-6">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1049EB]">
-                DEPARTMENT / {activeCategory.id.toUpperCase()}
-              </span>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#09090B] sm:text-4xl">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 {activeCategory.label}
               </h1>
-              <p className="mt-3 max-w-[60ch] text-xs leading-relaxed text-[#52525B] sm:text-sm">
+              <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">
                 {(activeCategory.merchandisingLine || '').replace(/[—–]/g, '-')}
               </p>
             </div>
-
-            {/* Horizontal Department Switcher Pills */}
-            <div className="mt-6 flex flex-wrap gap-1.5 border-t border-[#E4E4E7] pt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  navigate('/catalog')
-                  setActiveSubCategory('all')
-                  setCurrentPage(1)
-                }}
-                className={`px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                  !categoryId || categoryId === 'all'
-                    ? 'bg-[#09090B] text-white'
-                    : 'border border-[#E4E4E7] bg-[#FAFAFA] text-[#52525B] hover:border-[#09090B] hover:text-[#09090B]'
-                }`}
-              >
-                ALL [{products.length}]
-              </button>
-              {categories.map((cat) => {
-                const isSelected = categoryId === cat.id
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      navigate(`/category/${cat.id}`)
-                      setActiveSubCategory('all')
-                      setCurrentPage(1)
-                    }}
-                    className={`px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                      isSelected
-                        ? 'bg-[#09090B] text-white'
-                        : 'border border-[#E4E4E7] bg-[#FAFAFA] text-[#52525B] hover:border-[#09090B] hover:text-[#09090B]'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                )
-              })}
-            </div>
+            <span className="shrink-0 text-xs font-semibold text-slate-500">
+              {sortedProducts.length} {sortedProducts.length === 1 ? 'product' : 'products'}
+            </span>
           </div>
 
-          <div className="bg-[#F4F4F5] p-4 sm:p-6 md:col-span-5 lg:col-span-4">
-            <div className="aspect-[16/10] w-full overflow-hidden border border-[#E4E4E7] bg-white">
-              <img
-                src={currentHeroImage}
-                alt={activeCategory.label}
-                className="h-full w-full object-cover object-center"
-              />
-            </div>
+          {/* Department Switcher Pills */}
+          <div className="mt-5 flex items-center gap-2 overflow-x-auto border-t border-slate-100 pt-4 pb-1">
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/catalog')
+                setActiveSubCategory('all')
+                setCurrentPage(1)
+              }}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                !categoryId || categoryId === 'all'
+                  ? 'bg-[#1049EB] text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              All ({products.length})
+            </button>
+            {categories.map((cat) => {
+              const isSelected = categoryId === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    navigate(`/category/${cat.id}`)
+                    setActiveSubCategory('all')
+                    setCurrentPage(1)
+                  }}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                    isSelected
+                      ? 'bg-[#1049EB] text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Layout B Top Horizontal Filter & Sort Bar */}
-        <div className="border-b border-[#E4E4E7] bg-white">
-          <div className="flex flex-wrap items-stretch justify-between divide-y divide-[#E4E4E7] lg:divide-y-0">
-            {/* Left: Toggle Filters Drawer/Bar + Subcategory Tabs */}
-            <div className="flex w-full flex-wrap items-stretch divide-x divide-[#E4E4E7] overflow-x-auto lg:w-auto">
+        {/* Top Horizontal Filter & Sort Toolbar */}
+        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Left: Filter Button + Subcategory Pills */}
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => setFiltersPanelOpen((prev) => !prev)}
-                className={`flex shrink-0 items-center gap-2 px-5 py-3.5 font-mono text-xs font-semibold uppercase tracking-wider transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                   filtersPanelOpen || activeFilterCount > 0
-                    ? 'bg-[#09090B] text-white'
-                    : 'bg-[#FAFAFA] text-[#09090B] hover:bg-[#F4F4F5]'
+                    ? 'bg-slate-900 text-white'
+                    : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                <Funnel size={14} weight="regular" />
-                <span>FILTERS</span>
+                <Funnel size={14} weight="bold" />
+                <span>Filters</span>
                 {activeFilterCount > 0 ? (
-                  <span className="bg-[#FEB719] px-1.5 py-0.2 font-mono text-[10px] font-bold text-[#09090B]">
+                  <span className="rounded-full bg-[#FEB719] px-1.5 py-0.2 text-[10px] font-bold text-slate-950">
                     {activeFilterCount}
                   </span>
                 ) : null}
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSubCategory('all')
-                  setCurrentPage(1)
-                }}
-                className={`shrink-0 px-4 py-3.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                  activeSubCategory === 'all'
-                    ? 'bg-[#FAFAFA] text-[#1049EB]'
-                    : 'bg-white text-[#52525B] hover:bg-[#FAFAFA] hover:text-[#09090B]'
-                }`}
-              >
-                ALL {activeCategory.label}
-              </button>
-
-              {activeCategorySubcategories.map((sub) => {
-                const isSubActive =
-                  activeSubCategory === sub.id || activeSubCategory === sub.label
-                return (
+              {activeCategorySubcategories.length > 0 ? (
+                <div className="flex items-center gap-1.5 overflow-x-auto">
                   <button
-                    key={sub.id}
                     type="button"
                     onClick={() => {
-                      setActiveSubCategory(sub.id)
+                      setActiveSubCategory('all')
                       setCurrentPage(1)
                     }}
-                    className={`shrink-0 px-4 py-3.5 font-mono text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                      isSubActive
-                        ? 'bg-[#FAFAFA] text-[#1049EB]'
-                        : 'bg-white text-[#52525B] hover:bg-[#FAFAFA] hover:text-[#09090B]'
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                      activeSubCategory === 'all'
+                        ? 'bg-[#EEF3FE] font-semibold text-[#1049EB]'
+                        : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    {sub.label}
+                    All
                   </button>
-                )
-              })}
+                  {activeCategorySubcategories.map((sub) => {
+                    const isSubActive =
+                      activeSubCategory === sub.id || activeSubCategory === sub.label
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveSubCategory(sub.id)
+                          setCurrentPage(1)
+                        }}
+                        className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                          isSubActive
+                            ? 'bg-[#EEF3FE] font-semibold text-[#1049EB]'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {sub.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : null}
             </div>
 
-            {/* Right: Item Count + Sort Dropdown + Grid/List Mode */}
-            <div className="flex w-full items-stretch justify-between divide-x divide-[#E4E4E7] border-t border-[#E4E4E7] lg:w-auto lg:border-l lg:border-t-0">
-              <div className="flex items-center px-4 py-3 font-mono text-[11px] text-[#71717A]">
-                {sortedProducts.length} UNITS
-              </div>
-
-              <div className="relative flex items-stretch">
+            {/* Right: Sort Dropdown + View Toggle */}
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setSortOpen((prev) => !prev)}
-                  className="flex items-center gap-2 bg-white px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#09090B] hover:bg-[#FAFAFA]"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   <SlidersHorizontal size={14} weight="regular" />
-                  <span>SORT: {activeSort?.label}</span>
-                  <CaretDown size={12} weight="regular" className="text-[#71717A]" />
+                  <span>Sort: {activeSort?.label}</span>
+                  <CaretDown size={12} weight="regular" className="text-slate-400" />
                 </button>
 
                 {sortOpen ? (
-                  <div className="absolute right-0 top-full z-30 -mt-px w-52 divide-y divide-[#E4E4E7] border border-[#09090B] bg-white shadow-xl">
+                  <div className="absolute right-0 top-full z-30 mt-1.5 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {sortOptions.map((opt) => (
                       <button
                         key={opt.value}
@@ -432,10 +378,10 @@ export function CatalogPage() {
                           setCurrentPage(1)
                           setSortOpen(false)
                         }}
-                        className={`w-full px-4 py-2.5 text-left font-mono text-xs font-semibold uppercase tracking-wider transition-colors ${
+                        className={`w-full px-4 py-2 text-left text-xs font-medium transition-colors ${
                           sort === opt.value
-                            ? 'bg-[#09090B] text-white'
-                            : 'text-[#09090B] hover:bg-[#FAFAFA]'
+                            ? 'bg-[#EEF3FE] font-semibold text-[#1049EB]'
+                            : 'text-slate-700 hover:bg-slate-50'
                         }`}
                       >
                         {opt.label}
@@ -445,46 +391,43 @@ export function CatalogPage() {
                 ) : null}
               </div>
 
-              <div className="flex items-stretch divide-x divide-[#E4E4E7]">
+              <div className="hidden items-center rounded-full border border-slate-200 bg-slate-50 p-0.5 sm:flex">
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
                   aria-label="Grid view"
-                  className={`flex items-center justify-center px-3.5 transition-colors ${
+                  className={`rounded-full p-1.5 transition-colors ${
                     viewMode === 'grid'
-                      ? 'bg-[#09090B] text-white'
-                      : 'bg-white text-[#71717A] hover:text-[#09090B]'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
-                  <SquaresFour size={16} weight="regular" />
+                  <SquaresFour size={15} weight="regular" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
                   aria-label="List view"
-                  className={`flex items-center justify-center px-3.5 transition-colors ${
+                  className={`rounded-full p-1.5 transition-colors ${
                     viewMode === 'list'
-                      ? 'bg-[#09090B] text-white'
-                      : 'bg-white text-[#71717A] hover:text-[#09090B]'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
-                  <List size={16} weight="regular" />
+                  <List size={15} weight="regular" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Expandable Horizontal Filter Matrix Panel */}
+          {/* Expandable Filter Options */}
           {filtersPanelOpen ? (
-            <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] border-t border-[#E4E4E7] bg-[#FAFAFA] md:grid-cols-3 md:divide-x md:divide-y-0">
-              {/* Price Ceiling */}
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                    01 / MAX PRICE CEILING
-                  </span>
-                  <strong className="font-mono text-xs font-bold text-[#09090B]">
-                    UP TO {formatNaira(maxPriceFilter)}
+            <div className="mt-4 grid grid-cols-1 gap-6 border-t border-slate-100 pt-4 md:grid-cols-3">
+              <div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-600">Max Price</span>
+                  <strong className="font-bold text-slate-900">
+                    Up to {formatNaira(maxPriceFilter)}
                   </strong>
                 </div>
                 <input
@@ -498,16 +441,13 @@ export function CatalogPage() {
                     setCurrentPage(1)
                   }}
                   aria-label="Maximum price filter"
-                  className="mt-3 w-full accent-[#09090B]"
+                  className="mt-3 w-full accent-[#1049EB]"
                 />
               </div>
 
-              {/* Minimum Rating */}
-              <div className="p-5">
-                <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                  02 / MINIMUM RATING
-                </span>
-                <div className="mt-2.5 flex flex-wrap gap-2">
+              <div>
+                <span className="block text-xs font-semibold text-slate-600">Minimum Rating</span>
+                <div className="mt-2 flex flex-wrap gap-2">
                   {[5, 4, 3].map((stars) => (
                     <button
                       key={stars}
@@ -516,26 +456,23 @@ export function CatalogPage() {
                         setMinRating((prev) => (prev === stars ? null : stars))
                         setCurrentPage(1)
                       }}
-                      className={`inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-semibold transition-colors ${
+                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                         minRating === stars
-                          ? 'border-[#09090B] bg-[#09090B] text-white'
-                          : 'border-[#E4E4E7] bg-white text-[#09090B] hover:border-[#09090B]'
+                          ? 'border-[#1049EB] bg-[#EEF3FE] text-[#1049EB]'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <Star size={12} weight="fill" className="text-[#FEB719]" />
-                      <span>{stars}.0+</span>
+                      <span>{stars}.0 &amp; up</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Availability & Reset */}
-              <div className="flex flex-col justify-between p-5">
+              <div className="flex flex-col justify-between">
                 <div>
-                  <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
-                    03 / AVAILABILITY
-                  </span>
-                  <label className="mt-2.5 inline-flex cursor-pointer items-center gap-2.5 text-xs font-semibold text-[#09090B]">
+                  <span className="block text-xs font-semibold text-slate-600">Availability</span>
+                  <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-700">
                     <input
                       type="checkbox"
                       checked={inStockOnly}
@@ -543,120 +480,58 @@ export function CatalogPage() {
                         setInStockOnly(e.target.checked)
                         setCurrentPage(1)
                       }}
-                      className="h-4 w-4 accent-[#09090B]"
+                      className="h-4 w-4 rounded accent-[#1049EB]"
                     />
-                    <span>Show In-Stock Units Only</span>
+                    <span>Show in-stock items only</span>
                   </label>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-[#E4E4E7] pt-3">
+                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-2">
                   <button
                     type="button"
                     onClick={resetAllFilters}
-                    className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#1049EB] hover:underline"
+                    className="text-xs font-semibold text-[#1049EB] hover:underline"
                   >
-                    RESET ALL FILTERS
+                    Reset all
                   </button>
                   <button
                     type="button"
                     onClick={() => setFiltersPanelOpen(false)}
-                    className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#09090B]"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900"
                   >
-                    <span>CLOSE</span>
+                    <span>Done</span>
                     <X size={13} />
                   </button>
                 </div>
               </div>
             </div>
           ) : null}
+        </div>
 
-          {/* Active Filter Chips Bar */}
-          {activeFilterCount > 0 ? (
-            <div className="flex flex-wrap items-center gap-2 border-t border-[#E4E4E7] bg-[#FAFAFA] px-5 py-2.5">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#71717A]">
-                ACTIVE:
-              </span>
-              {activeSubCategory !== 'all' ? (
-                <button
-                  type="button"
-                  onClick={() => setActiveSubCategory('all')}
-                  className="inline-flex items-center gap-1.5 border border-[#09090B] bg-white px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[#09090B]"
-                >
-                  <span>SUB: {activeSubCategory}</span>
-                  <X size={11} />
-                </button>
-              ) : null}
-              {inStockOnly ? (
-                <button
-                  type="button"
-                  onClick={() => setInStockOnly(false)}
-                  className="inline-flex items-center gap-1.5 border border-[#09090B] bg-white px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[#09090B]"
-                >
-                  <span>IN STOCK ONLY</span>
-                  <X size={11} />
-                </button>
-              ) : null}
-              {minRating !== null ? (
-                <button
-                  type="button"
-                  onClick={() => setMinRating(null)}
-                  className="inline-flex items-center gap-1.5 border border-[#09090B] bg-white px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[#09090B]"
-                >
-                  <span>{minRating}+ STARS</span>
-                  <X size={11} />
-                </button>
-              ) : null}
-              {maxPriceFilter < 2000000 ? (
-                <button
-                  type="button"
-                  onClick={() => setMaxPriceFilter(2000000)}
-                  className="inline-flex items-center gap-1.5 border border-[#09090B] bg-white px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[#09090B]"
-                >
-                  <span>MAX {formatNaira(maxPriceFilter)}</span>
-                  <X size={11} />
-                </button>
-              ) : null}
+        {/* Breathable 4-Column Product Grid */}
+        {paginatedProducts.length === 0 ? (
+          <EmptyState
+            title="No products match your filters"
+            detail="Try clearing your price or stock filters to see more products."
+            action={
               <button
                 type="button"
                 onClick={resetAllFilters}
-                className="ml-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1049EB] hover:underline"
+                className="rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
               >
-                CLEAR ALL
+                Reset Filters
               </button>
-            </div>
-          ) : null}
-        </div>
-
-        {/* Full-Width 4-Column Exposed 1px Product Matrix */}
-        {paginatedProducts.length === 0 ? (
-          <div className="p-12">
-            <EmptyState
-              title="No products match your selected filters"
-              detail="Try clearing your price ceiling, rating, or stock filter to view more items."
-              action={
-                <button
-                  type="button"
-                  onClick={resetAllFilters}
-                  className="bg-[#09090B] px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#1049EB]"
-                >
-                  Clear All Filters
-                </button>
-              }
-            />
-          </div>
+            }
+          />
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 gap-px border-b border-[#E4E4E7] bg-[#E4E4E7] md:grid-cols-3 lg:grid-cols-4">
-            {paginatedProducts.map((product, idx) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                index={(currentPage - 1) * PAGE_SIZE + idx}
-              />
+          <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+            {paginatedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         ) : (
-          <div className="divide-y divide-[#E4E4E7] border-b border-[#E4E4E7]">
-            {paginatedProducts.map((product, idx) => {
+          <div className="space-y-3.5">
+            {paginatedProducts.map((product) => {
               const wishlisted = isInWishlist(product.id)
               const hasDiscount = Boolean(
                 product.compareAtPrice && product.compareAtPrice > product.finalPrice,
@@ -667,25 +542,24 @@ export function CatalogPage() {
               return (
                 <article
                   key={product.id}
-                  className="flex flex-col gap-5 bg-white p-5 transition-colors hover:bg-[#FAFAFA] sm:flex-row sm:items-center sm:px-8"
+                  className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-shadow hover:shadow-md sm:flex-row sm:items-center"
                 >
                   <Link
                     to={`/product/${product.slug || product.id}`}
-                    className="relative flex h-36 w-full shrink-0 items-center justify-center overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5] p-4 sm:h-32 sm:w-40"
+                    className="relative flex h-36 w-full shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100/80 p-4 sm:h-32 sm:w-40"
                   >
                     <img
                       src={product.image}
                       alt={product.name}
                       loading="lazy"
-                      className="h-full w-full object-contain mix-blend-multiply"
+                      className="h-full w-full object-contain"
                     />
                   </Link>
 
-                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
                     <div>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#71717A]">
-                          {String((currentPage - 1) * PAGE_SIZE + idx + 1).padStart(2, '0')} /{' '}
+                        <span className="text-xs font-medium capitalize text-slate-400">
                           {product.brand || product.category.replace(/-/g, ' ')}
                         </span>
                         <button
@@ -697,43 +571,43 @@ export function CatalogPage() {
                             )
                           }}
                           aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-                          className={`flex h-8 w-8 items-center justify-center border ${
+                          className={`flex h-8 w-8 items-center justify-center rounded-full ${
                             wishlisted
-                              ? 'border-[#09090B] bg-[#09090B] text-white'
-                              : 'border-[#E4E4E7] bg-white text-[#71717A]'
+                              ? 'bg-rose-50 text-rose-500'
+                              : 'bg-slate-100 text-slate-500 hover:text-rose-500'
                           }`}
                         >
-                          <Heart size={14} weight={wishlisted ? 'fill' : 'regular'} />
+                          <Heart size={15} weight={wishlisted ? 'fill' : 'regular'} />
                         </button>
                       </div>
 
                       <Link to={`/product/${product.slug || product.id}`}>
-                        <h3 className="mt-1 text-base font-bold text-[#09090B] hover:text-[#1049EB]">
+                        <h3 className="mt-1 text-base font-bold text-slate-900 hover:text-[#1049EB]">
                           {product.name}
                         </h3>
                       </Link>
 
-                      <p className="mt-1 line-clamp-2 text-xs text-[#52525B]">
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-500">
                         {product.description}
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E4E4E7] pt-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
                       <div className="flex items-center gap-3">
                         <div className="flex items-baseline gap-2">
-                          <strong className="font-mono text-base font-bold tabular-nums text-[#09090B]">
+                          <strong className="text-base font-bold tabular-nums text-slate-900">
                             {formatNaira(product.finalPrice)}
                           </strong>
                           {hasDiscount && product.compareAtPrice ? (
-                            <span className="font-mono text-xs tabular-nums text-[#71717A] line-through">
+                            <span className="text-xs tabular-nums text-slate-400 line-through">
                               {formatNaira(product.compareAtPrice)}
                             </span>
                           ) : null}
                         </div>
 
                         <div className="flex items-center gap-1 text-xs">
-                          <Star size={12} weight="fill" className="text-[#FEB719]" />
-                          <span className="font-mono font-semibold text-[#09090B]">
+                          <Star size={13} weight="fill" className="text-[#FEB719]" />
+                          <span className="font-semibold text-slate-700">
                             {(product.rating || 4.8).toFixed(1)}
                           </span>
                         </div>
@@ -743,16 +617,14 @@ export function CatalogPage() {
                         type="button"
                         disabled={outOfStock}
                         onClick={() => handleListQuickAdd(product)}
-                        className={`inline-flex items-center gap-1.5 px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider transition-colors ${
+                        className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
                           outOfStock
-                            ? 'cursor-not-allowed border border-[#E4E4E7] bg-[#F4F4F5] text-[#71717A]'
-                            : 'bg-[#09090B] text-white hover:bg-[#1049EB]'
+                            ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                            : 'bg-slate-900 text-white hover:bg-[#1049EB]'
                         }`}
                       >
                         <Plus size={13} weight="bold" />
-                        <span>
-                          {outOfStock ? 'SOLD OUT' : hasSizes ? 'SELECT SIZE' : 'ADD TO BAG'}
-                        </span>
+                        <span>{outOfStock ? 'Out of Stock' : hasSizes ? 'Options' : 'Add to Bag'}</span>
                       </button>
                     </div>
                   </div>
@@ -762,62 +634,53 @@ export function CatalogPage() {
           </div>
         )}
 
-        {/* Exposed Architectural Pagination Bar */}
+        {/* Clean Rounded Pagination */}
         {totalPages > 1 ? (
           <nav
             aria-label="Catalog pagination"
-            className="flex items-center justify-between bg-[#FAFAFA] px-5 py-4 sm:px-8"
+            className="mt-10 flex items-center justify-center gap-1.5"
           >
-            <span className="font-mono text-xs uppercase tracking-wider text-[#71717A]">
-              PAGE {currentPage} OF {totalPages}
-            </span>
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              aria-label="Previous page"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40"
+            >
+              <CaretLeft size={14} weight="bold" />
+            </button>
 
-            <div className="flex items-center gap-px border border-[#E4E4E7] bg-[#E4E4E7]">
-              <button
-                type="button"
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                aria-label="Previous page"
-                className="flex h-9 w-9 items-center justify-center bg-white text-[#09090B] transition-colors hover:bg-[#FAFAFA] disabled:pointer-events-none disabled:opacity-40"
-              >
-                <CaretLeft size={14} weight="regular" />
-              </button>
+            {visiblePages.map((entry, idx) =>
+              entry === 'ellipsis' ? (
+                <span key={`ellipsis-${idx}`} className="px-2 text-xs text-slate-400">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={entry}
+                  type="button"
+                  onClick={() => setCurrentPage(entry)}
+                  aria-current={entry === currentPage ? 'page' : undefined}
+                  className={`flex h-9 min-w-[36px] items-center justify-center rounded-xl px-2.5 text-xs font-semibold transition-colors ${
+                    entry === currentPage
+                      ? 'bg-[#1049EB] text-white'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {entry}
+                </button>
+              ),
+            )}
 
-              {visiblePages.map((entry, idx) =>
-                entry === 'ellipsis' ? (
-                  <span
-                    key={`ellipsis-${idx}`}
-                    className="flex h-9 items-center bg-white px-2 font-mono text-xs text-[#71717A]"
-                  >
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    key={entry}
-                    type="button"
-                    onClick={() => setCurrentPage(entry)}
-                    aria-current={entry === currentPage ? 'page' : undefined}
-                    className={`flex h-9 min-w-[36px] items-center justify-center px-2 font-mono text-xs font-semibold transition-colors ${
-                      entry === currentPage
-                        ? 'bg-[#09090B] text-white'
-                        : 'bg-white text-[#09090B] hover:bg-[#FAFAFA]'
-                    }`}
-                  >
-                    {entry}
-                  </button>
-                ),
-              )}
-
-              <button
-                type="button"
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                aria-label="Next page"
-                className="flex h-9 w-9 items-center justify-center bg-white text-[#09090B] transition-colors hover:bg-[#FAFAFA] disabled:pointer-events-none disabled:opacity-40"
-              >
-                <CaretRight size={14} weight="regular" />
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              aria-label="Next page"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40"
+            >
+              <CaretRight size={14} weight="bold" />
+            </button>
           </nav>
         ) : null}
       </div>

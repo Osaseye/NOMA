@@ -8,25 +8,20 @@ import { useAdminStore } from '../store/adminStore'
 
 export function StorefrontLayout() {
   const { settings } = useAdminStore()
-  const announcementText = settings.announcementText?.replace(/[—–]/g, '-').trim()
+  const rawText = settings.announcementText?.trim() || ''
+  const announcementText = /firebase/i.test(rawText)
+    ? 'Nationwide delivery across Nigeria • Retail & bulk orders available'
+    : rawText.replace(/[—–]/g, '-')
   const showAnnouncement = Boolean(settings.announcementActive && announcementText)
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white text-[#09090B]">
+    <div className="flex min-h-[100dvh] flex-col bg-[#F8FAFC] text-[#0F172A]">
       <ScrollToTop />
 
       {showAnnouncement ? (
-        <div className="border-b border-[#E4E4E7] bg-[#09090B] text-white">
-          <div className="mx-auto flex h-8 max-w-[1600px] items-center justify-between px-4 text-[11px] md:px-8">
-            <span className="hidden font-mono text-[10px] uppercase tracking-widest text-white/60 sm:inline">
-              NOMA / NG
-            </span>
-            <p className="truncate font-mono text-[11px] tracking-wide text-white/95">
-              {announcementText}
-            </p>
-            <span className="hidden font-mono text-[10px] uppercase tracking-widest text-[#FEB719] sm:inline">
-              VERIFIED ESCROW &amp; POD
-            </span>
+        <div className="bg-[#1049EB] text-white">
+          <div className="mx-auto flex min-h-9 max-w-7xl items-center justify-center px-4 py-1.5 text-center text-xs font-medium sm:px-6">
+            <p className="truncate">{announcementText}</p>
           </div>
         </div>
       ) : null}

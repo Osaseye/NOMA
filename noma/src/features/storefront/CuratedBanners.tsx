@@ -1,31 +1,28 @@
-import { ArrowUpRight } from '@phosphor-icons/react'
+import { ArrowRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useAdminStore } from '../../store/adminStore'
 
 const DEFAULT_EDITORIAL_COLLECTIONS = [
   {
-    id: 'editorial-power',
-    code: 'LOOKBOOK / 01',
-    title: 'Power & Inverter Systems',
-    subtitle: 'Quiet backup energy hardware sized for Nigerian homes and workspaces.',
-    imageUrl: '/images/editorial-power.png',
-    targetUrl: '/category/appliances',
-  },
-  {
-    id: 'editorial-smart',
-    code: 'LOOKBOOK / 02',
-    title: 'Smart Home & Audio',
-    subtitle: '4K displays, acoustic soundbars, and connected everyday hardware.',
-    imageUrl: '/images/editorial-smart.png',
-    targetUrl: '/category/electronics',
+    id: 'editorial-fashion',
+    title: 'Footwear & Fashion (Retail & Bulk)',
+    subtitle: 'Quality shoes, sneakers, and apparel available in single pairs or wholesale bales.',
+    imageUrl: '/images/cat-living.png',
+    targetUrl: '/category/clothing',
   },
   {
     id: 'editorial-kitchen',
-    code: 'LOOKBOOK / 03',
-    title: 'Modern Kitchen Architecture',
-    subtitle: 'Induction kettles, digital air fryers, and durable steel cookware.',
+    title: 'Kitchen & Home Essentials',
+    subtitle: 'Durable cookware, digital air fryers, blenders, and everyday household upgrades.',
     imageUrl: '/images/editorial-kitchen.png',
     targetUrl: '/category/kitchen',
+  },
+  {
+    id: 'editorial-smart',
+    title: 'Electronics & Appliances',
+    subtitle: 'Smart TVs, soundbars, cooling systems, and home power solutions.',
+    imageUrl: '/images/editorial-smart.png',
+    targetUrl: '/category/electronics',
   },
 ]
 
@@ -37,7 +34,6 @@ export function CuratedBanners() {
     activeBanners.length > 0
       ? activeBanners.slice(0, 3).map((banner, index) => ({
           id: banner.id,
-          code: `LOOKBOOK / 0${index + 1}`,
           title: banner.title.replace(/[—–]/g, '-'),
           subtitle: (banner.subtitle || 'Curated collection for everyday living.').replace(
             /[—–]/g,
@@ -52,62 +48,55 @@ export function CuratedBanners() {
       : DEFAULT_EDITORIAL_COLLECTIONS
 
   return (
-    <section className="border-b border-[#E4E4E7] bg-white">
-      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
-        {/* Architectural Header Bar */}
-        <div className="flex items-center justify-between border-b border-[#E4E4E7] px-5 py-4 sm:px-8">
+    <section>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1049EB]">
-              05 / EDITORIAL CURATION
-            </span>
-            <h2 className="mt-0.5 text-xl font-bold tracking-tight text-[#09090B] sm:text-2xl">
-              Architectural Lookbook
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+              Featured Collections
             </h2>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+              Handpicked categories for your wardrobe, home, and business
+            </p>
           </div>
 
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-1.5 border border-[#E4E4E7] bg-[#FAFAFA] px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:border-[#09090B]"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB] hover:underline"
           >
-            <span>EXPLORE ALL</span>
-            <ArrowUpRight size={14} weight="regular" />
+            <span>Explore all</span>
+            <ArrowRight size={14} weight="bold" />
           </Link>
         </div>
 
-        {/* 3-Column Exposed 1px Architectural Lookbook Matrix */}
-        <div className="grid grid-cols-1 gap-px bg-[#E4E4E7] md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {collections.map((item) => (
             <Link
               key={item.id}
               to={item.targetUrl}
-              className="group flex flex-col justify-between bg-white p-5 transition-colors hover:bg-[#FAFAFA] sm:p-7"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div>
-                <div className="mb-3 flex items-center justify-between font-mono text-[10px] font-semibold uppercase tracking-widest text-[#71717A]">
-                  <span>{item.code}</span>
-                  <span>NOMA STUDIO</span>
-                </div>
-
-                <div className="aspect-[16/10] w-full overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5]">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-
-                <div className="mt-5">
-                  <h3 className="text-base font-bold tracking-tight text-[#09090B] transition-colors group-hover:text-[#1049EB] sm:text-lg">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-[#52525B]">{item.subtitle}</p>
-                </div>
+              <div className="aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  loading="lazy"
+                  className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                />
               </div>
 
-              <div className="mt-5 flex items-center justify-between border-t border-[#E4E4E7] pt-3.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#09090B] group-hover:text-[#1049EB]">
-                <span>ENTER COLLECTION</span>
-                <ArrowUpRight size={14} weight="regular" />
+              <div className="flex flex-1 flex-col justify-between p-5">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 transition-colors group-hover:text-[#1049EB]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{item.subtitle}</p>
+                </div>
+
+                <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB]">
+                  <span>Shop Collection</span>
+                  <ArrowRight size={14} weight="bold" />
+                </span>
               </div>
             </Link>
           ))}

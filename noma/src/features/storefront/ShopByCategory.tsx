@@ -1,4 +1,4 @@
-import { ArrowUpRight } from '@phosphor-icons/react'
+import { ArrowRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useProductStore } from '../../store/productStore'
 
@@ -45,31 +45,29 @@ export function ShopByCategory() {
   const displayCategories = categories.slice(0, 6)
 
   return (
-    <section className="border-b border-[#E4E4E7] bg-white">
-      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
-        {/* Architectural Header Bar */}
-        <div className="flex items-center justify-between border-b border-[#E4E4E7] px-5 py-4 sm:px-8">
+    <section>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1049EB]">
-              02 / DIRECTORY
-            </span>
-            <h2 className="mt-0.5 text-xl font-bold tracking-tight text-[#09090B] sm:text-2xl">
-              Shop by Department
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+              Shop by Category
             </h2>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+              Explore our top departments
+            </p>
           </div>
 
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-1.5 border border-[#E4E4E7] bg-[#FAFAFA] px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:border-[#09090B]"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB] hover:underline"
           >
-            <span>FULL DIRECTORY</span>
-            <ArrowUpRight size={14} weight="regular" />
+            <span>See all categories</span>
+            <ArrowRight size={14} weight="bold" />
           </Link>
         </div>
 
-        {/* 6-Cell Exposed 1px Architectural Bento Matrix */}
-        <div className="grid grid-cols-2 gap-px bg-[#E4E4E7] md:grid-cols-3 lg:grid-cols-6">
-          {displayCategories.map((cat, idx) => {
+        <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-5 lg:grid-cols-6">
+          {displayCategories.map((cat) => {
             const count = getCategoryCount(cat.id)
             const imageSrc = resolveCategoryImage(cat.id, cat.image)
 
@@ -77,37 +75,26 @@ export function ShopByCategory() {
               <Link
                 key={cat.id}
                 to={`/category/${cat.id}`}
-                className="group flex flex-col justify-between bg-white p-4 transition-colors hover:bg-[#FAFAFA] sm:p-5"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-2xs transition-all hover:-translate-y-0.5 hover:border-[#1049EB]/40 hover:shadow-md"
               >
-                <div>
-                  <div className="mb-3 flex items-center justify-between font-mono text-[10px] text-[#71717A]">
-                    <span>DEPT / {String(idx + 1).padStart(2, '0')}</span>
-                    <span>[{count}]</span>
-                  </div>
-
-                  <div className="aspect-[4/3] w-full overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5]">
-                    <img
-                      src={imageSrc}
-                      alt={cat.label}
-                      loading="lazy"
-                      className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
+                <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100">
+                  <img
+                    src={imageSrc}
+                    alt={cat.label}
+                    loading="lazy"
+                    className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                  />
                 </div>
 
-                <div className="mt-4 flex items-end justify-between gap-2 border-t border-[#E4E4E7] pt-3">
+                <div className="mt-3 flex items-center justify-between gap-2 px-1">
                   <div className="min-w-0">
-                    <h3 className="truncate text-xs font-bold uppercase tracking-wider text-[#09090B] group-hover:text-[#1049EB]">
+                    <h3 className="truncate text-xs font-bold text-slate-900 group-hover:text-[#1049EB] sm:text-sm">
                       {cat.label}
                     </h3>
-                    <span className="mt-0.5 block font-mono text-[10px] text-[#71717A]">
-                      {count} {count === 1 ? 'UNIT' : 'UNITS'}
+                    <span className="mt-0.5 block text-[11px] text-slate-500">
+                      {count} {count === 1 ? 'item' : 'items'}
                     </span>
                   </div>
-
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-[#E4E4E7] bg-[#FAFAFA] text-[#09090B] transition-colors group-hover:border-[#09090B] group-hover:bg-[#09090B] group-hover:text-white">
-                    <ArrowUpRight size={13} weight="regular" />
-                  </span>
                 </div>
               </Link>
             )

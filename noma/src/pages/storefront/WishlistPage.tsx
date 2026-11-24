@@ -1,6 +1,6 @@
 import {
   ArrowRight,
-  Bell,
+  CaretRight,
   Heart,
   ShareNetwork,
   ShoppingBag,
@@ -100,16 +100,16 @@ export function WishlistPage() {
   }
 
   const pageTitle = isSharedMode
-    ? `${sharedOwnerName}'s Curated Wishlist | NOMA Nigeria`
+    ? `${sharedOwnerName}'s Wishlist | NOMA Nigeria`
     : 'Saved Wishlist | NOMA Marketplace'
   const metaDescription = isSharedMode
-    ? `Explore ${displayedProducts.length} curated products chosen by ${sharedOwnerName} on NOMA.`
+    ? `Explore ${displayedProducts.length} products chosen by ${sharedOwnerName} on NOMA.`
     : 'Manage your saved favorite products on NOMA Marketplace.'
   const ogImage = displayedProducts[0]?.image || '/icon.png'
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '/wishlist'
 
   return (
-    <div className="min-h-screen bg-white pb-24 text-[#09090B]">
+    <div className="min-h-screen pb-24 pt-5 text-slate-900">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="title" content={pageTitle} />
@@ -122,71 +122,60 @@ export function WishlistPage() {
         <meta property="og:url" content={currentUrl} />
       </Helmet>
 
-      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
-        {/* Architectural Breadcrumb Strip */}
-        <div className="flex items-center justify-between border-b border-[#E4E4E7] bg-[#FAFAFA] px-5 py-2.5 font-mono text-[11px] uppercase tracking-wider text-[#71717A] sm:px-8">
-          <nav className="flex items-center gap-2">
-            <Link to="/" className="transition-colors hover:text-[#09090B]">
-              INDEX
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-[#09090B]">
-              {isSharedMode ? `${sharedOwnerName.toUpperCase()}'S WISHLIST` : 'SAVED WISHLIST'}
-            </span>
-          </nav>
-          <span>[{displayedProducts.length} SAVED]</span>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Clean Friendly Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-slate-500">
+          <Link to="/" className="transition-colors hover:text-[#1049EB]">
+            Home
+          </Link>
+          <CaretRight size={12} weight="regular" />
+          <span className="font-semibold text-slate-900">
+            {isSharedMode ? `${sharedOwnerName}'s Wishlist` : 'Saved Wishlist'}
+          </span>
+        </nav>
 
         {/* Shared Wishlist Banner */}
         {isSharedMode ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E4E4E7] bg-[#09090B] px-6 py-4 text-white sm:px-8">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-[#1049EB] p-5 text-white shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/20 bg-white/10 text-white">
-                <User size={18} weight="regular" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white">
+                <User size={19} weight="bold" />
               </div>
               <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-sm font-bold text-white">
-                    {sharedOwnerName}&apos;s Curated Wishlist
-                  </h2>
-                  <span className="border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#FEB719]">
-                    SHARED SELECTION
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-white/75">
-                  Add items from this shared collection to your bag or personal wishlist.
+                <h2 className="text-sm font-bold text-white">
+                  {sharedOwnerName}&apos;s Shared Wishlist
+                </h2>
+                <p className="mt-0.5 text-xs text-white/80">
+                  Add items from this shared list directly to your bag.
                 </p>
               </div>
             </div>
 
             <Link
               to="/catalog"
-              className="inline-flex items-center gap-1.5 bg-white px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:bg-[#FAFAFA]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 transition-colors hover:bg-slate-100"
             >
-              <span>Explore Catalog</span>
-              <ArrowRight size={13} weight="regular" />
+              <span>Browse All Products</span>
+              <ArrowRight size={13} weight="bold" />
             </Link>
           </div>
         ) : null}
 
-        {/* Page Header Bar */}
-        <div className="flex flex-col justify-between gap-4 border-b border-[#E4E4E7] p-6 sm:p-10 md:flex-row md:items-end">
+        {/* Page Header */}
+        <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-6 md:flex-row md:items-center">
           <div>
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1049EB]">
-              ARCHIVE / SAVED HARDWARE
-            </span>
-            <div className="mt-1 flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-[#09090B] sm:text-4xl">
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 {isSharedMode ? `${sharedOwnerName}'s Wishlist` : 'Saved Wishlist'}
               </h1>
-              <span className="border border-[#E4E4E7] bg-[#F4F4F5] px-2.5 py-0.5 font-mono text-xs font-bold text-[#09090B]">
-                {String(displayedProducts.length).padStart(2, '0')}
+              <span className="rounded-full bg-[#EEF3FE] px-3 py-0.5 text-xs font-bold text-[#1049EB]">
+                {displayedProducts.length}
               </span>
             </div>
-            <p className="mt-2 text-xs text-[#52525B] sm:text-sm">
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
               {isSharedMode
-                ? `Curated products shared by ${sharedOwnerName}.`
-                : 'Hardware saved for specification comparison or instant bag transfer.'}
+                ? `Items saved and shared by ${sharedOwnerName}.`
+                : 'Keep track of your favorite shoes, fashion, and home items.'}
             </p>
           </div>
 
@@ -195,9 +184,9 @@ export function WishlistPage() {
               <button
                 type="button"
                 onClick={handleMoveAllToCart}
-                className="inline-flex items-center gap-2 bg-[#09090B] px-5 py-3 font-mono text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#1049EB]"
+                className="inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white shadow-2xs transition-colors hover:bg-[#0D3BC2]"
               >
-                <ShoppingBag size={15} weight="regular" />
+                <ShoppingBag size={15} weight="bold" />
                 <span>Add All to Bag</span>
               </button>
 
@@ -205,10 +194,10 @@ export function WishlistPage() {
                 <button
                   type="button"
                   onClick={handleShareWishlist}
-                  className="inline-flex items-center gap-2 border border-[#E4E4E7] bg-white px-5 py-3 font-mono text-xs font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:border-[#09090B] hover:bg-[#FAFAFA]"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   <ShareNetwork size={15} weight="regular" />
-                  <span>Share Link</span>
+                  <span>Share Wishlist</span>
                 </button>
               ) : null}
             </div>
@@ -216,61 +205,29 @@ export function WishlistPage() {
         </div>
 
         {displayedProducts.length === 0 ? (
-          <div className="p-12">
-            <EmptyState
-              icon={<Heart size={24} weight="regular" />}
-              title={isSharedMode ? 'No Items in Shared Wishlist' : 'Your Wishlist is Empty'}
-              detail={
-                isSharedMode
-                  ? 'This shared wishlist link does not reference any active catalog items.'
-                  : 'Tap the heart icon on any product cell to archive hardware here for later.'
-              }
-              action={
-                <Link
-                  to="/catalog"
-                  className="inline-flex items-center justify-center bg-[#09090B] px-6 py-3 font-mono text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#1049EB]"
-                >
-                  Explore Catalog
-                </Link>
-              }
-            />
-          </div>
+          <EmptyState
+            icon={<Heart size={24} weight="regular" />}
+            title={isSharedMode ? 'No items in this shared wishlist' : 'Your wishlist is empty'}
+            detail={
+              isSharedMode
+                ? 'This shared wishlist link does not contain any active products.'
+                : 'Tap the heart icon on any product card to save your favorite items here.'
+            }
+            action={
+              <Link
+                to="/catalog"
+                className="inline-flex items-center justify-center rounded-full bg-[#1049EB] px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
+              >
+                Start Shopping
+              </Link>
+            }
+          />
         ) : (
-          <>
-            {/* 4-Column Exposed 1px Product Matrix */}
-            <div className="grid grid-cols-2 gap-px border-b border-[#E4E4E7] bg-[#E4E4E7] md:grid-cols-3 lg:grid-cols-4">
-              {displayedProducts.map((product, idx) => (
-                <ProductCard key={product.id} product={product} index={idx} />
-              ))}
-            </div>
-
-            {/* Price Drop Alert Row */}
-            {!isSharedMode ? (
-              <div className="flex flex-col items-start justify-between gap-4 border-b border-[#E4E4E7] bg-[#FAFAFA] p-6 sm:flex-row sm:items-center sm:px-10">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E4E4E7] bg-white text-[#1049EB]">
-                    <Bell size={19} weight="regular" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#09090B]">
-                      Price Drop Dispatch Alerts
-                    </h3>
-                    <p className="mt-0.5 text-xs text-[#52525B]">
-                      Receive instant updates when any saved unit receives a daily Naira price drop.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => toast.success('Price drop notifications enabled.')}
-                  className="border border-[#09090B] bg-white px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:bg-[#09090B] hover:text-white"
-                >
-                  Enable Alerts
-                </button>
-              </div>
-            ) : null}
-          </>
+          <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+            {displayedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         )}
       </div>
     </div>

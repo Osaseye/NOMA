@@ -5,19 +5,17 @@ import { ShopByCategory } from '../../features/storefront/ShopByCategory'
 import { TodaysBestDeals } from '../../features/storefront/TodaysBestDeals'
 import { TrendingNow } from '../../features/storefront/TrendingNow'
 import { TrustStrip } from '../../features/storefront/TrustStrip'
-import { WhyNoma } from '../../features/storefront/WhyNoma'
 
 export function HomePage() {
   return (
-    <>
+    <div className="space-y-12 pb-16 sm:space-y-16">
       <HomeHero />
       <TrustStrip />
-      <TrendingNow />
       <ShopByCategory />
+      <TrendingNow />
       <TodaysBestDeals />
-      <WhyNoma />
       <CuratedBanners />
       <NewsletterCTA />
-    </>
+    </div>
   )
 }
