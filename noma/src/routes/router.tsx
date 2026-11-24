@@ -98,10 +98,24 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/support',
+        element: lazyView(
+          () => import('../pages/storefront/StaticInfoPage').then((m) => m.StaticInfoPage),
+          { type: 'support' },
+        ),
+      },
+      {
+        path: '/help',
+        element: lazyView(
+          () => import('../pages/storefront/StaticInfoPage').then((m) => m.StaticInfoPage),
+          { type: 'support' },
+        ),
+      },
+      {
         path: '/contact',
         element: lazyView(
           () => import('../pages/storefront/StaticInfoPage').then((m) => m.StaticInfoPage),
-          { type: 'contact' },
+          { type: 'support' },
         ),
       },
       {

@@ -1,479 +1,686 @@
 import {
-  ArrowsCounterClockwise,
+  ArrowRight,
+  ArrowUpRight,
   CaretRight,
-  ChatCircleDots,
-  Envelope,
-  FileText,
-  Headset,
+  MagnifyingGlass,
   Minus,
-  Phone,
   Plus,
-  ShieldCheck,
-  Truck,
   WhatsappLogo,
 } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { brand } from '../../constants/brand'
 import { useAdminStore } from '../../store/adminStore'
 
-const copy = {
-  about: {
-    title: 'About Noma',
-    subtitle: `Noma is a Nigerian retail platform operated under ${brand.legalEntity}, built for transparent pricing and reliable doorstep delivery.`,
-  },
-  contact: {
-    title: 'Contact Noma',
-    subtitle:
-      'Reach our customer desk for product specifications, order status updates, or state delivery estimates.',
-  },
-  faq: {
-    title: 'Frequently Asked Questions',
-    subtitle: 'Clear answers about Nigerian delivery fees, payment methods, and returns.',
-  },
-  returns: {
-    title: 'Returns & Refunds Policy',
-    subtitle: 'Details on our 30-day return eligibility, inspection, and refund timelines.',
-  },
-  privacy: {
-    title: 'Privacy Policy',
-    subtitle: 'How Noma collects, secures, and manages your personal order information.',
-  },
-  terms: {
-    title: 'Terms of Service',
-    subtitle: 'Terms and guidelines governing shopping and order fulfillment on Noma.',
-  },
-  delivery: {
-    title: 'Delivery & Shipping Policy',
-    subtitle: 'Delivery zones, dispatch timelines, and upfront fee estimation across Nigeria.',
-  },
-  policies: {
-    title: 'Our Policies',
-    subtitle: 'Delivery standards, 30-day returns, and data protection guidelines.',
-  },
-  account: {
-    title: 'My Account',
-    subtitle: 'Manage your saved delivery addresses and order history.',
-  },
-}
+export type StaticPageType =
+  | 'about'
+  | 'support'
+  | 'contact'
+  | 'faq'
+  | 'returns'
+  | 'privacy'
+  | 'terms'
+  | 'delivery'
+  | 'policies'
 
-const FAQ_ITEMS = [
+const HELP_FAQS = [
   {
-    q: 'How is the delivery fee calculated?',
-    a: 'Delivery fees are calculated dynamically from your Nigerian state and whether an item requires heavy freight handling. The final fee is always displayed upfront on checkout before payment.',
+    category: 'wholesale',
+    q: 'Can I buy shoes, sneakers, or clothing in bulk / wholesale bales?',
+    a: 'Yes. Noma supplies both individual retail shoppers and bulk resellers across Nigeria. You can order single pairs directly on the website or tap "Wholesale & Bulk Desk" to request bale pricing and custom quantity discounts via WhatsApp.',
   },
   {
-    q: 'Do you offer Pay on Delivery?',
-    a: 'Yes. Pay on Delivery is available for verified addresses in eligible metro areas and can be selected directly at checkout.',
+    category: 'delivery',
+    q: 'How are delivery fees and timelines calculated across Nigerian states?',
+    a: 'Your delivery fee is calculated upfront based on your selected state in the top bar or checkout. Orders over ₦250,000 qualify for free standard delivery on non-bulky items. Lagos deliveries arrive in 1–2 business days, Southwest & Abuja in 2–3 business days, and other states in 3–5 business days.',
   },
   {
-    q: 'How long does delivery take?',
-    a: 'Standard delivery takes 2-5 business days depending on state corridor. Express 1-2 day dispatch is available in major hubs.',
+    category: 'payment',
+    q: 'Is Pay on Delivery (POD) available?',
+    a: 'Yes. Pay on Delivery is supported for verified addresses in eligible metro zones including Lagos and Abuja. You can also pay securely via Naira Bank Transfer, Debit/Credit Card, or USSD.',
   },
   {
-    q: 'What is your return policy?',
-    a: 'Eligible unused items in original packaging can be returned within 30 days of delivery if defective, damaged in transit, or not as described.',
+    category: 'delivery',
+    q: 'How do I track my package after ordering?',
+    a: 'Every order receives a unique Noma reference (e.g. NMA-123456). Enter your Order ID on the Track Order page or in the quick tracker on this page to view real-time dispatch milestones from Placed to Delivered.',
   },
   {
-    q: 'Are your products authentic?',
-    a: 'Yes. Every item is sourced from verified distributors and includes a 1-year distributor warranty.',
+    category: 'returns',
+    q: 'What is your return and exchange policy for footwear, fashion, and appliances?',
+    a: 'We offer a 30-day return and size-exchange window on unused items in their original packaging with tags and accessories intact. If an item arrives damaged or incorrect, contact our team within 48 hours for priority pickup and replacement.',
+  },
+  {
+    category: 'wholesale',
+    q: 'Do you supply catering equipment and kitchen appliances in bulk?',
+    a: 'Yes. We supply commercial blenders, air fryers, cookware sets, and catering hardware for restaurants, hotels, events, and homes with consolidated freight rates.',
   },
 ]
 
-export function StaticInfoPage({ type }: { type: keyof typeof copy }) {
+const DELIVERY_ZONES = [
+  { zone: 'Lagos Metro (Island & Mainland)', eta: '1 – 2 business days', baseRate: '₦3,500' },
+  { zone: 'Southwest (Ogun, Oyo, Osun, Ondo)', eta: '2 – 3 business days', baseRate: '₦4,500' },
+  { zone: 'FCT Abuja & Rivers (Port Harcourt)', eta: '2 – 4 business days', baseRate: '₦6,000' },
+  { zone: 'All Other Nigerian States', eta: '3 – 5 business days', baseRate: '₦7,500' },
+]
+
+const LEGAL_SECTIONS = [
+  {
+    id: 'overview',
+    number: '01',
+    title: 'Marketplace Overview & Operator Identity',
+    body: [
+      `Noma Marketplace ("Noma") is operated under ${brand.legalEntity} in Nigeria. These Terms of Service govern all retail purchases, wholesale/bulk inquiries, account registrations, and deliveries made through our platform.`,
+      'By browsing, creating an account, or placing an order on Noma, you agree to these terms, our upfront Naira pricing rules, and our nationwide delivery guidelines.',
+    ],
+  },
+  {
+    id: 'orders',
+    number: '02',
+    title: 'Retail Purchases & Wholesale Bulk Orders',
+    body: [
+      'Noma fulfills both single-unit retail orders (across footwear, clothing, kitchenware, electronics, and home appliances) and bulk wholesale orders (including footwear bales and catering/office equipment).',
+      'For size-specific products such as shoes and apparel, shoppers must select an available size variant prior to checkout. Bulk bale orders confirmed through our WhatsApp Wholesale Desk receive an itemized pro-forma invoice and tracking reference before dispatch.',
+    ],
+  },
+  {
+    id: 'pricing',
+    number: '03',
+    title: 'Naira Pricing, Taxes & Payment Settlement',
+    body: [
+      'All prices on Noma are stated in Nigerian Naira (₦ / NGN). The checkout total always shows your item subtotal plus the exact state delivery fee before you confirm payment—with zero hidden rider surcharges.',
+      'We accept Naira Bank Transfers, Verve/Mastercard/Visa cards, USSD, and Pay on Delivery (POD) in eligible metro locations. Orders paid via bank transfer are queued for dispatch immediately upon transfer confirmation.',
+    ],
+  },
+  {
+    id: 'shipping',
+    number: '04',
+    title: 'Nationwide Delivery, Inspection & Risk of Loss',
+    body: [
+      'Orders are dispatched from our fulfillment hubs to all 36 states and the FCT. Estimated transit times range from 1–2 business days in Lagos to 2–5 business days interstate.',
+      'Upon doorstep arrival, recipients are encouraged to verify outer package integrity. Risk of loss transfers to the recipient upon signed delivery confirmation.',
+    ],
+  },
+  {
+    id: 'returns',
+    number: '05',
+    title: '30-Day Returns, Size Exchanges & Warranty',
+    body: [
+      'Unused footwear, clothing, and household items in original packaging with factory tags/seals intact may be returned or exchanged within 30 days of delivery.',
+      'Electronics and major home appliances carry a 1-year distributor warranty against manufacturing defects. Approved refunds are credited back to your original Nigerian bank account or payment method within 3–5 business days of return inspection.',
+    ],
+  },
+  {
+    id: 'privacy',
+    number: '06',
+    title: 'Privacy, Data Protection & Account Security',
+    body: [
+      'We collect only the personal details required to process and deliver your order: your name, phone number, email address, and Nigerian delivery address.',
+      'Your contact data is never sold to third-party marketers. Card transactions are processed over encrypted channels, and raw card numbers or PINs are never stored on Noma servers. You may request profile updates or account deletion at any time by emailing our support desk.',
+    ],
+  },
+]
+
+export function StaticInfoPage({ type }: { type: StaticPageType }) {
+  const navigate = useNavigate()
   const { settings } = useAdminStore()
-  const { title, subtitle } = copy[type] || copy.about
-  const [openFaq, setOpenFaq] = useState<number | null>(0)
-  const [activeTab, setActiveTab] = useState<'delivery' | 'returns' | 'privacy'>(
-    type === 'returns' ? 'returns' : type === 'privacy' ? 'privacy' : 'delivery'
-  )
+
+  const [faqQuery, setFaqQuery] = useState('')
+  const [faqCategory, setFaqCategory] = useState<'all' | 'delivery' | 'wholesale' | 'payment' | 'returns'>('all')
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0)
+  const [trackingInput, setTrackingInput] = useState('')
+  const [activeLegalSection, setActiveLegalSection] = useState<string>('overview')
 
   const supportPhone = settings.supportPhone || brand.phone
-  const supportEmail = settings.supportEmail || brand.supportEmail
+  const supportEmail = settings.supportEmail || brand.supportEmail || brand.email
   const whatsappDigits = (settings.whatsappNumber || brand.whatsappNumber).replace(/\D/g, '')
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : brand.whatsapp
 
-  return (
-    <div className="min-h-screen bg-[#F6F7F9] pb-20 text-[#0B1220]">
-      {/* Light Editorial Header */}
-      <div className="border-b border-[#E5E7EB] bg-white py-12 text-center md:py-16">
-        <div className="mx-auto max-w-3xl px-4 md:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-[#0B1220] md:text-4xl">
-            {title}
-          </h1>
-          <p className="mx-auto mt-3 max-w-[60ch] text-sm leading-[1.6] text-[#374151] md:text-[15px]">
-            {subtitle}
-          </p>
-        </div>
-      </div>
+  const normalizedView: 'about' | 'support' | 'legal' = useMemo(() => {
+    if (type === 'about') return 'about'
+    if (type === 'terms' || type === 'privacy' || type === 'policies') return 'legal'
+    return 'support'
+  }, [type])
 
-      <div className="mx-auto w-full max-w-4xl px-4 py-12 md:px-8">
-        {/* ABOUT */}
-        {type === 'about' ? (
-          <div className="space-y-8 rounded-[8px] border border-[#E5E7EB] bg-white p-6 sm:p-10">
-            <div className="max-w-[65ch] space-y-4 text-sm leading-[1.65] text-[#374151] md:text-[15px]">
-              <p>
-                At <strong className="text-[#0B1220]">{brand.name}</strong>, operated by{' '}
-                {brand.legalEntity}, shopping for home electronics and kitchen appliances is built around upfront clarity with zero hidden dispatch surprises.
-              </p>
-              <p>
-                Every item lists final Naira pricing and calculates Nigerian delivery fees before checkout. <strong className="text-[#0B1220]">What you see is what you pay.</strong>
-              </p>
-            </div>
+  const filteredFaqs = useMemo(() => {
+    const q = faqQuery.trim().toLowerCase()
+    return HELP_FAQS.filter((item) => {
+      if (faqCategory !== 'all' && item.category !== faqCategory) return false
+      if (!q) return true
+      return item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q)
+    })
+  }, [faqCategory, faqQuery])
 
-            <div className="grid grid-cols-1 gap-4 border-t border-[#E5E7EB] pt-6 md:grid-cols-3">
-              <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-5">
-                <ShieldCheck size={22} weight="fill" className="mb-3 text-[#1049EB]" />
-                <h2 className="text-sm font-bold text-[#0B1220]">100% Authentic</h2>
-                <p className="mt-1 text-xs leading-relaxed text-[#5E6675]">
-                  Sourced directly from authorized Nigerian distributors with warranty coverage.
-                </p>
-              </div>
-              <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-5">
-                <Truck size={22} weight="regular" className="mb-3 text-[#1049EB]" />
-                <h2 className="text-sm font-bold text-[#0B1220]">Upfront Shipping</h2>
-                <p className="mt-1 text-xs leading-relaxed text-[#5E6675]">
-                  State and freight rates are calculated transparently before you pay.
-                </p>
-              </div>
-              <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-5">
-                <ChatCircleDots size={22} weight="regular" className="mb-3 text-[#1049EB]" />
-                <h2 className="text-sm font-bold text-[#0B1220]">Human Desk Support</h2>
-                <p className="mt-1 text-xs leading-relaxed text-[#5E6675]">
-                  Speak directly with specialists via WhatsApp, phone, or email.
-                </p>
+  const handleQuickTrack = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (trackingInput.trim()) {
+      navigate(`/orders?id=${encodeURIComponent(trackingInput.trim().toUpperCase())}`)
+    }
+  }
+
+  /* ============================================================================
+   * VIEW 1: ABOUT NOMA (Editorial Magazine Story — Zero Basic Boxy Cards)
+   * ========================================================================== */
+  if (normalizedView === 'about') {
+    return (
+      <div className="min-h-screen bg-white pb-24 pt-4 text-slate-900">
+        <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+          {/* Breadcrumb */}
+          <nav className="mb-4 flex items-center gap-1.5 text-xs text-slate-500">
+            <Link to="/" className="hover:text-slate-900">
+              Home
+            </Link>
+            <CaretRight size={11} />
+            <span className="font-medium text-slate-900">About Noma</span>
+          </nav>
+
+          {/* Full-Bleed Editorial Masthead */}
+          <div className="relative h-[380px] w-full overflow-hidden rounded-2xl bg-slate-950 sm:h-[460px] lg:h-[520px]">
+            <img
+              src="/images/cat-clothing.png"
+              alt="About Noma Marketplace"
+              className="h-full w-full object-cover object-center opacity-75"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/15" />
+
+            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-12 lg:p-16">
+              <div className="max-w-3xl">
+                <span className="text-xs font-semibold uppercase tracking-widest text-white/75">
+                  Our Story &bull; {brand.legalEntity}
+                </span>
+                <h1 className="mt-3 text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
+                  Built for how Nigeria shops — from single pairs to wholesale bales &amp; modern home essentials.
+                </h1>
               </div>
             </div>
           </div>
-        ) : null}
 
-        {/* CONTACT */}
-        {type === 'contact' ? (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Column 1: Direct Contact */}
-            <div className="space-y-5 rounded-[8px] border border-[#E5E7EB] bg-white p-6">
-              <h2 className="border-b border-[#E5E7EB] pb-3 text-base font-bold text-[#0B1220]">
-                Direct Channels
+          {/* Open Editorial Manifesto & Metrics Strip (No Card Containers) */}
+          <div className="grid grid-cols-1 gap-10 border-b border-slate-200 py-14 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <h2 className="text-2xl font-bold leading-snug tracking-tight text-slate-900 sm:text-3xl">
+                One trusted marketplace for your wardrobe, your kitchen, and your business.
+              </h2>
+            </div>
+
+            <div className="space-y-4 text-sm leading-relaxed text-slate-600 sm:text-base lg:col-span-7">
+              <p>
+                Noma started with a simple observation: whether you are buying a fresh pair of sneakers, restocking wholesale footwear bales for your boutique, equipping a catering kitchen, or upgrading your living room with a 4K display, online shopping in Nigeria should never feel like a gamble.
+              </p>
+              <p>
+                We eliminated hidden rider markups by building live state-by-state delivery estimation directly into the top bar and shopping bag—so you know your exact landing cost in Lagos, Abuja, Port Harcourt, or anywhere across all 36 states before you pay.
+              </p>
+            </div>
+          </div>
+
+          {/* Open Typography Key Figures */}
+          <div className="grid grid-cols-2 gap-8 border-b border-slate-200 py-12 md:grid-cols-4">
+            <div>
+              <span className="block text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                36 + FCT
+              </span>
+              <span className="mt-1 block text-xs font-medium text-slate-500 sm:text-sm">
+                States covered with tracked doorstep delivery
+              </span>
+            </div>
+            <div>
+              <span className="block text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                Retail &amp; Bulk
+              </span>
+              <span className="mt-1 block text-xs font-medium text-slate-500 sm:text-sm">
+                Single units for homes &amp; wholesale bales for resellers
+              </span>
+            </div>
+            <div>
+              <span className="block text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                24 – 48 hrs
+              </span>
+              <span className="mt-1 block text-xs font-medium text-slate-500 sm:text-sm">
+                Express metro dispatch across Lagos &amp; Abuja
+              </span>
+            </div>
+            <div>
+              <span className="block text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                100% Upfront
+              </span>
+              <span className="mt-1 block text-xs font-medium text-slate-500 sm:text-sm">
+                Transparent Naira pricing with zero surprise fees
+              </span>
+            </div>
+          </div>
+
+          {/* 3-Column Visual Pillars */}
+          <div className="py-14">
+            <div className="mb-8 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                What We Specialize In
+              </h2>
+              <Link
+                to="/catalog"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900 hover:underline sm:text-sm"
+              >
+                <span>Browse all products</span>
+                <ArrowUpRight size={15} weight="bold" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {[
+                {
+                  title: 'Footwear & Contemporary Fashion',
+                  desc: 'Sneakers, leather shoes, and everyday apparel available in single pairs for retail shoppers or wholesale bales for resellers.',
+                  image: '/images/cat-clothing.png',
+                  href: '/category/clothing',
+                },
+                {
+                  title: 'Kitchen, Cookware & Catering',
+                  desc: 'Heavy-duty blenders, digital air fryers, stainless cookware, and catering supplies built for daily performance.',
+                  image: '/images/editorial-kitchen.png',
+                  href: '/category/kitchen',
+                },
+                {
+                  title: 'Smart Living, Power & Appliances',
+                  desc: '4K smart TVs, acoustic soundbars, energy-saving refrigerators, and lithium backup power systems.',
+                  image: '/images/hero-living-desktop.png',
+                  href: '/category/electronics',
+                },
+              ].map((item) => (
+                <Link key={item.title} to={item.href} className="group block">
+                  <div className="aspect-[16/11] w-full overflow-hidden rounded-2xl bg-slate-100">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="mt-4 flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 group-hover:underline sm:text-lg">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-500 sm:text-sm">
+                        {item.desc}
+                      </p>
+                    </div>
+                    <ArrowUpRight
+                      size={18}
+                      weight="bold"
+                      className="mt-1 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-slate-900"
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom Editorial CTA Strip */}
+          <div className="flex flex-col items-start justify-between gap-6 rounded-2xl bg-slate-950 p-8 text-white sm:p-12 lg:flex-row lg:items-center">
+            <div className="max-w-xl">
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                Ready to shop or request a wholesale quote?
+              </h2>
+              <p className="mt-2 text-xs leading-relaxed text-white/75 sm:text-sm">
+                Explore our live catalog online or speak directly with our team on WhatsApp for bulk orders.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/catalog"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-xs font-bold text-slate-950 transition-transform hover:scale-[1.01] sm:text-sm"
+              >
+                <span>Start Shopping</span>
+                <ArrowRight size={15} weight="bold" />
+              </Link>
+              <a
+                href={`${whatsappUrl}?text=${encodeURIComponent('Hello Noma, I would like to inquire about wholesale/bulk or retail orders.')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-white/20 sm:text-sm"
+              >
+                <WhatsappLogo size={17} weight="fill" className="text-emerald-400" />
+                <span>Chat on WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ============================================================================
+   * VIEW 2: TERMS, PRIVACY & POLICIES (Open Editorial Legal Reader — Zero Cards)
+   * ========================================================================== */
+  if (normalizedView === 'legal') {
+    return (
+      <div className="min-h-screen bg-white pb-24 pt-5 text-slate-900">
+        <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+          {/* Header Masthead */}
+          <div className="border-b border-slate-200 pb-8">
+            <nav className="mb-2 flex items-center gap-1.5 text-xs text-slate-500">
+              <Link to="/" className="hover:text-slate-900">
+                Home
+              </Link>
+              <CaretRight size={11} />
+              <span className="font-medium text-slate-900">Terms &amp; Privacy</span>
+            </nav>
+
+            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+                  Terms of Service &amp; Privacy Policy
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-slate-500">
+                  Clear operating guidelines covering retail and bulk orders, Naira payments, nationwide delivery, 30-day returns, and customer data privacy.
+                </p>
+              </div>
+              <span className="text-xs font-medium text-slate-400">
+                Operated by {brand.legalEntity} &bull; Updated 2026
+              </span>
+            </div>
+          </div>
+
+          {/* 2-Column Editorial Reader: Sticky Index on Left, Open Prose on Right */}
+          <div className="grid grid-cols-1 gap-10 pt-10 lg:grid-cols-12">
+            {/* Left 4 Cols: Sticky Section Directory */}
+            <aside className="lg:col-span-4">
+              <div className="sticky top-28 space-y-6">
+                <div>
+                  <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Sections
+                  </span>
+                  <nav className="mt-3 flex flex-col space-y-1 border-l border-slate-200 pl-3">
+                    {LEGAL_SECTIONS.map((sec) => {
+                      const isActive = activeLegalSection === sec.id
+                      return (
+                        <a
+                          key={sec.id}
+                          href={`#${sec.id}`}
+                          onClick={() => setActiveLegalSection(sec.id)}
+                          className={`py-1.5 text-xs transition-colors sm:text-sm ${
+                            isActive
+                              ? 'font-bold text-slate-900'
+                              : 'font-medium text-slate-500 hover:text-slate-900'
+                          }`}
+                        >
+                          {sec.number}. {sec.title}
+                        </a>
+                      )
+                    })}
+                  </nav>
+                </div>
+
+                <div className="border-t border-slate-200 pt-5 text-xs text-slate-500">
+                  <p className="font-semibold text-slate-900">Have a question about our terms?</p>
+                  <p className="mt-1">
+                    Reach our team directly at{' '}
+                    <a href={`mailto:${supportEmail}`} className="font-semibold text-slate-900 underline">
+                      {supportEmail}
+                    </a>{' '}
+                    or visit the{' '}
+                    <Link to="/support" className="font-semibold text-slate-900 underline">
+                      Help Center
+                    </Link>
+                    .
+                  </p>
+                </div>
+              </div>
+            </aside>
+
+            {/* Right 8 Cols: Open Editorial Sections (Zero Boxy Cards) */}
+            <div className="divide-y divide-slate-200 lg:col-span-8">
+              {LEGAL_SECTIONS.map((sec) => (
+                <section
+                  key={sec.id}
+                  id={sec.id}
+                  className="scroll-mt-28 py-8 first:pt-0 last:pb-0"
+                >
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-xs font-bold text-slate-400">{sec.number}</span>
+                    <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                      {sec.title}
+                    </h2>
+                  </div>
+
+                  <div className="mt-4 max-w-3xl space-y-3.5 pl-6 text-sm leading-relaxed text-slate-600 sm:text-base">
+                    {sec.body.map((paragraph, idx) => (
+                      <p key={idx}>{paragraph}</p>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ============================================================================
+   * VIEW 3: HELP & SUPPORT CENTER (/support, /help, /contact, /faq, /returns, /delivery-policy)
+   * ========================================================================== */
+  return (
+    <div className="min-h-screen bg-white pb-24 pt-5 text-slate-900">
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        {/* Open Editorial Masthead with Instant Help Search */}
+        <div className="border-b border-slate-200 pb-10">
+          <nav className="mb-2 flex items-center gap-1.5 text-xs text-slate-500">
+            <Link to="/" className="hover:text-slate-900">
+              Home
+            </Link>
+            <CaretRight size={11} />
+            <span className="font-medium text-slate-900">Help &amp; Support</span>
+          </nav>
+
+          <div className="grid grid-cols-1 items-end justify-between gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-7">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+                How can we help you today?
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500 sm:text-base">
+                Find instant answers on Nigerian state delivery rates, wholesale shoe bale orders, returns, and payment options—or chat directly with our team.
+              </p>
+            </div>
+
+            {/* Search Input for Help Topics */}
+            <div className="lg:col-span-5">
+              <div className="relative">
+                <MagnifyingGlass
+                  size={17}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  value={faqQuery}
+                  onChange={(e) => setFaqQuery(e.target.value)}
+                  placeholder="Search help topics (e.g. bulk shoes, Lagos delivery, returns)..."
+                  className="h-12 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main 12-Col Split: Left 7 Cols Open FAQ + Delivery Table | Right 5 Cols Live Order Tracker & Direct Desk */}
+        <div className="grid grid-cols-1 gap-12 pt-10 lg:grid-cols-12">
+          {/* Left 7 Cols: Topic Filter Pills + Open Hairline Accordion + State Delivery Schedule */}
+          <div className="space-y-12 lg:col-span-7">
+            <div>
+              {/* Topic Filter Pills */}
+              <div className="no-scrollbar mb-6 flex items-center gap-2 overflow-x-auto">
+                {[
+                  { id: 'all', label: 'All Topics' },
+                  { id: 'wholesale', label: 'Wholesale & Bulk' },
+                  { id: 'delivery', label: 'Delivery & States' },
+                  { id: 'payment', label: 'Payment & POD' },
+                  { id: 'returns', label: 'Returns & Exchanges' },
+                ].map((tab) => {
+                  const isActive = faqCategory === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setFaqCategory(tab.id as typeof faqCategory)}
+                      className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
+                        isActive
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Open Hairline FAQ Accordion (No Boxy Card Container) */}
+              <div className="divide-y divide-slate-200 border-y border-slate-200">
+                {filteredFaqs.length === 0 ? (
+                  <p className="py-8 text-sm text-slate-500">
+                    No matching questions found. Try another keyword or message us on WhatsApp.
+                  </p>
+                ) : (
+                  filteredFaqs.map((faq, idx) => {
+                    const isOpen = openFaqIndex === idx
+                    return (
+                      <div key={faq.q}>
+                        <button
+                          type="button"
+                          onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                          className="flex w-full items-center justify-between gap-4 py-5 text-left text-sm font-bold text-slate-900 transition-colors hover:text-slate-600 sm:text-base"
+                        >
+                          <span>{faq.q}</span>
+                          {isOpen ? (
+                            <Minus size={16} weight="bold" className="shrink-0 text-slate-900" />
+                          ) : (
+                            <Plus size={16} weight="bold" className="shrink-0 text-slate-400" />
+                          )}
+                        </button>
+                        {isOpen ? (
+                          <div className="pb-5 pr-8 text-sm leading-relaxed text-slate-600">
+                            {faq.a}
+                          </div>
+                        ) : null}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Open Delivery Corridors Reference Table */}
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                Nationwide Delivery Zones &amp; Timelines
+              </h2>
+              <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                Standard delivery is free on non-bulky orders over ₦250,000.
+              </p>
+
+              <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200 text-xs sm:text-sm">
+                {DELIVERY_ZONES.map((z) => (
+                  <div
+                    key={z.zone}
+                    className="flex flex-wrap items-center justify-between gap-2 py-3.5"
+                  >
+                    <span className="font-semibold text-slate-900">{z.zone}</span>
+                    <div className="flex items-center gap-6">
+                      <span className="text-slate-500">{z.eta}</span>
+                      <strong className="min-w-[64px] text-right font-bold tabular-nums text-slate-900">
+                        {z.baseRate}
+                      </strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right 5 Cols: Instant Order Lookup & Direct Human Channels */}
+          <div className="space-y-8 lg:col-span-5">
+            {/* Instant Order Tracker */}
+            <div className="rounded-2xl bg-[#F4F4F5] p-6 sm:p-8">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Live Dispatch Lookup
+              </span>
+              <h2 className="mt-1.5 text-xl font-bold text-slate-900">
+                Track an existing order
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Enter your Noma Order ID (e.g. NMA-123456) to check your package status immediately.
+              </p>
+
+              <form onSubmit={handleQuickTrack} className="mt-4 flex gap-2">
+                <input
+                  type="text"
+                  value={trackingInput}
+                  onChange={(e) => setTrackingInput(e.target.value)}
+                  placeholder="Enter Order ID..."
+                  className="h-11 flex-1 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-900 px-5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                >
+                  <span>Track</span>
+                  <ArrowRight size={13} weight="bold" />
+                </button>
+              </form>
+            </div>
+
+            {/* Direct Contact Channels (Open Hairline List) */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                Speak with Our Team
               </h2>
 
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-[#EEF3FE] text-[#1049EB]">
-                  <Phone size={17} weight="regular" />
+              <div className="divide-y divide-slate-200 border-y border-slate-200">
+                <div className="flex items-center justify-between gap-4 py-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">WhatsApp Concierge &amp; Bulk Desk</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Fastest response for order help &amp; wholesale shoe quotes
+                    </p>
+                  </div>
+                  <a
+                    href={`${whatsappUrl}?text=${encodeURIComponent('Hello Noma Support, I need assistance.')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                  >
+                    <WhatsappLogo size={15} weight="fill" className="text-emerald-400" />
+                    <span>Chat Now</span>
+                  </a>
                 </div>
-                <div>
-                  <h3 className="text-xs font-bold text-[#0B1220]">Call Support</h3>
-                  <p className="text-[11px] text-[#5E6675]">Mon - Sat (8:00 AM - 8:00 PM)</p>
+
+                <div className="flex items-center justify-between gap-4 py-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Phone Support</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">Mon – Sat, 8:00 AM – 8:00 PM WAT</p>
+                  </div>
                   <a
                     href={`tel:${supportPhone.replace(/\s+/g, '')}`}
-                    className="mt-0.5 block font-mono text-xs font-bold text-[#0B1220] hover:text-[#1049EB]"
+                    className="text-sm font-bold text-slate-900 hover:underline"
                   >
                     {supportPhone}
                   </a>
                 </div>
-              </div>
 
-              <div className="flex items-start gap-3 border-t border-[#E5E7EB] pt-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-[#EEF3FE] text-[#1049EB]">
-                  <Envelope size={17} weight="regular" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-[#0B1220]">Email Support</h3>
+                <div className="flex items-center justify-between gap-4 py-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Email Desk</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">For receipts, supplier &amp; corporate inquiries</p>
+                  </div>
                   <a
                     href={`mailto:${supportEmail}`}
-                    className="mt-0.5 block text-xs font-semibold text-[#1049EB] hover:underline"
+                    className="text-sm font-bold text-slate-900 hover:underline"
                   >
                     {supportEmail}
                   </a>
-                  <p className="mt-0.5 text-[11px] text-[#5E6675]">Responses within 24 hours</p>
                 </div>
               </div>
             </div>
-
-            {/* Column 2: Quick Help Topics */}
-            <div className="space-y-4 rounded-[8px] border border-[#E5E7EB] bg-white p-6">
-              <h2 className="border-b border-[#E5E7EB] pb-3 text-base font-bold text-[#0B1220]">
-                Popular Questions
-              </h2>
-              <div className="divide-y divide-[#E5E7EB]">
-                {FAQ_ITEMS.slice(0, 4).map((item, idx) => (
-                  <button
-                    key={item.q}
-                    type="button"
-                    onClick={() => setOpenFaq(idx)}
-                    className="flex w-full items-center justify-between gap-2 py-2.5 text-left text-xs font-semibold text-[#374151] transition-colors hover:text-[#1049EB]"
-                  >
-                    <span>{item.q}</span>
-                    <CaretRight size={13} weight="regular" className="shrink-0 text-[#5E6675]" />
-                  </button>
-                ))}
-              </div>
-              {openFaq !== null && FAQ_ITEMS[openFaq] ? (
-                <div className="rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] p-3 text-xs leading-relaxed text-[#374151]">
-                  {FAQ_ITEMS[openFaq].a}
-                </div>
-              ) : null}
-            </div>
-
-            {/* Column 3: Noma Care Desk (Phosphor Headset Badge - No Unsplash Avatar) */}
-            <div className="flex flex-col justify-between space-y-5 rounded-[8px] border border-[#E5E7EB] bg-white p-6">
-              <div className="space-y-4">
-                <h2 className="border-b border-[#E5E7EB] pb-3 text-base font-bold text-[#0B1220]">
-                  Customer Service
-                </h2>
-
-                <div className="flex items-center gap-3 rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-3.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] border border-[#1049EB]/25 bg-[#EEF3FE] text-[#1049EB]">
-                    <Headset size={20} weight="regular" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-[#0B1220]">Noma Care Desk</h3>
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#15803D]">
-                      <span className="h-1.5 w-1.5 rounded-[2px] bg-[#15803D]" />
-                      <span>Support agents on standby</span>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-xs leading-relaxed text-[#5E6675]">
-                  Need help confirming product compatibility or delivery status? Chat directly with our team on WhatsApp.
-                </p>
-              </div>
-
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] py-3 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
-              >
-                <WhatsappLogo size={16} weight="fill" className="text-[#25D366]" />
-                <span>Chat Live on WhatsApp</span>
-              </a>
-            </div>
           </div>
-        ) : null}
-
-        {/* FAQ (Clean border-bottom accordion with Plus/Minus) */}
-        {type === 'faq' ? (
-          <div className="mx-auto max-w-3xl divide-y divide-[#E5E7EB] rounded-[8px] border border-[#E5E7EB] bg-white">
-            {FAQ_ITEMS.map((faq, i) => {
-              const isOpen = openFaq === i
-              return (
-                <div key={faq.q}>
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : i)}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-bold text-[#0B1220] transition-colors hover:bg-[#F6F7F9] sm:px-6"
-                  >
-                    <span>{faq.q}</span>
-                    {isOpen ? (
-                      <Minus size={16} weight="regular" className="shrink-0 text-[#1049EB]" />
-                    ) : (
-                      <Plus size={16} weight="regular" className="shrink-0 text-[#5E6675]" />
-                    )}
-                  </button>
-                  {isOpen ? (
-                    <div className="border-t border-[#E5E7EB] bg-[#F6F7F9] px-5 py-4 text-sm leading-[1.6] text-[#374151] sm:px-6">
-                      {faq.a}
-                    </div>
-                  ) : null}
-                </div>
-              )
-            })}
-          </div>
-        ) : null}
-
-        {/* RETURNS */}
-        {type === 'returns' ? (
-          <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-white p-6 sm:p-10">
-            <div className="flex items-center gap-3 border-b border-[#E5E7EB] pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-[#1049EB]/25 bg-[#EEF3FE] text-[#1049EB]">
-                <ArrowsCounterClockwise size={20} weight="regular" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[#0B1220]">30-Day Return Guarantee</h2>
-                <p className="text-xs text-[#5E6675]">Hassle-free returns on eligible items</p>
-              </div>
-            </div>
-
-            <div className="max-w-[65ch] space-y-4 text-sm leading-[1.65] text-[#374151]">
-              <h3 className="text-base font-bold text-[#0B1220]">Eligibility Criteria</h3>
-              <p>
-                Items can be returned within 30 days of delivery if they arrive defective, damaged in transit, or missing parts. Returned items must remain unused in original packaging with all manuals and seals intact.
-              </p>
-
-              <h3 className="text-base font-bold text-[#0B1220]">How to Request a Return</h3>
-              <ol className="list-decimal space-y-1.5 pl-5">
-                <li>
-                  Contact support on WhatsApp or email{' '}
-                  <strong className="text-[#0B1220]">{supportEmail}</strong> with your Order ID and photo or video proof.
-                </li>
-                <li>Our team reviews your request within 24 hours and schedules pickup.</li>
-                <li>
-                  Once verified at our logistics hub, your refund or replacement is issued promptly.
-                </li>
-              </ol>
-
-              <h3 className="text-base font-bold text-[#0B1220]">Refund Processing</h3>
-              <p>
-                Refunds are credited to your original payment account within 3-5 business days after inspection approval.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {/* PRIVACY */}
-        {type === 'privacy' ? (
-          <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-white p-6 sm:p-10">
-            <div className="flex items-center gap-3 border-b border-[#E5E7EB] pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]">
-                <ShieldCheck size={20} weight="fill" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[#0B1220]">Privacy &amp; Data Security</h2>
-                <p className="text-xs text-[#5E6675]">How we protect your personal information</p>
-              </div>
-            </div>
-
-            <div className="max-w-[65ch] space-y-4 text-sm leading-[1.65] text-[#374151]">
-              <h3 className="text-base font-bold text-[#0B1220]">Information We Collect</h3>
-              <p>
-                When you place an order or create a Noma account, we collect your name, email address, phone number, and Nigerian delivery destination solely to fulfill your orders.
-              </p>
-              <h3 className="text-base font-bold text-[#0B1220]">Payment Data Protection</h3>
-              <p>
-                Noma uses PCI-DSS compliant payment infrastructure. Raw card numbers and banking PINs are never stored on our servers.
-              </p>
-              <h3 className="text-base font-bold text-[#0B1220]">Your Rights</h3>
-              <p>
-                You may request updates or deletion of your personal profile anytime by contacting{' '}
-                <strong className="text-[#0B1220]">{supportEmail}</strong>.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {/* TERMS */}
-        {type === 'terms' ? (
-          <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-white p-6 sm:p-10">
-            <div className="flex items-center gap-3 border-b border-[#E5E7EB] pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] text-[#0B1220]">
-                <FileText size={20} weight="regular" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[#0B1220]">Terms of Service</h2>
-                <p className="text-xs text-[#5E6675]">
-                  Operating guidelines for shopping on Noma
-                </p>
-              </div>
-            </div>
-
-            <div className="max-w-[65ch] space-y-4 text-sm leading-[1.65] text-[#374151]">
-              <h3 className="text-base font-bold text-[#0B1220]">Store Operations</h3>
-              <p>
-                Noma operates under {brand.legalEntity}. By accessing or placing an order on Noma, you agree to comply with our checkout terms, transparent pricing rules, and delivery policies.
-              </p>
-              <h3 className="text-base font-bold text-[#0B1220]">Pricing &amp; Availability</h3>
-              <p>
-                All prices listed are in Nigerian Naira (NGN). If an item is unexpectedly unavailable prior to dispatch, our team will notify you immediately for replacement or full refund.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {/* DELIVERY */}
-        {type === 'delivery' ? (
-          <div className="space-y-6 rounded-[8px] border border-[#E5E7EB] bg-white p-6 sm:p-10">
-            <div className="flex items-center gap-3 border-b border-[#E5E7EB] pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-[#FDE68A] bg-[#FFFBEB] text-[#B45309]">
-                <Truck size={20} weight="regular" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[#0B1220]">
-                  Delivery &amp; Shipping Guidelines
-                </h2>
-                <p className="text-xs text-[#5E6675]">Transparent dispatch across Nigeria</p>
-              </div>
-            </div>
-
-            <div className="max-w-[65ch] space-y-4 text-sm leading-[1.65] text-[#374151]">
-              <h3 className="text-base font-bold text-[#0B1220]">Delivery Timelines</h3>
-              <ul className="list-disc space-y-1.5 pl-5">
-                <li>
-                  <strong className="text-[#0B1220]">Standard Delivery:</strong> 2-5 business days across Nigerian states.
-                </li>
-                <li>
-                  <strong className="text-[#0B1220]">Express Delivery:</strong> 1-2 business days available in Lagos and selected corridors.
-                </li>
-              </ul>
-              <h3 className="text-base font-bold text-[#0B1220]">Upfront Freight Calculation</h3>
-              <p>
-                Delivery fees are computed from destination state and parcel bulkiness directly at checkout so there are zero unexpected rider surcharges.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {/* ALL-IN-ONE POLICIES */}
-        {type === 'policies' ? (
-          <div className="rounded-[8px] border border-[#E5E7EB] bg-white p-6 sm:p-10">
-            <div className="mb-6 flex gap-6 overflow-x-auto border-b border-[#E5E7EB]">
-              {[
-                { id: 'delivery', label: 'Delivery Policy' },
-                { id: 'returns', label: 'Returns & Refunds' },
-                { id: 'privacy', label: 'Privacy Policy' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`relative shrink-0 pb-3 text-sm font-semibold transition-colors ${
-                    activeTab === tab.id
-                      ? 'text-[#1049EB]'
-                      : 'text-[#5E6675] hover:text-[#0B1220]'
-                  }`}
-                >
-                  {tab.label}
-                  {activeTab === tab.id ? (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1049EB]" />
-                  ) : null}
-                </button>
-              ))}
-            </div>
-
-            <div className="max-w-[65ch] space-y-3 text-sm leading-[1.65] text-[#374151]">
-              {activeTab === 'delivery' ? (
-                <>
-                  <h2 className="text-base font-bold text-[#0B1220]">
-                    Delivery Timelines &amp; Fees
-                  </h2>
-                  <p>
-                    Customer-facing screens display final Naira pricing only. Your delivery fee is calculated and displayed upfront at checkout before you submit payment.
-                  </p>
-                  <p>
-                    Standard deliveries arrive within 2-5 business days across Nigeria.
-                  </p>
-                </>
-              ) : null}
-
-              {activeTab === 'returns' ? (
-                <>
-                  <h2 className="text-base font-bold text-[#0B1220]">30-Day Return Guarantee</h2>
-                  <p>
-                    If you receive a defective item, you have 30 days from delivery to request a return or exchange. Items must remain in original packaging with accessories included.
-                  </p>
-                </>
-              ) : null}
-
-              {activeTab === 'privacy' ? (
-                <>
-                  <h2 className="text-base font-bold text-[#0B1220]">Data Protection</h2>
-                  <p>
-                    We collect your name, email address, phone number, and delivery destination solely for order fulfillment and customer support.
-                  </p>
-                </>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
+        </div>
       </div>
     </div>
   )
