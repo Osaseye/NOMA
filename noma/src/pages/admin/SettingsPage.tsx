@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowClockwise, Check, Plus, Trash, UploadSimple } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { AdminTitle } from '../../components/admin/AdminTitle'
@@ -61,7 +61,10 @@ export function SettingsPage() {
     settings.cloudflareUploadEndpoint ??
     '/api/media/upload'
   const cloudflarePublicUrl = draft.cloudflarePublicUrl ?? settings.cloudflarePublicUrl ?? ''
-  const geminiApiKeys = draft.geminiApiKeys ?? settings.geminiApiKeys ?? []
+  const geminiApiKeys = useMemo(
+    () => draft.geminiApiKeys ?? settings.geminiApiKeys ?? [],
+    [draft.geminiApiKeys, settings.geminiApiKeys]
+  )
 
   // Live Gemini Key Pool State (Key 1..4 on Worker + Key 5..N added here)
   const [liveKeys, setLiveKeys] = useState<LiveKeyStatus[]>([])
@@ -92,10 +95,24 @@ export function SettingsPage() {
   }, [])
 
   useEffect(() => {
-    if (activeTab === 'storage') {
-      fetchLiveKeyStatuses(geminiApiKeys)
+    if (activeTab !== 'storage') return
+    let cancelled = false
+    const headers: Record<string, string> = {}
+    if (geminiApiKeys.length > 0) {
+      headers['X-Gemini-Api-Keys'] = geminiApiKeys.join(',')
     }
-  }, [activeTab, fetchLiveKeyStatuses, geminiApiKeys])
+    fetch('https://noma-r2-api.inventra.workers.dev/api/ai/keys-status', { headers })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { keys?: LiveKeyStatus[] } | null) => {
+        if (!cancelled && data && Array.isArray(data.keys)) {
+          setLiveKeys(data.keys)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, geminiApiKeys])
 
   const handleAddExtraKey = () => {
     const trimmed = newApiKeyInput.trim()
