@@ -55,21 +55,17 @@ export function TodaysBestDeals() {
 
   return (
     <section>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-              Today&apos;s Best Deals
-            </h2>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-              Limited-time price drops on customer favorites
-            </p>
-          </div>
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-4">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            Today&apos;s Best Deals
+          </h2>
 
-          <div className="inline-flex items-center gap-2.5 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900">
-            <Clock size={16} weight="fill" className="text-amber-600" />
+          {/* Clean Borderless Monochrome Countdown (Zero Colored Container) */}
+          <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
+            <Clock size={15} weight="regular" className="text-slate-700" />
             <span>Ends in</span>
-            <span className="font-bold tabular-nums">
+            <span className="font-bold tabular-nums text-slate-900">
               {String(h).padStart(2, '0')}h : {String(m).padStart(2, '0')}m :{' '}
               {String(s).padStart(2, '0')}s
             </span>
@@ -84,7 +80,7 @@ export function TodaysBestDeals() {
             action={
               <Link
                 to="/catalog"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
+                className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
               >
                 <span>Browse Catalog</span>
                 <ArrowRight size={14} weight="bold" />
@@ -92,7 +88,7 @@ export function TodaysBestDeals() {
             }
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
             {displayDeals.map((deal) => (
               <ProductCard key={deal.id} product={deal} />
             ))}

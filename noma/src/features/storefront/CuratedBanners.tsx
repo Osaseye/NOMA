@@ -1,4 +1,4 @@
-import { ArrowRight } from '@phosphor-icons/react'
+import { ArrowUpRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useAdminStore } from '../../store/adminStore'
 
@@ -6,8 +6,8 @@ const DEFAULT_EDITORIAL_COLLECTIONS = [
   {
     id: 'editorial-fashion',
     title: 'Footwear & Fashion (Retail & Bulk)',
-    subtitle: 'Quality shoes, sneakers, and apparel available in single pairs or wholesale bales.',
-    imageUrl: '/images/cat-living.png',
+    subtitle: 'Quality sneakers, shoes, and apparel available in single pairs or wholesale bales.',
+    imageUrl: '/images/cat-clothing.png',
     targetUrl: '/category/clothing',
   },
   {
@@ -49,53 +49,47 @@ export function CuratedBanners() {
 
   return (
     <section>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-              Featured Collections
-            </h2>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-              Handpicked categories for your wardrobe, home, and business
-            </p>
-          </div>
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            Featured Collections
+          </h2>
 
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB] hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-950 hover:underline"
           >
             <span>Explore all</span>
-            <ArrowRight size={14} weight="bold" />
+            <ArrowUpRight size={14} weight="bold" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        {/* Full-Bleed Editorial Visual Collection Cards */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 sm:gap-5">
           {collections.map((item) => (
             <Link
               key={item.id}
               to={item.targetUrl}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="group relative aspect-[16/11] w-full overflow-hidden rounded-2xl bg-slate-900"
             >
-              <div className="aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                <img
-                  src={item.imageUrl}
-                  alt={item.title}
-                  loading="lazy"
-                  className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
+              <img
+                src={item.imageUrl}
+                alt={item.title}
+                loading="lazy"
+                className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-              <div className="flex flex-1 flex-col justify-between p-5">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 transition-colors group-hover:text-[#1049EB]">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{item.subtitle}</p>
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6">
+                <div className="max-w-sm">
+                  <h3 className="text-lg font-bold text-white">{item.title}</h3>
+                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/80">
+                    {item.subtitle}
+                  </p>
                 </div>
 
-                <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB]">
-                  <span>Shop Collection</span>
-                  <ArrowRight size={14} weight="bold" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-transform duration-300 group-hover:scale-105">
+                  <ArrowUpRight size={17} weight="bold" />
                 </span>
               </div>
             </Link>

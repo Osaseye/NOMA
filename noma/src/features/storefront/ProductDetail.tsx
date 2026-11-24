@@ -274,16 +274,16 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
 
   return (
     <div className="min-h-screen pb-28 pt-5 text-slate-900">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
         {/* Friendly Breadcrumb */}
         <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
-          <Link to="/" className="transition-colors hover:text-[#1049EB]">
+          <Link to="/" className="transition-colors hover:text-slate-900">
             Home
           </Link>
           <CaretRight size={12} weight="regular" />
           <Link
             to={`/category/${product.category}`}
-            className="capitalize transition-colors hover:text-[#1049EB]"
+            className="capitalize transition-colors hover:text-slate-900"
           >
             {displayCategory}
           </Link>
@@ -312,7 +312,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                     onClick={() => setSelectedImgIndex(idx)}
                     className={`aspect-square w-full overflow-hidden rounded-xl border bg-white p-1.5 transition-all ${
                       selectedImgIndex === idx
-                        ? 'border-[#1049EB] ring-2 ring-[#1049EB]/20'
+                        ? 'border-slate-900 ring-2 ring-slate-900/15'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
@@ -326,14 +326,14 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className="relative flex aspect-[4/3] w-full flex-1 select-none items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs"
+              className="relative flex aspect-[4/3] w-full flex-1 select-none items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-[#F4F4F5] p-6"
             >
               {discountPercent > 0 ? (
-                <span className="absolute left-4 top-4 z-10 rounded-full bg-[#FEB719] px-3 py-1 text-xs font-bold text-slate-950">
+                <span className="absolute left-4 top-4 z-10 rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">
                   -{discountPercent}%
                 </span>
               ) : product.discountBadge ? (
-                <span className="absolute left-4 top-4 z-10 rounded-full bg-[#FEB719] px-3 py-1 text-xs font-bold text-slate-950">
+                <span className="absolute left-4 top-4 z-10 rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">
                   {product.discountBadge}
                 </span>
               ) : null}
@@ -343,7 +343,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   type="button"
                   onClick={handleShareProduct}
                   aria-label="Share product"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs transition-colors hover:text-[#1049EB]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs transition-colors hover:text-slate-900"
                 >
                   <ShareNetwork size={16} weight="regular" />
                 </button>
@@ -416,12 +416,12 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
             </div>
           </div>
 
-          {/* Right 5 Cols: Clean Conversion Card */}
+          {/* Right 5 Cols: Clean Conversion Card (Neutral Charcoal Palette, No Loud Blue) */}
           <div className="flex flex-col gap-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-6 lg:col-span-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 {product.badge ? (
-                  <span className="rounded-full bg-[#EEF3FE] px-2.5 py-0.5 text-[11px] font-semibold text-[#1049EB]">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-800">
                     {product.badge}
                   </span>
                 ) : null}
@@ -436,7 +436,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                 <button
                   type="button"
                   onClick={() => setActiveTab('reviews')}
-                  className="text-slate-500 hover:text-[#1049EB] hover:underline"
+                  className="text-slate-500 hover:text-slate-900 hover:underline"
                 >
                   ({productReviews.length} {productReviews.length === 1 ? 'review' : 'reviews'})
                 </button>
@@ -448,7 +448,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
             </h1>
 
             {/* Price & Stock Box */}
-            <div className="rounded-xl bg-slate-50 p-4">
+            <div className="rounded-xl bg-[#F4F4F5] p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-baseline gap-2.5">
@@ -470,17 +470,17 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
 
                 <div className="text-xs font-semibold">
                   {product.stockQty > 5 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
+                    <span className="inline-flex items-center gap-1.5 text-emerald-700">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                       <span>In stock ({product.stockQty})</span>
                     </span>
                   ) : product.stockQty > 0 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-amber-800">
+                    <span className="inline-flex items-center gap-1.5 text-amber-800">
                       <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                       <span>Only {product.stockQty} left</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-rose-700">
+                    <span className="inline-flex items-center gap-1.5 text-rose-700">
                       <span className="h-1.5 w-1.5 rounded-full bg-rose-600" />
                       <span>Out of stock</span>
                     </span>
@@ -495,9 +495,9 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-800">Select Size *</span>
                   {selectedSize ? (
-                    <span className="font-semibold text-[#1049EB]">Size: {selectedSize}</span>
+                    <span className="font-semibold text-slate-900">Size: {selectedSize}</span>
                   ) : (
-                    <span className="font-medium text-amber-700">Please choose a size</span>
+                    <span className="font-medium text-slate-500">Please choose a size</span>
                   )}
                 </div>
 
@@ -517,10 +517,10 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                         }}
                         className={`flex min-w-[48px] items-center justify-center rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all ${
                           isSelected
-                            ? 'border-[#1049EB] bg-[#1049EB] text-white shadow-2xs'
+                            ? 'border-slate-900 bg-slate-900 text-white'
                             : isOutOfStock
                               ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 line-through'
-                              : 'border-slate-200 bg-white text-slate-800 hover:border-[#1049EB]'
+                              : 'border-slate-200 bg-white text-slate-800 hover:border-slate-900'
                         }`}
                       >
                         {s.size}
@@ -586,9 +586,9 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   type="button"
                   disabled={maxAvailableStock <= 0}
                   onClick={handleAddToCartWithValidation}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1049EB] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0D3BC2] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <ShoppingBag size={17} weight="bold" />
+                  <ShoppingBag size={17} weight="regular" />
                   <span>{maxAvailableStock <= 0 ? 'Out of Stock' : 'Add to Bag'}</span>
                 </button>
                 <button
@@ -603,7 +603,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
 
               <Link
                 to={`/whatsapp-order?product=${encodeURIComponent(product.slug || product.id)}`}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-[#F4F4F5] px-4 py-3 text-xs font-semibold text-slate-900 transition-colors hover:bg-slate-200"
               >
                 <WhatsappLogo size={17} weight="fill" className="text-emerald-600" />
                 <span>Order or Ask About Bulk Pricing on WhatsApp</span>
@@ -613,19 +613,19 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
             {/* Clean 4-Point Assurances */}
             <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-xs font-medium text-slate-600">
               <div className="flex items-center gap-2">
-                <Truck size={16} className="text-[#1049EB]" />
+                <Truck size={16} className="text-slate-800" />
                 <span>Ships to {deliveryState}</span>
               </div>
               <div className="flex items-center gap-2">
-                <ShieldCheck size={16} className="text-[#1049EB]" />
+                <ShieldCheck size={16} className="text-slate-800" />
                 <span>Quality Checked</span>
               </div>
               <div className="flex items-center gap-2">
-                <ArrowsCounterClockwise size={16} className="text-[#1049EB]" />
+                <ArrowsCounterClockwise size={16} className="text-slate-800" />
                 <span>Easy Returns</span>
               </div>
               <div className="flex items-center gap-2">
-                <Lock size={16} className="text-[#1049EB]" />
+                <Lock size={16} className="text-slate-800" />
                 <span>Pay on Delivery</span>
               </div>
             </div>
@@ -634,7 +634,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
 
         {/* Clean Details Tabs Card */}
         <div className="mb-12 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-8">
-          <div className="flex gap-2 overflow-x-auto border-b border-slate-100 pb-3">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-slate-100 pb-3">
             {[
               { id: 'overview', label: 'Overview' },
               { id: 'specs', label: 'Details & Specs' },
@@ -648,8 +648,8 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-[#1049EB] text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                 }`}
               >
                 {tab.label}
@@ -677,7 +677,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                       {activeHighlights.map((feat, idx) => (
                         <div
                           key={idx}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[#EEF3FE] px-3.5 py-1.5 text-xs font-semibold text-[#1049EB]"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#F4F4F5] px-3.5 py-1.5 text-xs font-semibold text-slate-800"
                         >
                           <Check size={13} weight="bold" />
                           <span>{feat}</span>
@@ -688,7 +688,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                 </div>
 
                 {product.whatsInTheBox && product.whatsInTheBox.length > 0 ? (
-                  <div className="rounded-xl bg-slate-50 p-5 md:col-span-5">
+                  <div className="rounded-xl bg-[#F4F4F5] p-5 md:col-span-5">
                     <h3 className="text-sm font-bold text-slate-900">What&apos;s Included</h3>
                     <ul className="mt-3 space-y-2 text-xs font-medium text-slate-700">
                       {product.whatsInTheBox.map((item, idx) => (
@@ -705,7 +705,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
 
             {activeTab === 'specs' ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="rounded-xl bg-slate-50 p-5">
+                <div className="rounded-xl bg-[#F4F4F5] p-5">
                   <h3 className="text-xs font-bold text-slate-900">Product Information</h3>
                   <dl className="mt-3 space-y-2.5 text-xs">
                     {product.brand ? (
@@ -731,7 +731,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   </dl>
                 </div>
 
-                <div className="rounded-xl bg-slate-50 p-5">
+                <div className="rounded-xl bg-[#F4F4F5] p-5">
                   <h3 className="text-xs font-bold text-slate-900">Shipping &amp; Returns</h3>
                   <dl className="mt-3 space-y-2.5 text-xs">
                     <div className="flex items-center justify-between border-b border-slate-200/70 pb-2">
@@ -770,7 +770,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
 
             {activeTab === 'reviews' ? (
               <div className="space-y-6">
-                <div className="flex flex-col items-start justify-between gap-4 rounded-xl bg-slate-50 p-5 sm:flex-row sm:items-center">
+                <div className="flex flex-col items-start justify-between gap-4 rounded-xl bg-[#F4F4F5] p-5 sm:flex-row sm:items-center">
                   <div className="flex items-center gap-4">
                     <div className="flex min-w-[88px] flex-col items-center justify-center rounded-xl bg-white p-3 shadow-2xs">
                       <span className="text-2xl font-bold text-slate-900">
@@ -806,7 +806,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   <button
                     type="button"
                     onClick={() => setShowReviewModal(true)}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
+                    className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                   >
                     <Plus size={14} weight="bold" />
                     <span>Write a Review</span>
@@ -848,7 +848,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                       <button
                         type="button"
                         onClick={() => setShowReviewModal(true)}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white hover:bg-[#0D3BC2]"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white hover:bg-slate-800"
                       >
                         <Plus size={14} weight="bold" />
                         <span>Write a Review</span>
@@ -930,7 +930,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
             <h2 className="text-xl font-bold tracking-tight text-slate-900">You Might Also Like</h2>
             <Link
               to="/catalog"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#1049EB] hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-950 hover:underline"
             >
               <span>See all</span>
               <CaretRight size={14} weight="bold" />
@@ -944,7 +944,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
               detail="More items in this category will appear here soon."
             />
           ) : (
-            <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
               {relatedProducts.map((relProduct) => (
                 <ProductCard key={relProduct.id} product={relProduct} />
               ))}
@@ -965,9 +965,9 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
           type="button"
           disabled={maxAvailableStock <= 0}
           onClick={handleAddToCartWithValidation}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1049EB] px-5 py-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#0D3BC2] disabled:opacity-50"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
         >
-          <ShoppingBag size={16} weight="bold" />
+          <ShoppingBag size={16} weight="regular" />
           <span>{maxAvailableStock <= 0 ? 'Out of Stock' : 'Add to Bag'}</span>
         </button>
       </div>
@@ -1055,7 +1055,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   value={reviewerName}
                   onChange={(e) => setReviewerName(e.target.value)}
                   placeholder="Full name"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#1049EB] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
                 />
               </div>
 
@@ -1068,7 +1068,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   value={reviewerEmail}
                   onChange={(e) => setReviewerEmail(e.target.value)}
                   placeholder="you@domain.com"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#1049EB] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
                 />
               </div>
 
@@ -1081,7 +1081,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   value={reviewTitle}
                   onChange={(e) => setReviewTitle(e.target.value)}
                   placeholder="Summary of your experience"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#1049EB] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
                 />
               </div>
 
@@ -1093,7 +1093,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
                   placeholder="Share product quality, sizing, or delivery experience..."
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#1049EB] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
                 />
               </div>
 
@@ -1107,7 +1107,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white hover:bg-[#0D3BC2]"
+                  className="rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white hover:bg-slate-800"
                 >
                   Submit Review
                 </button>

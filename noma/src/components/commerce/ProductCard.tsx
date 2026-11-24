@@ -64,11 +64,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <Link
       to={`/product/${product.slug || product.id}`}
-      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md sm:p-4"
+      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/70 bg-white p-3 transition-all duration-200 hover:border-slate-300 hover:shadow-md sm:p-4"
     >
       <div>
         {/* Soft Rounded Product Image Well */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-slate-100/80">
+        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#F4F4F5]">
           <img
             src={product.image}
             alt={product.name}
@@ -86,18 +86,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             />
           ) : null}
 
-          {/* Top-Left Clean Badge */}
+          {/* Top-Left Neutral Badge */}
           <div className="absolute left-2.5 top-2.5 flex flex-col gap-1">
             {isOutOfStock ? (
-              <span className="rounded-full bg-slate-900/85 px-2.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="rounded-full bg-slate-900/90 px-2.5 py-0.5 text-[10px] font-semibold text-white">
                 Out of Stock
               </span>
             ) : discountPercent > 0 ? (
-              <span className="rounded-full bg-[#FEB719] px-2.5 py-0.5 text-[11px] font-bold text-slate-950">
+              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[11px] font-bold text-white">
                 -{discountPercent}%
               </span>
             ) : product.discountBadge ? (
-              <span className="rounded-full bg-[#FEB719] px-2.5 py-0.5 text-[11px] font-bold text-slate-950">
+              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[11px] font-bold text-white">
                 {product.discountBadge}
               </span>
             ) : product.badge ? (
@@ -114,7 +114,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
             className={`absolute right-2.5 top-2.5 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
               isWishlisted
-                ? 'bg-rose-50 text-rose-500'
+                ? 'bg-white text-rose-500 shadow-2xs'
                 : 'bg-white/90 text-slate-500 shadow-2xs hover:bg-white hover:text-rose-500'
             }`}
           >
@@ -136,7 +136,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             ) : null}
           </div>
 
-          <h3 className="mt-1 line-clamp-2 text-xs font-semibold leading-snug text-slate-900 transition-colors group-hover:text-[#1049EB] sm:text-sm">
+          <h3 className="mt-1 line-clamp-2 text-xs font-semibold leading-snug text-slate-900 transition-colors group-hover:text-slate-700 sm:text-sm">
             {product.name}
           </h3>
         </div>
@@ -159,20 +159,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             type="button"
             onClick={handleAddToCart}
-            className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition-all ${
+            className={`inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-3.5 text-xs font-semibold transition-all ${
               added
                 ? 'bg-emerald-600 text-white'
-                : 'bg-slate-900 text-white hover:bg-[#1049EB]'
+                : 'bg-slate-900 text-white hover:bg-slate-700'
             }`}
           >
             {added ? (
               <>
-                <Check size={13} weight="bold" />
+                <Check size={12} weight="bold" />
                 <span>Added</span>
               </>
             ) : (
               <>
-                <Plus size={13} weight="bold" />
+                <Plus size={12} weight="bold" />
                 <span>{hasSizes ? 'Options' : 'Add'}</span>
               </>
             )}

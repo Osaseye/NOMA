@@ -141,7 +141,6 @@ export function MiniCartDrawer() {
           aria-modal="true"
           aria-label="Shopping Bag Drawer"
         >
-          {/* Dimmed Backdrop */}
           <motion.div
             initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -151,7 +150,6 @@ export function MiniCartDrawer() {
             onClick={closeDrawer}
           />
 
-          {/* 100% Solid White Slide-Out Drawer Panel */}
           <motion.aside
             initial={reduceMotion ? { x: 0 } : { x: '100%' }}
             animate={{ x: 0 }}
@@ -162,7 +160,7 @@ export function MiniCartDrawer() {
             {/* Header Bar */}
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div className="flex items-center gap-2.5">
-                <ShoppingBag size={20} weight="bold" className="text-[#1049EB]" />
+                <ShoppingBag size={20} weight="regular" className="text-slate-900" />
                 <h2 className="text-base font-bold text-slate-900">Your Bag</h2>
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
                   {totalCount}
@@ -195,16 +193,16 @@ export function MiniCartDrawer() {
             </div>
 
             {/* Delivery State & Free Shipping Progress */}
-            <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="border-b border-slate-100 bg-[#F4F4F5] px-5 py-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-1.5">
-                  <MapPin size={14} weight="fill" className="text-[#1049EB]" />
+                  <MapPin size={14} weight="fill" className="text-slate-800" />
                   <span className="text-slate-500">Deliver to:</span>
                   <select
                     value={deliveryState}
                     onChange={(e) => setDeliveryState(e.target.value)}
                     aria-label="Select delivery state"
-                    className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-800 focus:border-[#1049EB] focus:outline-none"
+                    className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-900 focus:border-slate-900 focus:outline-none"
                   >
                     {NIGERIAN_STATES.map((st) => (
                       <option key={st} value={st}>
@@ -224,7 +222,7 @@ export function MiniCartDrawer() {
                   <div className="flex items-center justify-between text-xs">
                     {deliveryEstimate.isFreeStandard ? (
                       <span className="font-semibold text-emerald-700">
-                        You&apos;ve unlocked free standard delivery!
+                        Free standard delivery unlocked!
                       </span>
                     ) : (
                       <span className="text-slate-600">
@@ -241,13 +239,13 @@ export function MiniCartDrawer() {
                   </div>
                   <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
-                      className="h-full rounded-full bg-[#1049EB] transition-all duration-300"
+                      className="h-full rounded-full bg-slate-900 transition-all duration-300"
                       style={{ width: `${freeShippingProgress}%` }}
                     />
                   </div>
                 </div>
               ) : (
-                <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-slate-700">
                   <Truck size={14} weight="regular" />
                   <span>Bulky delivery rate applies ({formatNaira(deliveryEstimate.standardFee)})</span>
                 </div>
@@ -270,20 +268,20 @@ export function MiniCartDrawer() {
                     closeDrawer()
                     navigate('/catalog')
                   }}
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-6 py-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#0D3BC2]"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                 >
                   <span>Start Shopping</span>
                   <ArrowRight size={14} weight="bold" />
                 </button>
               </div>
             ) : (
-              <div className="flex-1 divide-y divide-slate-100 overflow-y-auto px-5">
+              <div className="no-scrollbar flex-1 divide-y divide-slate-100 overflow-y-auto px-5">
                 {cartLines.map((line) => (
                   <div key={line.key} className="flex gap-3.5 py-4">
                     <Link
                       to={`/product/${line.product.slug || line.product.id}`}
                       onClick={closeDrawer}
-                      className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50 p-2"
+                      className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F4F5] p-2"
                     >
                       <img
                         src={line.product.image}
@@ -298,7 +296,7 @@ export function MiniCartDrawer() {
                           <Link
                             to={`/product/${line.product.slug || line.product.id}`}
                             onClick={closeDrawer}
-                            className="line-clamp-2 text-xs font-semibold leading-snug text-slate-900 hover:text-[#1049EB]"
+                            className="line-clamp-2 text-xs font-semibold leading-snug text-slate-900 hover:underline"
                           >
                             {line.product.name}
                           </Link>
@@ -394,7 +392,7 @@ export function MiniCartDrawer() {
                     closeDrawer()
                     navigate('/checkout')
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1049EB] py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0D3BC2]"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                 >
                   <Lock size={16} weight="bold" />
                   <span>Proceed to Checkout</span>
@@ -412,7 +410,7 @@ export function MiniCartDrawer() {
                     href={whatsappOrderHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/70 py-2.5 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-100"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50"
                   >
                     <WhatsappLogo size={16} weight="fill" className="text-emerald-600" />
                     <span>WhatsApp Order</span>

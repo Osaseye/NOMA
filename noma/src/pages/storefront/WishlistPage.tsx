@@ -122,30 +122,19 @@ export function WishlistPage() {
         <meta property="og:url" content={currentUrl} />
       </Helmet>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Clean Friendly Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-slate-500">
-          <Link to="/" className="transition-colors hover:text-[#1049EB]">
-            Home
-          </Link>
-          <CaretRight size={12} weight="regular" />
-          <span className="font-semibold text-slate-900">
-            {isSharedMode ? `${sharedOwnerName}'s Wishlist` : 'Saved Wishlist'}
-          </span>
-        </nav>
-
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
         {/* Shared Wishlist Banner */}
         {isSharedMode ? (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-[#1049EB] p-5 text-white shadow-sm">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-900 p-5 text-white">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white">
                 <User size={19} weight="bold" />
               </div>
               <div>
                 <h2 className="text-sm font-bold text-white">
                   {sharedOwnerName}&apos;s Shared Wishlist
                 </h2>
-                <p className="mt-0.5 text-xs text-white/80">
+                <p className="mt-0.5 text-xs text-white/75">
                   Add items from this shared list directly to your bag.
                 </p>
               </div>
@@ -161,22 +150,24 @@ export function WishlistPage() {
           </div>
         ) : null}
 
-        {/* Page Header */}
-        <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-6 md:flex-row md:items-center">
+        {/* Single Clean Header Bar */}
+        <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-200 pb-4 md:flex-row md:items-end">
           <div>
-            <div className="flex items-center gap-2.5">
+            <nav className="mb-1 flex items-center gap-1.5 text-xs text-slate-500">
+              <Link to="/" className="hover:text-slate-900">
+                Home
+              </Link>
+              <CaretRight size={11} />
+              <span className="font-medium text-slate-800">Wishlist</span>
+            </nav>
+            <div className="flex items-baseline gap-2.5">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 {isSharedMode ? `${sharedOwnerName}'s Wishlist` : 'Saved Wishlist'}
               </h1>
-              <span className="rounded-full bg-[#EEF3FE] px-3 py-0.5 text-xs font-bold text-[#1049EB]">
-                {displayedProducts.length}
+              <span className="text-xs font-medium text-slate-500">
+                ({displayedProducts.length})
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-              {isSharedMode
-                ? `Items saved and shared by ${sharedOwnerName}.`
-                : 'Keep track of your favorite shoes, fashion, and home items.'}
-            </p>
           </div>
 
           {displayedProducts.length > 0 ? (
@@ -184,9 +175,9 @@ export function WishlistPage() {
               <button
                 type="button"
                 onClick={handleMoveAllToCart}
-                className="inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white shadow-2xs transition-colors hover:bg-[#0D3BC2]"
+                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
               >
-                <ShoppingBag size={15} weight="bold" />
+                <ShoppingBag size={15} weight="regular" />
                 <span>Add All to Bag</span>
               </button>
 
@@ -216,14 +207,14 @@ export function WishlistPage() {
             action={
               <Link
                 to="/catalog"
-                className="inline-flex items-center justify-center rounded-full bg-[#1049EB] px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
+                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
               >
                 Start Shopping
               </Link>
             }
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
             {displayedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

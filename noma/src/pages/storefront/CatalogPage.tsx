@@ -33,7 +33,6 @@ const sortOptions = [
 
 const subCategoryMap: Record<string, { id: string; label: string }[]> = {
   electronics: [
-    { id: 'all', label: 'All Electronics' },
     { id: 'tvs', label: 'Smart TVs' },
     { id: 'audio', label: 'Audio & Sound' },
     { id: 'speakers', label: 'Speakers' },
@@ -41,27 +40,20 @@ const subCategoryMap: Record<string, { id: string; label: string }[]> = {
     { id: 'gaming', label: 'Gaming' },
   ],
   kitchen: [
-    { id: 'all', label: 'All Kitchen' },
     { id: 'cookware', label: 'Cookware' },
     { id: 'airfryers', label: 'Air Fryers' },
     { id: 'blenders', label: 'Blenders' },
   ],
   appliances: [
-    { id: 'all', label: 'All Appliances' },
     { id: 'microwaves', label: 'Microwaves' },
     { id: 'refrigerators', label: 'Refrigerators' },
     { id: 'fans', label: 'Fans & Cooling' },
   ],
   phones: [
-    { id: 'all', label: 'All Phones' },
     { id: 'smartphones', label: 'Smartphones' },
     { id: 'powerbanks', label: 'Power Banks' },
   ],
-  default: [
-    { id: 'all', label: 'All Items' },
-    { id: 'featured', label: 'Featured' },
-    { id: 'deals', label: 'Price Drops' },
-  ],
+  default: [],
 }
 
 function getVisiblePages(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
@@ -109,8 +101,6 @@ export function CatalogPage() {
       return {
         id: 'all',
         label: 'All Products',
-        merchandisingLine:
-          'Browse shoes (retail & bulk), fashion, kitchen essentials, and home electronics.',
       }
     }
     const cleanKey = categoryId.toLowerCase()
@@ -120,7 +110,6 @@ export function CatalogPage() {
       ) || {
         id: categoryId,
         label: categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace(/-/g, ' '),
-        merchandisingLine: 'Quality items with fast delivery across Nigeria.',
       }
     )
   }, [categoryId, categories])
@@ -217,114 +206,43 @@ export function CatalogPage() {
 
   return (
     <div className="min-h-screen pb-20 pt-5 text-slate-900">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Clean Friendly Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-2 text-xs font-medium text-slate-500">
-          <Link to="/" className="transition-colors hover:text-[#1049EB]">
-            Home
-          </Link>
-          <CaretRight size={12} weight="regular" />
-          <span className="font-semibold text-slate-900">{activeCategory.label}</span>
-          {activeSubCategory !== 'all' ? (
-            <>
-              <CaretRight size={12} weight="regular" />
-              <span className="font-semibold capitalize text-[#1049EB]">{activeSubCategory}</span>
-            </>
-          ) : null}
-        </nav>
-
-        {/* Clean Header & Category Pills */}
-        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-6">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                {activeCategory.label}
-              </h1>
-              <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-500 sm:text-sm">
-                {(activeCategory.merchandisingLine || '').replace(/[—–]/g, '-')}
-              </p>
-            </div>
-            <span className="shrink-0 text-xs font-semibold text-slate-500">
-              {sortedProducts.length} {sortedProducts.length === 1 ? 'product' : 'products'}
-            </span>
-          </div>
-
-          {/* Department Switcher Pills */}
-          <div className="mt-5 flex items-center gap-2 overflow-x-auto border-t border-slate-100 pt-4 pb-1">
-            <button
-              type="button"
-              onClick={() => {
-                navigate('/catalog')
-                setActiveSubCategory('all')
-                setCurrentPage(1)
-              }}
-              className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                !categoryId || categoryId === 'all'
-                  ? 'bg-[#1049EB] text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              All ({products.length})
-            </button>
-            {categories.map((cat) => {
-              const isSelected = categoryId === cat.id
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    navigate(`/category/${cat.id}`)
-                    setActiveSubCategory('all')
-                    setCurrentPage(1)
-                  }}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                    isSelected
-                      ? 'bg-[#1049EB] text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Top Horizontal Filter & Sort Toolbar */}
-        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs sm:px-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {/* Left: Filter Button + Subcategory Pills */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setFiltersPanelOpen((prev) => !prev)}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
-                  filtersPanelOpen || activeFilterCount > 0
-                    ? 'bg-slate-900 text-white'
-                    : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <Funnel size={14} weight="bold" />
-                <span>Filters</span>
-                {activeFilterCount > 0 ? (
-                  <span className="rounded-full bg-[#FEB719] px-1.5 py-0.2 text-[10px] font-bold text-slate-950">
-                    {activeFilterCount}
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        {/* ONE Single Unified Header & Filter Bar (Eliminates the 3 redundant stacked filter levels!) */}
+        <div className="mb-6 border-b border-slate-200 pb-4">
+          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+            {/* Left: Breadcrumb + Title + Count + Inline Subcategory Tabs */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <div>
+                <nav className="mb-1 flex items-center gap-1.5 text-xs text-slate-500">
+                  <Link to="/" className="hover:text-slate-900">
+                    Home
+                  </Link>
+                  <CaretRight size={11} />
+                  <span className="font-medium text-slate-800">{activeCategory.label}</span>
+                </nav>
+                <div className="flex items-baseline gap-2.5">
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                    {activeCategory.label}
+                  </h1>
+                  <span className="text-xs font-medium text-slate-500">
+                    ({sortedProducts.length})
                   </span>
-                ) : null}
-              </button>
+                </div>
+              </div>
 
+              {/* Inline Subcategory Pills (Only shown if this department has subcategories) */}
               {activeCategorySubcategories.length > 0 ? (
-                <div className="flex items-center gap-1.5 overflow-x-auto">
+                <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
                   <button
                     type="button"
                     onClick={() => {
                       setActiveSubCategory('all')
                       setCurrentPage(1)
                     }}
-                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                       activeSubCategory === 'all'
-                        ? 'bg-[#EEF3FE] font-semibold text-[#1049EB]'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
                     All
@@ -340,10 +258,10 @@ export function CatalogPage() {
                           setActiveSubCategory(sub.id)
                           setCurrentPage(1)
                         }}
-                        className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                        className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                           isSubActive
-                            ? 'bg-[#EEF3FE] font-semibold text-[#1049EB]'
-                            : 'text-slate-600 hover:bg-slate-100'
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                         }`}
                       >
                         {sub.label}
@@ -354,8 +272,26 @@ export function CatalogPage() {
               ) : null}
             </div>
 
-            {/* Right: Sort Dropdown + View Toggle */}
-            <div className="flex items-center gap-2.5">
+            {/* Right: Filter Toggle + Sort Dropdown + Grid/List */}
+            <div className="flex items-center gap-2 self-start lg:self-end">
+              <button
+                type="button"
+                onClick={() => setFiltersPanelOpen((prev) => !prev)}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
+                  filtersPanelOpen || activeFilterCount > 0
+                    ? 'bg-slate-900 text-white'
+                    : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Funnel size={14} weight="regular" />
+                <span>Filter</span>
+                {activeFilterCount > 0 ? (
+                  <span className="rounded-full bg-white/20 px-1.5 text-[10px] font-bold">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </button>
+
               <div className="relative">
                 <button
                   type="button"
@@ -380,7 +316,7 @@ export function CatalogPage() {
                         }}
                         className={`w-full px-4 py-2 text-left text-xs font-medium transition-colors ${
                           sort === opt.value
-                            ? 'bg-[#EEF3FE] font-semibold text-[#1049EB]'
+                            ? 'bg-slate-100 font-semibold text-slate-950'
                             : 'text-slate-700 hover:bg-slate-50'
                         }`}
                       >
@@ -420,9 +356,9 @@ export function CatalogPage() {
             </div>
           </div>
 
-          {/* Expandable Filter Options */}
+          {/* Collapsible Filter Drawer Panel */}
           {filtersPanelOpen ? (
-            <div className="mt-4 grid grid-cols-1 gap-6 border-t border-slate-100 pt-4 md:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-6 rounded-2xl bg-[#F4F4F5] p-5 md:grid-cols-3">
               <div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-600">Max Price</span>
@@ -441,7 +377,7 @@ export function CatalogPage() {
                     setCurrentPage(1)
                   }}
                   aria-label="Maximum price filter"
-                  className="mt-3 w-full accent-[#1049EB]"
+                  className="mt-3 w-full accent-slate-900"
                 />
               </div>
 
@@ -458,7 +394,7 @@ export function CatalogPage() {
                       }}
                       className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                         minRating === stars
-                          ? 'border-[#1049EB] bg-[#EEF3FE] text-[#1049EB]'
+                          ? 'border-slate-900 bg-slate-900 text-white'
                           : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                       }`}
                     >
@@ -480,24 +416,24 @@ export function CatalogPage() {
                         setInStockOnly(e.target.checked)
                         setCurrentPage(1)
                       }}
-                      className="h-4 w-4 rounded accent-[#1049EB]"
+                      className="h-4 w-4 rounded accent-slate-900"
                     />
                     <span>Show in-stock items only</span>
                   </label>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-2">
+                <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-2">
                   <button
                     type="button"
                     onClick={resetAllFilters}
-                    className="text-xs font-semibold text-[#1049EB] hover:underline"
+                    className="text-xs font-semibold text-slate-700 hover:underline"
                   >
                     Reset all
                   </button>
                   <button
                     type="button"
                     onClick={() => setFiltersPanelOpen(false)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900"
                   >
                     <span>Done</span>
                     <X size={13} />
@@ -508,7 +444,7 @@ export function CatalogPage() {
           ) : null}
         </div>
 
-        {/* Breathable 4-Column Product Grid */}
+        {/* Wide 4-Column Product Grid */}
         {paginatedProducts.length === 0 ? (
           <EmptyState
             title="No products match your filters"
@@ -517,14 +453,14 @@ export function CatalogPage() {
               <button
                 type="button"
                 onClick={resetAllFilters}
-                className="rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
+                className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
               >
                 Reset Filters
               </button>
             }
           />
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
             {paginatedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -582,7 +518,7 @@ export function CatalogPage() {
                       </div>
 
                       <Link to={`/product/${product.slug || product.id}`}>
-                        <h3 className="mt-1 text-base font-bold text-slate-900 hover:text-[#1049EB]">
+                        <h3 className="mt-1 text-base font-bold text-slate-900 hover:underline">
                           {product.name}
                         </h3>
                       </Link>
@@ -620,7 +556,7 @@ export function CatalogPage() {
                         className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
                           outOfStock
                             ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                            : 'bg-slate-900 text-white hover:bg-[#1049EB]'
+                            : 'bg-slate-900 text-white hover:bg-slate-800'
                         }`}
                       >
                         <Plus size={13} weight="bold" />
@@ -634,7 +570,7 @@ export function CatalogPage() {
           </div>
         )}
 
-        {/* Clean Rounded Pagination */}
+        {/* Neutral Pagination */}
         {totalPages > 1 ? (
           <nav
             aria-label="Catalog pagination"
@@ -663,7 +599,7 @@ export function CatalogPage() {
                   aria-current={entry === currentPage ? 'page' : undefined}
                   className={`flex h-9 min-w-[36px] items-center justify-center rounded-xl px-2.5 text-xs font-semibold transition-colors ${
                     entry === currentPage
-                      ? 'bg-[#1049EB] text-white'
+                      ? 'bg-slate-900 text-white'
                       : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >

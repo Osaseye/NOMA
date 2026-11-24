@@ -31,19 +31,14 @@ export function TrendingNow() {
 
   return (
     <section>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Clean Section Header & Pill Tabs */}
-        <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-              Trending Now
-            </h2>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-              Popular picks across footwear, fashion, home, and electronics
-            </p>
-          </div>
+      <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        {/* Clean Section Header & Scrollbar-Free Pill Tabs */}
+        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            Trending Now
+          </h2>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
             {filterTabs.map((tab) => {
               const isActive = activeTab === tab.id
               return (
@@ -51,10 +46,10 @@ export function TrendingNow() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                     isActive
-                      ? 'bg-[#1049EB] text-white shadow-2xs'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
                   {tab.label}
@@ -64,8 +59,8 @@ export function TrendingNow() {
           </div>
         </div>
 
-        {/* Breathable 4-Column Rounded Card Grid */}
-        <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+        {/* Wide 4-Column Product Grid */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
           {displayProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -74,7 +69,7 @@ export function TrendingNow() {
         <div className="mt-8 text-center">
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-2.5 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:border-[#1049EB] hover:text-[#1049EB]"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-2.5 text-xs font-semibold text-slate-900 transition-colors hover:bg-slate-900 hover:text-white"
           >
             <span>View All Products</span>
             <ArrowRight size={14} weight="bold" />
