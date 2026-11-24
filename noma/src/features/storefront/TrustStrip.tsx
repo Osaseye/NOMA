@@ -1,56 +1,50 @@
-import {
-  ArrowsCounterClockwise,
-  Clock,
-  ShieldCheck,
-  Truck,
-  Wallet,
-} from '@phosphor-icons/react'
+import { ArrowsCounterClockwise, Headset, ShieldCheck, Truck } from '@phosphor-icons/react'
 
 const trustItems = [
   {
-    icon: Truck,
-    title: 'Delivery Fee Upfront',
-    detail: 'Confirmed before payment',
-  },
-  {
-    icon: Clock,
-    title: '2-5 Days Delivery',
-    detail: 'Tracked nationwide dispatch',
-  },
-  {
-    icon: Wallet,
-    title: 'Pay on Delivery',
-    detail: 'Available in selected areas',
-  },
-  {
-    icon: ArrowsCounterClockwise,
-    title: '30-Day Returns',
-    detail: 'Verified condition guarantee',
-  },
-  {
+    code: 'SPEC-01',
     icon: ShieldCheck,
-    title: 'Secure Payments',
-    detail: 'Card, bank transfer & USSD',
+    title: 'Verified Warranty',
+    detail: '100% genuine items backed by distributor warranty',
+  },
+  {
+    code: 'SPEC-02',
+    icon: Truck,
+    title: 'Nationwide Delivery',
+    detail: '2 to 5 business days with upfront Naira shipping rates',
+  },
+  {
+    code: 'SPEC-03',
+    icon: ArrowsCounterClockwise,
+    title: 'Pay on Delivery',
+    detail: 'Available in eligible metro zones across Nigeria',
+  },
+  {
+    code: 'SPEC-04',
+    icon: Headset,
+    title: 'WhatsApp Concierge',
+    detail: 'Direct human order tracking and product assistance',
   },
 ]
 
 export function TrustStrip() {
   return (
-    <section className="border-y border-[#E5E7EB] bg-white" aria-label="Store guarantees">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="grid grid-cols-2 divide-y divide-[#E5E7EB] sm:grid-cols-3 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
+    <section aria-label="Store guarantees" className="border-b border-[#E4E4E7] bg-[#FAFAFA]">
+      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
+        <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
           {trustItems.map((item) => (
-            <div key={item.title} className="flex items-center gap-3 px-3 py-4 sm:px-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] bg-[#EEF3FE] text-[#1049EB]">
+            <div key={item.title} className="flex items-start gap-3.5 p-5 lg:p-6">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#E4E4E7] bg-white text-[#09090B]">
                 <item.icon size={18} weight="regular" />
-              </span>
+              </div>
               <div className="min-w-0">
-                <span className="block truncate text-xs font-semibold text-[#0B1220]">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#71717A]">
+                  {item.code}
+                </span>
+                <div className="mt-0.5 text-xs font-bold uppercase tracking-wider text-[#09090B]">
                   {item.title}
-                </span>
-                <span className="block truncate text-[11px] text-[#5E6675]">
-                  {item.detail}
-                </span>
+                </div>
+                <div className="mt-0.5 text-xs leading-relaxed text-[#52525B]">{item.detail}</div>
               </div>
             </div>
           ))}

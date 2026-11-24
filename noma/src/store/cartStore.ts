@@ -33,19 +33,73 @@ export function toCartLineEntries(items: Record<string, number>): CartLineEntry[
     })
 }
 
+export const FREE_DELIVERY_THRESHOLD = 250000
+
+export function estimateStateDeliveryFee(
+  stateName: string,
+  hasBulkyItem: boolean,
+  subtotal: number,
+): {
+  standardFee: number
+  expressFee: number
+  freeShippingThreshold: number
+  isFreeStandard: boolean
+  zoneLabel: string
+} {
+  const clean = (stateName || 'Lagos').toLowerCase().trim()
+  let baseStandard = 7500
+  let baseExpress = 12000
+  let zoneLabel = 'Nationwide Interstate (3 - 5 Days)'
+
+  if (clean.includes('lagos')) {
+    baseStandard = 3500
+    baseExpress = 6000
+    zoneLabel = 'Lagos Metro (1 - 2 Days)'
+  } else if (clean.includes('oyo') || clean.includes('ogun') || clean.includes('osun')) {
+    baseStandard = 4500
+    baseExpress = 7500
+    zoneLabel = 'South-West Regional (2 - 3 Days)'
+  } else if (clean.includes('abuja') || clean.includes('fct') || clean.includes('rivers') || clean.includes('edo')) {
+    baseStandard = 6000
+    baseExpress = 9500
+    zoneLabel = 'Major Hub Air/Road (2 - 4 Days)'
+  }
+
+  const bulkySurcharge = hasBulkyItem ? 4000 : 0
+  const isFreeStandard = !hasBulkyItem && subtotal >= FREE_DELIVERY_THRESHOLD
+  const standardFee = isFreeStandard ? 0 : baseStandard + bulkySurcharge
+  const expressFee = baseExpress + bulkySurcharge
+
+  return {
+    standardFee,
+    expressFee,
+    freeShippingThreshold: FREE_DELIVERY_THRESHOLD,
+    isFreeStandard,
+    zoneLabel,
+  }
+}
+
 type CartState = {
   items: Record<string, number>
+  deliveryState: string
+  isDrawerOpen: boolean
   addItem: (productId: string, size?: string, quantity?: number) => void
   removeItem: (productId: string, size?: string) => void
   setItemQuantity: (lineKey: string, quantity: number) => void
   removeLine: (lineKey: string) => void
   clearCart: () => void
+  openDrawer: () => void
+  closeDrawer: () => void
+  toggleDrawer: () => void
+  setDeliveryState: (deliveryState: string) => void
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: {},
+      deliveryState: 'Lagos',
+      isDrawerOpen: false,
       addItem: (productId, size, quantity = 1) =>
         set((state) => {
           if (!Number.isFinite(quantity) || quantity <= 0) {
@@ -102,9 +156,17 @@ export const useCartStore = create<CartState>()(
           return { items: next }
         }),
       clearCart: () => set({ items: {} }),
+      openDrawer: () => set({ isDrawerOpen: true }),
+      closeDrawer: () => set({ isDrawerOpen: false }),
+      toggleDrawer: () => set((state) => ({ isDrawerOpen: !state.isDrawerOpen })),
+      setDeliveryState: (deliveryState) => set({ deliveryState }),
     }),
     {
       name: 'noma_cart_store_v2',
+      partialize: (state) => ({
+        items: state.items,
+        deliveryState: state.deliveryState,
+      }),
     }
   )
 )

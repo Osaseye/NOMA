@@ -1,10 +1,8 @@
-import { ArrowRight, CaretRight, SquaresFour } from '@phosphor-icons/react'
+import { ArrowUpRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import { EmptyState } from '../../design-system/components/EmptyState'
 import { useProductStore } from '../../store/productStore'
-import type { Category } from '../../types/commerce'
 
-const CATEGORY_IMAGE_FALLBACKS: Record<string, string> = {
+const CATEGORY_STUDIO_IMAGES: Record<string, string> = {
   electronics: '/images/cat-electronics.png',
   appliances: '/images/cat-appliances.png',
   kitchen: '/images/cat-kitchen.png',
@@ -14,140 +12,107 @@ const CATEGORY_IMAGE_FALLBACKS: Record<string, string> = {
   solar: '/images/cat-power.png',
   living: '/images/cat-living.png',
   'home-essentials': '/images/cat-living.png',
-  general: '/images/cat-living.png',
   bicycles: '/images/cat-living.png',
   outdoor: '/images/cat-living.png',
   clothing: '/images/cat-living.png',
-}
-
-function resolveCategoryImage(category: Category): string {
-  if (category.image && !category.image.includes('unsplash.com')) {
-    return category.image
-  }
-  return CATEGORY_IMAGE_FALLBACKS[category.id.toLowerCase()] || '/images/cat-living.png'
-}
-
-function getBentoColSpan(index: number, totalCategories: number): string {
-  if (index === 0) {
-    if (totalCategories === 1) return 'col-span-2 lg:col-span-7 min-h-[240px] lg:min-h-[340px]'
-    return 'col-span-2 lg:col-span-5 lg:row-span-2 min-h-[230px] lg:min-h-[380px]'
-  }
-  if (totalCategories === 2) {
-    return 'col-span-1 lg:col-span-7 min-h-[168px] lg:min-h-[182px]'
-  }
-  if (totalCategories === 3) {
-    return index === 1
-      ? 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
-      : 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
-  }
-  if (totalCategories === 4) {
-    if (index === 1) return 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
-    if (index === 2) return 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
-    return 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
-  }
-  // 5 categories
-  if (index === 1) return 'col-span-1 lg:col-span-4 min-h-[168px] lg:min-h-[182px]'
-  if (index === 2) return 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
-  return 'col-span-1 lg:col-span-2 min-h-[168px] lg:min-h-[182px]'
-}
-
-function getBrowseTileSpan(totalCategories: number): string {
-  if (totalCategories === 1) return 'col-span-2 lg:col-span-5 min-h-[180px] lg:min-h-[340px]'
-  if (totalCategories === 2) return 'col-span-1 lg:col-span-7 min-h-[168px] lg:min-h-[182px]'
-  if (totalCategories === 3) return 'col-span-1 lg:col-span-7 min-h-[168px] lg:min-h-[182px]'
-  return 'col-span-1 lg:col-span-3 min-h-[168px] lg:min-h-[182px]'
+  wines: '/images/cat-kitchen.png',
+  general: '/images/cat-living.png',
 }
 
 export function ShopByCategory() {
-  const { categories } = useProductStore()
-  const displayCategories = categories.slice(0, 5)
+  const { categories, products } = useProductStore()
+
+  const getCategoryCount = (catId: string) =>
+    products.filter(
+      (p) =>
+        p.category === catId ||
+        p.subCategory === catId ||
+        (catId === 'kitchen' && p.category === 'cooking') ||
+        (catId === 'cooking' && p.category === 'kitchen'),
+    ).length
+
+  const resolveCategoryImage = (catId: string, customImage?: string) => {
+    if (customImage && !customImage.includes('unsplash.com')) {
+      return customImage
+    }
+    const clean = catId.toLowerCase()
+    if (CATEGORY_STUDIO_IMAGES[clean]) {
+      return CATEGORY_STUDIO_IMAGES[clean]
+    }
+    return '/images/cat-living.png'
+  }
+
+  const displayCategories = categories.slice(0, 6)
 
   return (
-    <section className="border-b border-[#E5E7EB] bg-white py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
-        {/* Header (No eyebrow) */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-bold tracking-tight text-[#0B1220] md:text-[1.75rem]">
-            Shop by category
-          </h2>
+    <section className="border-b border-[#E4E4E7] bg-white">
+      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
+        {/* Architectural Header Bar */}
+        <div className="flex items-center justify-between border-b border-[#E4E4E7] px-5 py-4 sm:px-8">
+          <div>
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1049EB]">
+              02 / DIRECTORY
+            </span>
+            <h2 className="mt-0.5 text-xl font-bold tracking-tight text-[#09090B] sm:text-2xl">
+              Shop by Department
+            </h2>
+          </div>
+
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1049EB] hover:text-[#0D3BC2] hover:underline"
+            className="inline-flex items-center gap-1.5 border border-[#E4E4E7] bg-[#FAFAFA] px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:border-[#09090B]"
           >
-            <span>All categories</span>
-            <CaretRight size={14} weight="regular" />
+            <span>FULL DIRECTORY</span>
+            <ArrowUpRight size={14} weight="regular" />
           </Link>
         </div>
 
-        {/* Category Bento Mosaic */}
-        {displayCategories.length === 0 ? (
-          <EmptyState
-            icon={<SquaresFour size={24} weight="regular" />}
-            title="No categories available yet"
-            detail="Categories configured in the catalog will appear here automatically."
-            action={
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
-              >
-                Browse Full Catalog
-              </Link>
-            }
-          />
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-12">
-            {displayCategories.map((cat, index) => (
+        {/* 6-Cell Exposed 1px Architectural Bento Matrix */}
+        <div className="grid grid-cols-2 gap-px bg-[#E4E4E7] md:grid-cols-3 lg:grid-cols-6">
+          {displayCategories.map((cat, idx) => {
+            const count = getCategoryCount(cat.id)
+            const imageSrc = resolveCategoryImage(cat.id, cat.image)
+
+            return (
               <Link
                 key={cat.id}
                 to={`/category/${cat.id}`}
-                aria-label={`Shop ${cat.label}`}
-                className={`group relative flex overflow-hidden rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] ${getBentoColSpan(
-                  index,
-                  displayCategories.length
-                )}`}
+                className="group flex flex-col justify-between bg-white p-4 transition-colors hover:bg-[#FAFAFA] sm:p-5"
               >
-                <img
-                  src={resolveCategoryImage(cat)}
-                  alt={cat.label}
-                  loading="lazy"
-                  className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220]/85 via-[#0B1220]/25 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                  <h3 className="line-clamp-1 text-sm font-bold tracking-tight text-white sm:text-base">
-                    {cat.label}
-                  </h3>
-                  <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-white/80">
-                    {(cat.merchandisingLine || 'Curated home essentials').replace(/[—–]/g, '-')}
-                  </p>
+                <div>
+                  <div className="mb-3 flex items-center justify-between font-mono text-[10px] text-[#71717A]">
+                    <span>DEPT / {String(idx + 1).padStart(2, '0')}</span>
+                    <span>[{count}]</span>
+                  </div>
+
+                  <div className="aspect-[4/3] w-full overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5]">
+                    <img
+                      src={imageSrc}
+                      alt={cat.label}
+                      loading="lazy"
+                      className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-end justify-between gap-2 border-t border-[#E4E4E7] pt-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-xs font-bold uppercase tracking-wider text-[#09090B] group-hover:text-[#1049EB]">
+                      {cat.label}
+                    </h3>
+                    <span className="mt-0.5 block font-mono text-[10px] text-[#71717A]">
+                      {count} {count === 1 ? 'UNIT' : 'UNITS'}
+                    </span>
+                  </div>
+
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-[#E4E4E7] bg-[#FAFAFA] text-[#09090B] transition-colors group-hover:border-[#09090B] group-hover:bg-[#09090B] group-hover:text-white">
+                    <ArrowUpRight size={13} weight="regular" />
+                  </span>
                 </div>
               </Link>
-            ))}
-
-            {/* Dark Architectural Browse Full Catalog Tile */}
-            <Link
-              to="/catalog"
-              aria-label="Browse Full Catalog"
-              className={`group flex flex-col items-start justify-between rounded-[8px] border border-[#0B1220] bg-[#0B1220] p-5 text-white transition-colors hover:bg-[#1E293B] ${getBrowseTileSpan(
-                displayCategories.length
-              )}`}
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-white/15 bg-white/10 text-white">
-                <SquaresFour size={20} weight="regular" />
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold tracking-tight text-white sm:text-base">
-                  Browse Full Catalog
-                </h3>
-                <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-white/80 transition-colors group-hover:text-white">
-                  <span>View all items</span>
-                  <ArrowRight size={14} weight="regular" />
-                </span>
-              </div>
-            </Link>
-          </div>
-        )}
+            )
+          })}
+        </div>
       </div>
     </section>
   )

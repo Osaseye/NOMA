@@ -1,648 +1,525 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  ArrowRight,
-  CaretRight,
-  Clock,
+  ArrowUpRight,
+  CaretDown,
   Heart,
-  House,
   List,
   MagnifyingGlass,
+  MapPin,
   ShoppingBag,
-  SquaresFour,
-  Star,
-  Tag,
+  Truck,
   User,
-  WhatsappLogo,
   X,
 } from '@phosphor-icons/react'
-import { brand } from '../../constants/brand'
-import { useAdminStore } from '../../store/adminStore'
-import { useCartStore } from '../../store/cartStore'
+import { toCartLineEntries, useCartStore } from '../../store/cartStore'
 import { useProductStore } from '../../store/productStore'
+import { useUserStore } from '../../store/userStore'
 import { formatNaira } from '../../utils/pricing'
-import { InstallAppBanner } from '../pwa/InstallAppBanner'
 
-export function StoreHeader() {
+const QUICK_SEARCH_CHIPS = ['Smart TV', 'Inverter AC', 'Power Station', 'Air Fryer', 'Soundbar']
+
+const NIGERIAN_STATES = [
+  'Lagos',
+  'FCT - Abuja',
+  'Oyo',
+  'Ogun',
+  'Rivers',
+  'Edo',
+  'Delta',
+  'Enugu',
+  'Anambra',
+  'Kano',
+  'Kaduna',
+  'Akwa Ibom',
+  'Cross River',
+  'Imo',
+  'Kwara',
+  'Osun',
+  'Ondo',
+  'Ekiti',
+  'Plateau',
+  'Abia',
+]
+
+const EXPOSED_DEPARTMENTS = [
+  { label: 'ALL CATALOG', href: '/catalog' },
+  { label: 'ELECTRONICS', href: '/category/electronics' },
+  { label: 'APPLIANCES', href: '/category/appliances' },
+  { label: 'KITCHEN', href: '/category/kitchen' },
+  { label: 'PHONES', href: '/category/phones' },
+]
+
+export const StoreHeader: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchContainerRef = useRef<HTMLDivElement>(null)
+
   const navigate = useNavigate()
   const location = useLocation()
-  const { products, categories } = useProductStore()
-  const { settings } = useAdminStore()
-  const count = Object.values(useCartStore((state) => state.items)).reduce(
-    (sum, quantity) => sum + quantity,
-    0,
+
+  const items = useCartStore((state) => state.items)
+  const openDrawer = useCartStore((state) => state.openDrawer)
+  const deliveryState = useCartStore((state) => state.deliveryState)
+  const setDeliveryState = useCartStore((state) => state.setDeliveryState)
+
+  const totalItems = useMemo(
+    () => toCartLineEntries(items).reduce((sum, entry) => sum + entry.quantity, 0),
+    [items],
   )
 
-  const [menuOpenedPath, setMenuOpenedPath] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [dropdownOpenedPath, setDropdownOpenedPath] = useState<string | null>(null)
+  const wishlistCount = useUserStore((state) => state.wishlistProductIds.length)
+  const products = useProductStore((state) => state.products)
+  const categories = useProductStore((state) => state.categories)
 
-  const mobileMenuOpen = menuOpenedPath === location.pathname
-  const isDropdownOpen = dropdownOpenedPath === location.pathname
-  const setMobileMenuOpen = useCallback(
-    (open: boolean | ((prev: boolean) => boolean)) => {
-      setMenuOpenedPath((prevPath) => {
-        const prevOpen = prevPath === location.pathname
-        const nextOpen = typeof open === 'function' ? open(prevOpen) : open
-        return nextOpen ? location.pathname : null
-      })
-    },
-    [location.pathname],
-  )
-  const setIsDropdownOpen = useCallback(
-    (open: boolean) => {
-      setDropdownOpenedPath(open ? location.pathname : null)
-    },
-    [location.pathname],
-  )
-
-  const searchContainerRef = useRef<HTMLDivElement>(null)
-  const mobileSearchRef = useRef<HTMLDivElement>(null)
-  const desktopInputRef = useRef<HTMLInputElement>(null)
-
-  const whatsappDigits = settings.whatsappNumber?.replace(/\D/g, '')
-  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : brand.whatsapp
-
-  const searchResults = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim()
-    if (!q) return { products: [], categories: [] }
-
-    const matchedProducts = products
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          (p.brand && p.brand.toLowerCase().includes(q)) ||
-          (p.description && p.description.toLowerCase().includes(q)),
-      )
-      .slice(0, 5)
-
-    const matchedCategories = categories
-      .filter(
-        (c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q),
-      )
-      .slice(0, 3)
-
-    return { products: matchedProducts, categories: matchedCategories }
-  }, [searchQuery, products, categories])
-
-  // Keyboard "/" focuses desktop search; Escape closes dropdown
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsDropdownOpen(false)
-        setMobileMenuOpen(false)
-        desktopInputRef.current?.blur()
-        return
-      }
-
       if (
         event.key === '/' &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA' &&
+        document.activeElement?.tagName !== 'SELECT'
       ) {
-        const target = event.target as HTMLElement | null
-        const tag = target?.tagName?.toLowerCase()
-        if (tag === 'input' || tag === 'textarea' || tag === 'select' || target?.isContentEditable) {
-          return
-        }
         event.preventDefault()
-        desktopInputRef.current?.focus()
-        setIsDropdownOpen(true)
+        searchInputRef.current?.focus()
+        setSearchOpen(true)
+      } else if (event.key === 'Escape') {
+        setSearchOpen(false)
+        searchInputRef.current?.blur()
       }
     }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [setIsDropdownOpen, setMobileMenuOpen])
-
-  // Close search dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node
-      const insideDesktop = searchContainerRef.current?.contains(target)
-      const insideMobile = mobileSearchRef.current?.contains(target)
-      if (!insideDesktop && !insideMobile) {
-        setIsDropdownOpen(false)
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setSearchOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [setIsDropdownOpen])
+  }, [])
 
-  // Lock background scroll when mobile menu is open
-  useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) {
+      return products.slice(0, 4)
     }
-  }, [mobileMenuOpen])
+    return products
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          (p.subCategory && p.subCategory.toLowerCase().includes(q)) ||
+          (p.brand && p.brand.toLowerCase().includes(q)),
+      )
+      .slice(0, 5)
+  }, [products, searchQuery])
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const matchingCategories = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return categories.slice(0, 5)
+    return categories
+      .filter((c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+      .slice(0, 5)
+  }, [categories, searchQuery])
+
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setIsDropdownOpen(false)
+      setSearchOpen(false)
+      setMobileMenuOpen(false)
     }
-  }
-
-  const isNavActive = (path: string) => {
-    if (path === '/catalog') {
-      return location.pathname.startsWith('/catalog') || location.pathname.startsWith('/category')
-    }
-    return location.pathname === path
   }
 
   return (
-    <>
-      <InstallAppBanner />
+    <header className="sticky top-0 z-40 w-full border-b border-[#E4E4E7] bg-white/95 backdrop-blur-md">
+      {/* Primary Exposed 1px Architectural Bar */}
+      <div className="mx-auto flex h-16 max-w-[1600px] items-stretch justify-between border-x border-[#E4E4E7]">
+        {/* Cell 1: Mobile Menu Trigger + Untouched Brand Logo */}
+        <div className="flex shrink-0 items-center border-r border-[#E4E4E7] px-4 sm:px-6">
+          <button
+            type="button"
+            className="mr-3 inline-flex h-9 w-9 items-center justify-center border border-[#E4E4E7] text-[#09090B] transition-colors hover:bg-[#F4F4F5] lg:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X size={18} weight="regular" /> : <List size={18} weight="regular" />}
+          </button>
 
-      <header className="sticky top-0 left-0 z-40 w-full border-b border-[#E5E7EB] bg-white/95 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          {/* Desktop & Mobile Top Row */}
-          <div className="flex h-16 items-center justify-between gap-3 md:gap-6">
-            {/* Mobile Left: Menu + Logo */}
-            <div className="flex items-center gap-2.5 md:gap-0">
-              <button
-                type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#0B1220] transition-colors hover:bg-[#F6F7F9] md:hidden"
-                aria-label="Toggle navigation menu"
-                onClick={() => setMobileMenuOpen((open) => !open)}
+          <Link to="/" className="flex shrink-0 items-center">
+            <img
+              src="/logo.PNG"
+              alt="Noma Store"
+              className="h-8 w-auto object-contain sm:h-9"
+            />
+          </Link>
+        </div>
+
+        {/* Cell 2: Exposed Department Links (Desktop) */}
+        <nav className="hidden xl:flex items-stretch divide-x divide-[#E4E4E7] border-r border-[#E4E4E7]">
+          {EXPOSED_DEPARTMENTS.map((dept) => {
+            const isActive =
+              dept.href === '/catalog'
+                ? location.pathname === '/catalog'
+                : location.pathname === dept.href
+            return (
+              <Link
+                key={dept.label}
+                to={dept.href}
+                className={`relative flex items-center px-4 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors ${
+                  isActive
+                    ? 'bg-[#FAFAFA] text-[#09090B]'
+                    : 'text-[#52525B] hover:bg-[#FAFAFA] hover:text-[#09090B]'
+                }`}
               >
-                {mobileMenuOpen ? (
-                  <X size={18} weight="regular" />
-                ) : (
-                  <List size={18} weight="regular" />
-                )}
-              </button>
-
-              <Link to="/" className="flex shrink-0 items-center">
-                <img
-                  src="/logo.PNG"
-                  alt="Noma"
-                  className="h-8 w-auto object-contain md:h-9"
-                />
+                {dept.label}
+                {isActive ? (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#1049EB]" />
+                ) : null}
               </Link>
-            </div>
+            )
+          })}
+        </nav>
 
-            {/* Desktop Center: Flat Search Bar */}
-            <div
-              className="relative hidden max-w-xl flex-1 md:block"
-              ref={searchContainerRef}
-            >
-              <form role="search" onSubmit={handleSearchSubmit} className="relative w-full">
-                <MagnifyingGlass
-                  size={16}
-                  weight="regular"
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5E6675]"
-                />
-                <input
-                  ref={desktopInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value)
-                    setIsDropdownOpen(true)
-                  }}
-                  onFocus={() => setIsDropdownOpen(true)}
-                  placeholder="Search products, brands, categories..."
-                  aria-label="Search products"
-                  className="h-10 w-full rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] pl-10 pr-14 text-sm text-[#0B1220] placeholder:text-[#5E6675] transition-colors focus:border-[#1049EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1049EB]/15"
-                />
+        {/* Cell 3: Architectural Command Search Cell */}
+        <div
+          ref={searchContainerRef}
+          className="relative hidden md:flex flex-1 items-stretch border-r border-[#E4E4E7]"
+        >
+          <form onSubmit={handleSearch} className="relative flex w-full items-center">
+            <MagnifyingGlass
+              size={15}
+              weight="regular"
+              className="pointer-events-none ml-4 shrink-0 text-[#71717A]"
+            />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search appliances, SKU, brand..."
+              value={searchQuery}
+              onFocus={() => setSearchOpen(true)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setSearchOpen(true)
+              }}
+              className="h-full w-full bg-transparent pl-3 pr-12 text-xs text-[#09090B] placeholder:text-[#71717A] focus:bg-[#FAFAFA] focus:outline-none"
+            />
+            <kbd className="pointer-events-none mr-4 hidden sm:inline-flex h-5 items-center border border-[#E4E4E7] bg-[#F4F4F5] px-1.5 font-mono text-[10px] font-medium text-[#71717A]">
+              /
+            </kbd>
+          </form>
 
-                {searchQuery ? (
-                  <button
-                    type="button"
-                    aria-label="Clear search"
-                    onClick={() => {
-                      setSearchQuery('')
-                      setIsDropdownOpen(false)
-                    }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-[4px] p-1 text-[#5E6675] hover:bg-[#EEF0F4] hover:text-[#0B1220]"
-                  >
-                    <X size={14} weight="regular" />
-                  </button>
-                ) : (
-                  <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 items-center rounded-[4px] border border-[#E5E7EB] bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-[#5E6675] lg:inline-flex">
-                    /
-                  </kbd>
-                )}
-              </form>
-
-              {/* Live Dropdown */}
-              {isDropdownOpen && searchQuery.trim().length > 0 ? (
-                <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[8px] border border-[#E5E7EB] bg-white shadow-[0_8px_24px_rgba(11,18,32,0.08)]">
-                  <div className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F6F7F9] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#5E6675]">
-                    <span>Results for "{searchQuery}"</span>
-                    <span className="font-mono">{searchResults.products.length} items</span>
+          {/* 2-Column Predictive Command Palette Dropdown */}
+          {searchOpen ? (
+            <div className="absolute left-0 right-0 top-full z-50 -mt-px border border-[#09090B] bg-white shadow-2xl">
+              <div className="grid grid-cols-1 divide-y divide-[#E4E4E7] lg:grid-cols-12 lg:divide-x lg:divide-y-0">
+                {/* Left Column: Quick Searches & Categories */}
+                <div className="bg-[#FAFAFA] p-4 lg:col-span-5">
+                  <p className="mb-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
+                    INDEX / QUERIES
+                  </p>
+                  <div className="mb-5 flex flex-wrap gap-1.5">
+                    {QUICK_SEARCH_CHIPS.map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery(chip)
+                          navigate(`/search?q=${encodeURIComponent(chip)}`)
+                          setSearchOpen(false)
+                        }}
+                        className="border border-[#E4E4E7] bg-white px-2.5 py-1 text-[11px] font-medium text-[#09090B] transition-colors hover:border-[#09090B]"
+                      >
+                        {chip}
+                      </button>
+                    ))}
                   </div>
 
-                  {searchResults.categories.length > 0 ? (
-                    <div className="border-b border-[#E5E7EB] bg-[#F6F7F9]/50 px-3.5 py-2.5">
-                      <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#1049EB]">
-                        Categories
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {searchResults.categories.map((cat) => (
-                          <Link
-                            key={cat.id}
-                            to={`/category/${cat.id}`}
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#E5E7EB] bg-white px-2.5 py-1 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
-                          >
-                            <Tag size={12} weight="regular" className="text-[#1049EB]" />
-                            <span>{cat.label}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {searchResults.products.length > 0 ? (
-                    <div className="max-h-[360px] divide-y divide-[#E5E7EB] overflow-y-auto">
-                      {searchResults.products.map((product) => (
+                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
+                    DEPARTMENTS
+                  </p>
+                  <ul className="space-y-0.5">
+                    {matchingCategories.map((cat) => (
+                      <li key={cat.id}>
                         <Link
-                          key={product.id}
-                          to={`/product/${product.slug || product.id}`}
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="group flex items-center gap-3 p-3 transition-colors hover:bg-[#F6F7F9]"
+                          to={`/category/${cat.id}`}
+                          onClick={() => setSearchOpen(false)}
+                          className="flex items-center justify-between px-2 py-1.5 text-xs font-medium text-[#09090B] transition-colors hover:bg-white"
                         >
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="h-11 w-11 shrink-0 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] object-contain p-1"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <h4 className="truncate text-xs font-semibold text-[#0B1220] group-hover:text-[#1049EB]">
-                              {product.name}
-                            </h4>
-                            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-[#5E6675]">
-                              <span className="font-mono font-bold text-[#0B1220]">
-                                {formatNaira(product.finalPrice)}
-                              </span>
-                              <span>:</span>
-                              <span className="capitalize">{product.category.replace(/-/g, ' ')}</span>
-                              <span className="inline-flex items-center gap-0.5 font-mono text-[#0B1220]">
-                                <Star size={11} weight="fill" className="text-[#FEB719]" />
-                                {(product.rating || 4.8).toFixed(1)}
-                              </span>
-                            </div>
+                          <span>{cat.label}</span>
+                          <ArrowUpRight size={13} className="text-[#71717A]" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Right Column: Live Matching Products */}
+                <div className="p-4 lg:col-span-7">
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
+                      {searchQuery.trim() ? 'MATCHING HARDWARE' : 'CURATED HIGHLIGHTS'}
+                    </p>
+                    {searchQuery.trim() ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                          setSearchOpen(false)
+                        }}
+                        className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1049EB] hover:underline"
+                      >
+                        VIEW ALL &rarr;
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {searchResults.length === 0 ? (
+                    <p className="py-8 text-center text-xs text-[#71717A]">
+                      No products matching &ldquo;{searchQuery}&rdquo;.
+                    </p>
+                  ) : (
+                    <div className="divide-y divide-[#E4E4E7] border-t border-[#E4E4E7]">
+                      {searchResults.map((item) => (
+                        <Link
+                          key={item.id}
+                          to={`/product/${item.slug || item.id}`}
+                          onClick={() => setSearchOpen(false)}
+                          className="flex items-center gap-3 py-2.5 transition-colors hover:bg-[#FAFAFA]"
+                        >
+                          <div className="h-11 w-11 shrink-0 overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5] p-1">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="h-full w-full object-contain mix-blend-multiply"
+                            />
                           </div>
-                          <ArrowRight
-                            size={14}
-                            weight="regular"
-                            className="shrink-0 text-[#5E6675] transition-transform group-hover:translate-x-0.5 group-hover:text-[#1049EB]"
-                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium text-[#09090B]">
+                              {item.name}
+                            </p>
+                            <p className="font-mono text-[10px] uppercase tracking-wider text-[#71717A]">
+                              {item.brand || item.category}
+                            </p>
+                          </div>
+                          <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-[#09090B]">
+                            {formatNaira(item.finalPrice)}
+                          </span>
                         </Link>
                       ))}
                     </div>
-                  ) : (
-                    <div className="p-5 text-center text-xs text-[#5E6675]">
-                      No products found matching "<strong className="text-[#0B1220]">{searchQuery}</strong>".
-                    </div>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={handleSearchSubmit}
-                    className="flex w-full items-center justify-center gap-1.5 bg-[#0B1220] py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
-                  >
-                    <span>View all search results</span>
-                    <ArrowRight size={13} weight="regular" />
-                  </button>
                 </div>
-              ) : null}
-            </div>
-
-            {/* Desktop Right: Single-Row Navigation */}
-            <nav className="hidden items-center gap-1 md:flex lg:gap-1.5" aria-label="Primary">
-              <Link
-                to="/catalog"
-                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-[6px] px-2.5 py-2 text-xs font-semibold transition-colors ${
-                  isNavActive('/catalog')
-                    ? 'bg-[#EEF3FE] text-[#1049EB]'
-                    : 'text-[#374151] hover:bg-[#F6F7F9] hover:text-[#0B1220]'
-                }`}
-              >
-                <SquaresFour size={16} weight="regular" />
-                <span>Categories</span>
-              </Link>
-
-              <Link
-                to="/orders"
-                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-[6px] px-2.5 py-2 text-xs font-semibold transition-colors ${
-                  isNavActive('/orders') || isNavActive('/track-order')
-                    ? 'bg-[#EEF3FE] text-[#1049EB]'
-                    : 'text-[#374151] hover:bg-[#F6F7F9] hover:text-[#0B1220]'
-                }`}
-              >
-                <Clock size={16} weight="regular" />
-                <span>Track Order</span>
-              </Link>
-
-              <Link
-                to="/wishlist"
-                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-[6px] px-2.5 py-2 text-xs font-semibold transition-colors ${
-                  isNavActive('/wishlist')
-                    ? 'bg-[#EEF3FE] text-[#1049EB]'
-                    : 'text-[#374151] hover:bg-[#F6F7F9] hover:text-[#0B1220]'
-                }`}
-              >
-                <Heart size={16} weight="regular" />
-                <span>Wishlist</span>
-              </Link>
-
-              <Link
-                to="/account"
-                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-[6px] px-2.5 py-2 text-xs font-semibold transition-colors ${
-                  isNavActive('/account')
-                    ? 'bg-[#EEF3FE] text-[#1049EB]'
-                    : 'text-[#374151] hover:bg-[#F6F7F9] hover:text-[#0B1220]'
-                }`}
-              >
-                <User size={16} weight="regular" />
-                <span>Account</span>
-              </Link>
-
-              <Link
-                to="/cart"
-                className={`ml-1 inline-flex items-center gap-2 whitespace-nowrap rounded-[6px] border px-3 py-2 text-xs font-semibold transition-colors ${
-                  isNavActive('/cart')
-                    ? 'border-[#1049EB] bg-[#EEF3FE] text-[#1049EB]'
-                    : 'border-[#E5E7EB] bg-white text-[#0B1220] hover:border-[#D1D5DB] hover:bg-[#F6F7F9]'
-                }`}
-              >
-                <ShoppingBag size={16} weight="regular" />
-                <span>Cart</span>
-                <span className="inline-flex min-w-[20px] items-center justify-center rounded-[4px] bg-[#1049EB] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
-                  {count}
-                </span>
-              </Link>
-            </nav>
-
-            {/* Mobile Right: Account & Cart */}
-            <div className="flex items-center gap-1.5 md:hidden">
-              <Link
-                to="/account"
-                aria-label="Account"
-                className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#0B1220] hover:bg-[#F6F7F9]"
-              >
-                <User size={18} weight="regular" />
-              </Link>
-              <Link
-                to="/cart"
-                aria-label="Shopping cart"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[6px] border border-[#E5E7EB] bg-white px-2.5 text-[#0B1220] hover:bg-[#F6F7F9]"
-              >
-                <ShoppingBag size={18} weight="regular" />
-                <span className="inline-flex min-w-[18px] items-center justify-center rounded-[4px] bg-[#1049EB] px-1 py-0.5 font-mono text-[10px] font-bold text-white">
-                  {count}
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Mobile Search Bar Row (Clean - No Category Strip) */}
-          <div className="relative pb-3 md:hidden" ref={mobileSearchRef}>
-            <form role="search" onSubmit={handleSearchSubmit} className="relative w-full">
-              <MagnifyingGlass
-                size={15}
-                weight="regular"
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5E6675]"
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  setIsDropdownOpen(true)
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                placeholder="Search products, brands..."
-                aria-label="Search products"
-                className="h-10 w-full rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] pl-9 pr-9 text-xs text-[#0B1220] placeholder:text-[#5E6675] focus:border-[#1049EB] focus:bg-white focus:outline-none"
-              />
-              {searchQuery ? (
-                <button
-                  type="button"
-                  aria-label="Clear search"
-                  onClick={() => {
-                    setSearchQuery('')
-                    setIsDropdownOpen(false)
-                  }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-[4px] p-1 text-[#5E6675]"
-                >
-                  <X size={14} weight="regular" />
-                </button>
-              ) : null}
-            </form>
-
-            {isDropdownOpen && searchQuery.trim().length > 0 ? (
-              <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-[8px] border border-[#E5E7EB] bg-white shadow-[0_8px_24px_rgba(11,18,32,0.08)]">
-                {searchResults.products.length > 0 ? (
-                  <div className="max-h-[280px] divide-y divide-[#E5E7EB] overflow-y-auto">
-                    {searchResults.products.map((product) => (
-                      <Link
-                        key={product.id}
-                        to={`/product/${product.slug || product.id}`}
-                        onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-3 p-2.5 hover:bg-[#F6F7F9]"
-                      >
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="h-10 w-10 shrink-0 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] object-contain p-1"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <h4 className="truncate text-xs font-semibold text-[#0B1220]">
-                            {product.name}
-                          </h4>
-                          <span className="font-mono text-[11px] font-bold text-[#1049EB]">
-                            {formatNaira(product.finalPrice)}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4 text-center text-xs text-[#5E6675]">
-                    No matching products.
-                  </div>
-                )}
               </div>
-            ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Cell 4: Nigerian State Delivery Estimator Trigger (Desktop) */}
+        <div className="hidden lg:flex items-center border-r border-[#E4E4E7] bg-[#FAFAFA] px-3.5">
+          <MapPin size={13} weight="bold" className="mr-1.5 shrink-0 text-[#1049EB]" />
+          <div className="relative flex items-center">
+            <span className="mr-1 font-mono text-[10px] uppercase tracking-wider text-[#71717A]">
+              STATE:
+            </span>
+            <select
+              aria-label="Delivery state"
+              value={deliveryState}
+              onChange={(e) => setDeliveryState(e.target.value)}
+              className="cursor-pointer appearance-none bg-transparent pr-4 font-mono text-[11px] font-semibold uppercase text-[#09090B] focus:outline-none"
+            >
+              {NIGERIAN_STATES.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
+            </select>
+            <CaretDown
+              size={11}
+              className="pointer-events-none absolute right-0 text-[#71717A]"
+            />
           </div>
         </div>
 
-        {/* Slide-Over Mobile Drawer */}
-        {mobileMenuOpen ? (
-          <div className="fixed inset-0 z-50 md:hidden">
-            <div
-              className="absolute inset-0 bg-[#0B1220]/45 backdrop-blur-xs"
-              onClick={() => setMobileMenuOpen(false)}
-            />
+        {/* Cell 5: Right Utility Cells (Track, Wishlist, Account, Slide-Out Bag Drawer Trigger) */}
+        <div className="flex items-stretch divide-x divide-[#E4E4E7]">
+          <Link
+            to="/orders"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52525B] transition-colors hover:bg-[#FAFAFA] hover:text-[#09090B]"
+            title="Track Order"
+          >
+            <Truck size={16} weight="regular" />
+            <span className="hidden 2xl:inline">Track</span>
+          </Link>
 
-            <aside className="absolute bottom-0 left-0 top-0 z-10 flex w-[85%] max-w-[320px] flex-col rounded-r-[10px] border-r border-[#E5E7EB] bg-white">
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F6F7F9] px-4 py-3.5">
-                <Link
-                  to="/"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center"
-                >
-                  <img src="/logo.PNG" alt="Noma" className="h-7 w-auto object-contain" />
-                </Link>
+          <Link
+            to="/wishlist"
+            className="relative flex items-center gap-1.5 px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52525B] transition-colors hover:bg-[#FAFAFA] hover:text-[#09090B]"
+            title="Saved Items"
+          >
+            <Heart size={16} weight={wishlistCount > 0 ? 'fill' : 'regular'} />
+            {wishlistCount > 0 ? (
+              <span className="font-mono text-[10px] font-semibold tabular-nums text-[#09090B]">
+                [{wishlistCount}]
+              </span>
+            ) : null}
+          </Link>
+
+          <Link
+            to="/account"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52525B] transition-colors hover:bg-[#FAFAFA] hover:text-[#09090B]"
+            title="Account"
+          >
+            <User size={16} weight="regular" />
+          </Link>
+
+          {/* Slide-Out Mini-Cart Bag Trigger */}
+          <button
+            type="button"
+            onClick={openDrawer}
+            className="flex items-center gap-2 bg-[#09090B] px-4 sm:px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#1049EB]"
+            aria-label="Open Shopping Bag"
+          >
+            <ShoppingBag size={16} weight="regular" />
+            <span className="hidden sm:inline">BAG</span>
+            <span className="font-mono text-[11px] font-semibold tabular-nums text-[#FEB719]">
+              [{totalItems}]
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Search Strip (Exposed 1px Sub-Row) */}
+      <div className="border-t border-[#E4E4E7] bg-white px-4 py-2 md:hidden">
+        <form onSubmit={handleSearch} className="relative flex items-center">
+          <MagnifyingGlass
+            size={15}
+            weight="regular"
+            className="pointer-events-none absolute left-3 text-[#71717A]"
+          />
+          <input
+            type="text"
+            placeholder="Search appliances, electronics, SKU..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 w-full border border-[#E4E4E7] bg-[#F4F4F5] pl-9 pr-3 text-xs text-[#09090B] placeholder:text-[#71717A] focus:border-[#1049EB] focus:bg-white focus:outline-none"
+          />
+        </form>
+      </div>
+
+      {/* Mobile Exposed-Grid Drawer */}
+      {mobileMenuOpen ? (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="relative z-10 flex w-full max-w-xs flex-col justify-between border-r border-[#E4E4E7] bg-white">
+            <div>
+              <div className="flex h-16 items-center justify-between border-b border-[#E4E4E7] px-5">
+                <img src="/logo.PNG" alt="Noma" className="h-7 w-auto object-contain" />
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  aria-label="Close navigation menu"
-                  className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#5E6675] hover:text-[#0B1220]"
+                  className="inline-flex h-8 w-8 items-center justify-center border border-[#E4E4E7] text-[#09090B]"
                 >
-                  <X size={16} weight="regular" />
+                  <X size={16} />
                 </button>
               </div>
 
-              {/* Account Quick Link (Neutral Architectural Surface) */}
-              <div className="px-4 pt-4">
-                <Link
-                  to="/account"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between rounded-[8px] border border-[#E5E7EB] bg-[#F6F7F9] p-3.5 transition-colors hover:border-[#D1D5DB]"
+              {/* Mobile Delivery State Selector */}
+              <div className="flex items-center justify-between border-b border-[#E4E4E7] bg-[#FAFAFA] px-5 py-3">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#71717A]">
+                  DELIVER TO STATE
+                </span>
+                <select
+                  value={deliveryState}
+                  onChange={(e) => setDeliveryState(e.target.value)}
+                  className="border border-[#E4E4E7] bg-white px-2 py-1 font-mono text-xs font-semibold text-[#09090B]"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#0B1220]">
-                      <User size={18} weight="regular" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-[#0B1220]">Account &amp; Settings</div>
-                      <div className="text-[11px] text-[#5E6675]">Manage saved delivery info</div>
-                    </div>
-                  </div>
-                  <CaretRight size={15} weight="regular" className="text-[#5E6675]" />
-                </Link>
-              </div>
-
-              {/* Primary Drawer Links */}
-              <div className="flex-1 space-y-5 overflow-y-auto p-4">
-                <div className="space-y-1">
-                  <span className="block px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
-                    Navigation
-                  </span>
-
-                  {[
-                    { to: '/', label: 'Home', icon: House, active: location.pathname === '/' },
-                    {
-                      to: '/catalog',
-                      label: 'Shop Categories',
-                      icon: SquaresFour,
-                      active: isNavActive('/catalog'),
-                    },
-                    {
-                      to: '/orders',
-                      label: 'Track Order',
-                      icon: Clock,
-                      active: isNavActive('/orders'),
-                    },
-                    {
-                      to: '/wishlist',
-                      label: 'Wishlist',
-                      icon: Heart,
-                      active: isNavActive('/wishlist'),
-                    },
-                    {
-                      to: '/account',
-                      label: 'Account',
-                      icon: User,
-                      active: isNavActive('/account'),
-                    },
-                  ].map((item) => (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center justify-between rounded-[6px] px-3 py-2.5 text-sm font-semibold transition-colors ${
-                        item.active
-                          ? 'bg-[#EEF3FE] text-[#1049EB]'
-                          : 'text-[#0B1220] hover:bg-[#F6F7F9]'
-                      }`}
-                    >
-                      <span className="flex items-center gap-3">
-                        <item.icon
-                          size={18}
-                          weight="regular"
-                          className={item.active ? 'text-[#1049EB]' : 'text-[#5E6675]'}
-                        />
-                        <span>{item.label}</span>
-                      </span>
-                      <CaretRight size={14} weight="regular" className="text-[#5E6675]" />
-                    </Link>
+                  {NIGERIAN_STATES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
                   ))}
-
-                  <Link
-                    to="/cart"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between rounded-[6px] px-3 py-2.5 text-sm font-semibold transition-colors ${
-                      isNavActive('/cart')
-                        ? 'bg-[#EEF3FE] text-[#1049EB]'
-                        : 'text-[#0B1220] hover:bg-[#F6F7F9]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-3">
-                      <ShoppingBag
-                        size={18}
-                        weight="regular"
-                        className={isNavActive('/cart') ? 'text-[#1049EB]' : 'text-[#5E6675]'}
-                      />
-                      <span>Shopping Cart</span>
-                    </span>
-                    <span className="rounded-[4px] bg-[#1049EB] px-2 py-0.5 font-mono text-[11px] font-bold text-white">
-                      {count}
-                    </span>
-                  </Link>
-                </div>
-
-                {/* Store Categories */}
-                <div className="space-y-2 border-t border-[#E5E7EB] pt-4">
-                  <span className="block px-2.5 text-[10px] font-semibold uppercase tracking-wider text-[#5E6675]">
-                    Categories ({categories.length})
-                  </span>
-                  {categories.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {categories.map((c) => (
-                        <Link
-                          key={c.id}
-                          to={`/category/${c.id}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-2 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-2.5 py-2 text-xs font-medium text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
-                        >
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1049EB]" />
-                          <span className="truncate">{c.label}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="px-2.5 text-xs text-[#5E6675]">No categories available yet.</p>
-                  )}
-                </div>
+                </select>
               </div>
 
-              {/* Drawer Footer Support */}
-              <div className="border-t border-[#E5E7EB] bg-[#F6F7F9] p-4">
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-[6px] bg-[#0B1220] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
+              <div className="divide-y divide-[#E4E4E7] border-b border-[#E4E4E7]">
+                <div className="bg-[#F4F4F5] px-5 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">
+                  01 / DEPARTMENTS
+                </div>
+                <Link
+                  to="/catalog"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B] hover:bg-[#FAFAFA]"
                 >
-                  <WhatsappLogo size={16} weight="fill" className="text-[#25D366]" />
-                  <span>Need Support? Chat on WhatsApp</span>
-                </a>
+                  <span>ALL CATALOG</span>
+                  <ArrowUpRight size={14} className="text-[#71717A]" />
+                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    to={`/category/${cat.id}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-5 py-3 text-xs font-medium uppercase tracking-wider text-[#52525B] hover:bg-[#FAFAFA] hover:text-[#09090B]"
+                  >
+                    <span>{cat.label}</span>
+                    <ArrowUpRight size={14} className="text-[#71717A]" />
+                  </Link>
+                ))}
               </div>
-            </aside>
+            </div>
+
+            <div className="divide-y divide-[#E4E4E7] border-t border-[#E4E4E7]">
+              <Link
+                to="/orders"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2.5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B]"
+              >
+                <Truck size={16} /> Track Order
+              </Link>
+              <Link
+                to="/wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2.5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B]"
+              >
+                <Heart size={16} /> Saved Wishlist [{wishlistCount}]
+              </Link>
+              <Link
+                to="/account"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2.5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#09090B]"
+              >
+                <User size={16} /> Account
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  openDrawer()
+                }}
+                className="flex w-full items-center justify-between bg-[#09090B] px-5 py-3.5 text-xs font-semibold uppercase tracking-widest text-white"
+              >
+                <span className="flex items-center gap-2">
+                  <ShoppingBag size={16} /> Open Shopping Bag
+                </span>
+                <span className="font-mono text-[#FEB719]">[{totalItems}]</span>
+              </button>
+            </div>
           </div>
-        ) : null}
-      </header>
-    </>
+        </div>
+      ) : null}
+    </header>
   )
 }

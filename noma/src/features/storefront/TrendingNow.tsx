@@ -1,97 +1,94 @@
-import { ArrowRight, CaretLeft, CaretRight } from '@phosphor-icons/react'
-import { useRef } from 'react'
+import { ArrowUpRight } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ProductCard } from '../../components/commerce/ProductCard'
-import { EmptyState } from '../../design-system/components/EmptyState'
-import { useAdminStore } from '../../store/adminStore'
 import { useProductStore } from '../../store/productStore'
 
 export function TrendingNow() {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const { products } = useProductStore()
-  const { settings } = useAdminStore()
+  const { products, categories } = useProductStore()
+  const [activeTab, setActiveTab] = useState('all')
 
-  const trendingList = products.filter((p) => settings.trendingProductIds.includes(p.id))
-  const displayProducts = trendingList.length > 0 ? trendingList : products.slice(0, 8)
+  const filterTabs = [
+    { id: 'all', label: 'ALL UNITS' },
+    ...categories.slice(0, 5).map((cat) => ({
+      id: cat.id,
+      label: cat.label.toUpperCase(),
+    })),
+  ]
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return
-    const amount = 280
-    scrollRef.current.scrollBy({
-      left: direction === 'right' ? amount : -amount,
-      behavior: 'smooth',
-    })
-  }
+  const filteredProducts =
+    activeTab === 'all'
+      ? products
+      : products.filter(
+          (p) =>
+            p.category === activeTab ||
+            p.subCategory === activeTab ||
+            (activeTab === 'kitchen' && p.category === 'cooking') ||
+            (activeTab === 'cooking' && p.category === 'kitchen'),
+        )
+
+  const displayProducts = (filteredProducts.length > 0 ? filteredProducts : products).slice(0, 8)
 
   return (
-    <section className="border-b border-[#E5E7EB] bg-[#F6F7F9] py-14">
-      <div className="mx-auto w-full max-w-7xl px-4 md:px-8">
-        {/* Header Row (No eyebrow, no emoji) */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-bold tracking-tight text-[#0B1220] md:text-[1.75rem]">
-            Trending now
-          </h2>
+    <section className="border-b border-[#E4E4E7] bg-white">
+      <div className="mx-auto max-w-[1600px] border-x border-[#E4E4E7]">
+        {/* Architectural Exposed Section Header Bar */}
+        <div className="flex flex-col justify-between border-b border-[#E4E4E7] lg:flex-row lg:items-stretch">
+          <div className="flex items-center justify-between gap-4 px-5 py-4 sm:px-8">
+            <div>
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1049EB]">
+                01 / CURATED MATRIX
+              </span>
+              <h2 className="mt-0.5 text-xl font-bold tracking-tight text-[#09090B] sm:text-2xl">
+                Trending Hardware
+              </h2>
+            </div>
 
-          <div className="flex items-center gap-3">
             <Link
               to="/catalog"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB] hover:text-[#0D3BC2] hover:underline"
+              className="inline-flex items-center gap-1 border border-[#E4E4E7] bg-[#FAFAFA] px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#09090B] transition-colors hover:border-[#09090B] lg:hidden"
             >
-              <span>View all</span>
-              <ArrowRight size={14} weight="regular" />
+              <span>VIEW ALL</span>
+              <ArrowUpRight size={13} />
             </Link>
+          </div>
 
-            {displayProducts.length > 0 ? (
-              <div className="hidden items-center gap-1.5 md:flex">
+          {/* Exposed Filter Tabs + View All Cell */}
+          <div className="flex items-stretch divide-x divide-[#E4E4E7] overflow-x-auto border-t border-[#E4E4E7] lg:border-l lg:border-t-0">
+            {filterTabs.map((tab) => {
+              const isActive = activeTab === tab.id
+              return (
                 <button
+                  key={tab.id}
                   type="button"
-                  onClick={() => scroll('left')}
-                  aria-label="Scroll trending left"
-                  className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#0B1220] transition-colors hover:border-[#D1D5DB] hover:bg-[#EEF0F4]"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative shrink-0 px-4 py-3.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors sm:px-5 ${
+                    isActive
+                      ? 'bg-[#09090B] text-white'
+                      : 'bg-white text-[#52525B] hover:bg-[#FAFAFA] hover:text-[#09090B]'
+                  }`}
                 >
-                  <CaretLeft size={16} weight="regular" />
+                  {tab.label}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => scroll('right')}
-                  aria-label="Scroll trending right"
-                  className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-[#E5E7EB] bg-white text-[#0B1220] transition-colors hover:border-[#D1D5DB] hover:bg-[#EEF0F4]"
-                >
-                  <CaretRight size={16} weight="regular" />
-                </button>
-              </div>
-            ) : null}
+              )
+            })}
+
+            <Link
+              to="/catalog"
+              className="hidden items-center gap-1.5 bg-[#FAFAFA] px-6 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[#09090B] transition-colors hover:bg-[#1049EB] hover:text-white lg:inline-flex"
+            >
+              <span>ALL CATALOG</span>
+              <ArrowUpRight size={14} />
+            </Link>
           </div>
         </div>
 
-        {/* Horizontal Snap Track */}
-        {displayProducts.length === 0 ? (
-          <EmptyState
-            title="Trending selection coming soon"
-            detail="Featured products added to the store catalog will appear in this rail automatically."
-            action={
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#0B1220] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E293B]"
-              >
-                Explore Catalog
-              </Link>
-            }
-          />
-        ) : (
-          <div
-            ref={scrollRef}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {displayProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                className="w-[220px] shrink-0 snap-start md:w-[250px]"
-              />
-            ))}
-          </div>
-        )}
+        {/* 4-Column Exposed 1px Hairline Product Matrix (Zero Floating Gaps) */}
+        <div className="grid grid-cols-2 gap-px bg-[#E4E4E7] md:grid-cols-3 lg:grid-cols-4">
+          {displayProducts.map((product, idx) => (
+            <ProductCard key={product.id} product={product} index={idx} />
+          ))}
+        </div>
       </div>
     </section>
   )
