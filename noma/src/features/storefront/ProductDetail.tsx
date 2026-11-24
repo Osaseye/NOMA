@@ -442,7 +442,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                   <img
                     src={galleryImages[selectedImgIndex]}
                     alt={product.name}
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-contain mix-blend-multiply"
                   />
                 </button>
               ) : (

@@ -73,7 +73,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             src={product.image}
             alt={product.name}
             loading="lazy"
-            className={`h-full w-full object-contain p-4 transition-all duration-500 ${
+            className={`h-full w-full object-contain p-4 mix-blend-multiply transition-all duration-500 ${
               secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
             }`}
           />
@@ -82,7 +82,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               src={secondaryImage}
               alt={`${product.name} alternate view`}
               loading="lazy"
-              className="absolute inset-0 h-full w-full object-contain p-4 opacity-0 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+              className="absolute inset-0 h-full w-full object-contain p-4 mix-blend-multiply opacity-0 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
             />
           ) : null}
 

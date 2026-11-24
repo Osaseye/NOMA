@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Check, Plus, Trash, UploadSimple } from '@phosphor-icons/react'
+import { useCallback, useEffect, useState } from 'react'
+import { ArrowClockwise, Check, Plus, Trash, UploadSimple } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { AdminTitle } from '../../components/admin/AdminTitle'
 import { storageService } from '../../services/firebase/storageService'
@@ -9,6 +9,18 @@ import {
 } from '../../store/adminStore'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
+
+interface LiveKeyStatus {
+  id: string
+  label: string
+  masked: string
+  source: 'worker' | 'settings'
+  status: 'unused' | 'active' | 'swapped' | 'exhausted'
+  requests: number
+  lastUsedAt: string | null
+  cooldownRemainingSec: number
+  lastError: string | null
+}
 
 const publicPageOptions = [
   { label: 'All Products Catalog', value: '/catalog' },
@@ -49,7 +61,64 @@ export function SettingsPage() {
     settings.cloudflareUploadEndpoint ??
     '/api/media/upload'
   const cloudflarePublicUrl = draft.cloudflarePublicUrl ?? settings.cloudflarePublicUrl ?? ''
-  const geminiApiKey = draft.geminiApiKey ?? settings.geminiApiKey ?? ''
+  const geminiApiKeys = draft.geminiApiKeys ?? settings.geminiApiKeys ?? []
+
+  // Live Gemini Key Pool State (Key 1..4 on Worker + Key 5..N added here)
+  const [liveKeys, setLiveKeys] = useState<LiveKeyStatus[]>([])
+  const [loadingKeys, setLoadingKeys] = useState(false)
+  const [newApiKeyInput, setNewApiKeyInput] = useState('')
+
+  const fetchLiveKeyStatuses = useCallback(async (extraKeysList: string[]) => {
+    setLoadingKeys(true)
+    try {
+      const headers: Record<string, string> = {}
+      if (extraKeysList.length > 0) {
+        headers['X-Gemini-Api-Keys'] = extraKeysList.join(',')
+      }
+      const res = await fetch('https://noma-r2-api.inventra.workers.dev/api/ai/keys-status', {
+        headers,
+      })
+      if (res.ok) {
+        const data = (await res.json()) as { keys?: LiveKeyStatus[] }
+        if (Array.isArray(data.keys)) {
+          setLiveKeys(data.keys)
+        }
+      }
+    } catch {
+      // Silently ignore network hiccups
+    } finally {
+      setLoadingKeys(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'storage') {
+      fetchLiveKeyStatuses(geminiApiKeys)
+    }
+  }, [activeTab, fetchLiveKeyStatuses, geminiApiKeys])
+
+  const handleAddExtraKey = () => {
+    const trimmed = newApiKeyInput.trim()
+    if (!trimmed) return
+    if (geminiApiKeys.includes(trimmed)) {
+      toast.info('This API key is already in your pool.')
+      return
+    }
+    const nextKeys = [...geminiApiKeys, trimmed]
+    setDraft((prev) => ({ ...prev, geminiApiKeys: nextKeys }))
+    updateSettings({ geminiApiKeys: nextKeys })
+    setNewApiKeyInput('')
+    toast.success(`Added Key ${liveKeys.length + 1} to the smart-shuffle pool.`)
+    fetchLiveKeyStatuses(nextKeys)
+  }
+
+  const handleRemoveExtraKey = (extraIndex: number) => {
+    const nextKeys = geminiApiKeys.filter((_, idx) => idx !== extraIndex)
+    setDraft((prev) => ({ ...prev, geminiApiKeys: nextKeys }))
+    updateSettings({ geminiApiKeys: nextKeys })
+    toast.success('API key removed from pool.')
+    fetchLiveKeyStatuses(nextKeys)
+  }
 
   // Banner form state
   const [newBannerTitle, setNewBannerTitle] = useState('')
@@ -130,17 +199,17 @@ export function SettingsPage() {
     e.preventDefault()
     updateSettings({
       storageProvider: 'cloudflare_r2',
-      cloudflareUploadEndpoint: cloudflareUploadEndpoint.trim() || '/api/media/upload',
+      cloudflareUploadEndpoint: cloudflareUploadEndpoint.trim() || 'https://noma-r2-api.inventra.workers.dev/api/media/upload',
       cloudflarePublicUrl: cloudflarePublicUrl.trim(),
-      geminiApiKey: geminiApiKey.trim(),
+      geminiApiKeys,
     })
     setDraft((prev) => ({
       ...prev,
       cloudflareUploadEndpoint: undefined,
       cloudflarePublicUrl: undefined,
-      geminiApiKey: undefined,
+      geminiApiKeys: undefined,
     }))
-    toast.success('Cloudflare R2 & Gemini AI pipeline settings saved.')
+    toast.success('Cloudflare R2 & Gemini AI pool settings saved.')
   }
 
   return (
@@ -238,34 +307,109 @@ export function SettingsPage() {
             </div>
           </section>
 
-          {/* Gemini AI Product Studio Configuration */}
-          <section className="space-y-3 border-t border-slate-200 pt-6">
-            <div>
-              <h2 className="text-sm font-bold text-slate-950">
-                Gemini AI Product Studio Pipeline (4-Key Smart Shuffle Active)
-              </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                4 encrypted Gemini API keys are configured on your Cloudflare Worker (`noma-r2-api`) with smart round-robin shuffling and automatic 60-second rate-limit failover so no single key exhausts itself.
-              </p>
+          {/* Gemini AI Key Pool Manager (Key 1, Key 2, Key 3, Key 4, Key 5...) */}
+          <section className="space-y-4 border-t border-slate-200 pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-bold text-slate-950">
+                  Gemini API Key Pool ({liveKeys.length || 4 + geminiApiKeys.length} Keys)
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Smart shuffle rotates keys automatically across requests and swaps away from any exhausted key.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => fetchLiveKeyStatuses(geminiApiKeys)}
+                disabled={loadingKeys}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-slate-950 hover:text-slate-950 disabled:opacity-50"
+              >
+                <ArrowClockwise size={13} className={loadingKeys ? 'animate-spin' : ''} />
+                <span>Refresh Status</span>
+              </button>
             </div>
 
-            <div>
-              <label
-                htmlFor="gemini-api-key"
-                className="mb-1 block text-xs font-medium text-slate-600"
-              >
-                Optional Override Key (Leave blank to use the 4-key Cloudflare Worker pool)
-              </label>
+            {/* Keys Table: Key 1, Key 2, Key 3, Key 4, Key 5... */}
+            <div className="divide-y divide-slate-200 border-y border-slate-200">
+              {liveKeys.map((k) => {
+                const statusLabel =
+                  k.status === 'exhausted'
+                    ? `Exhausted (${k.cooldownRemainingSec}s cooldown)`
+                    : k.status === 'swapped'
+                    ? 'Swapped / Active Now'
+                    : k.status === 'active'
+                    ? 'Used & Ready'
+                    : 'Not Used Yet'
+                const extraIdx =
+                  k.source === 'settings'
+                    ? Number(k.label.replace(/\D/g, '')) -
+                      liveKeys.filter((item) => item.source === 'worker').length -
+                      1
+                    : -1
+
+                return (
+                  <div
+                    key={k.id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3 text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="min-w-[52px] font-bold text-slate-950">{k.label}</span>
+                      <span className="font-mono text-[11px] text-slate-400">{k.masked}</span>
+                      <span className="text-[11px] text-slate-400">
+                        {k.source === 'worker' ? 'Cloudflare Secret' : 'Added Here'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] font-medium tabular-nums text-slate-500">
+                        {k.requests} {k.requests === 1 ? 'use' : 'uses'}
+                      </span>
+                      <span
+                        className={`text-[11px] font-semibold ${
+                          k.status === 'exhausted'
+                            ? 'text-rose-600'
+                            : k.status === 'swapped'
+                            ? 'text-slate-950 underline underline-offset-4'
+                            : k.status === 'active'
+                            ? 'text-slate-800'
+                            : 'text-slate-400'
+                        }`}
+                      >
+                        {statusLabel}
+                      </span>
+                      {k.source === 'settings' && extraIdx >= 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExtraKey(extraIdx)}
+                          aria-label={`Remove ${k.label}`}
+                          className="text-slate-400 hover:text-slate-950"
+                        >
+                          <Trash size={14} />
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Add More Keys (Key 5, Key 6, ...) */}
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row">
               <input
-                id="gemini-api-key"
                 type="password"
-                value={geminiApiKey}
-                onChange={(e) =>
-                  setDraft((prev) => ({ ...prev, geminiApiKey: e.target.value }))
-                }
-                placeholder="Using 4-key Cloudflare Worker smart-shuffle pool..."
-                className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
+                value={newApiKeyInput}
+                onChange={(e) => setNewApiKeyInput(e.target.value)}
+                placeholder={`Paste Key ${(liveKeys.length || 4) + 1} (AIza... or AQ....)`}
+                className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
               />
+              <button
+                type="button"
+                onClick={handleAddExtraKey}
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-950 bg-white px-4 text-xs font-semibold text-slate-950 transition-colors hover:bg-slate-950 hover:text-white"
+              >
+                <Plus size={14} weight="bold" />
+                <span>Add Key {(liveKeys.length || 4) + 1}</span>
+              </button>
             </div>
           </section>
 

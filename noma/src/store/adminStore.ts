@@ -32,6 +32,7 @@ export interface SiteSettings {
   cloudflareUploadEndpoint?: string
   cloudflarePublicUrl?: string
   geminiApiKey?: string
+  geminiApiKeys?: string[]
 }
 
 interface AdminState {

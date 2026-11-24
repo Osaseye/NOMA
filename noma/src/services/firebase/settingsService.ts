@@ -20,6 +20,7 @@ export const initialSiteSettings: SiteSettings = {
   cloudflareUploadEndpoint: 'https://noma-r2-api.inventra.workers.dev/api/media/upload',
   cloudflarePublicUrl: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev',
   geminiApiKey: '',
+  geminiApiKeys: [],
 }
 
 function sanitizeAnnouncementText(raw?: string): string {
@@ -61,6 +62,7 @@ export const settingsService = {
             cloudflarePublicUrl:
               data.cloudflarePublicUrl || initialSiteSettings.cloudflarePublicUrl,
             geminiApiKey: data.geminiApiKey || '',
+            geminiApiKeys: Array.isArray(data.geminiApiKeys) ? data.geminiApiKeys : [],
           })
         } else {
           setDoc(SETTINGS_DOC_REF, {

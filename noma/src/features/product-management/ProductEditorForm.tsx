@@ -143,6 +143,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
         adminNotes: studioNotes,
         categories,
         apiKey: settings.geminiApiKey,
+        extraApiKeys: settings.geminiApiKeys || [],
       })
 
       setStudioMockups(result.mockups)
