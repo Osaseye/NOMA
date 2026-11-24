@@ -6,10 +6,14 @@ function resolveR2Provider(settings: {
   cloudflarePublicUrl?: string
   cloudflareBucketUrl?: string
 }): CloudflareR2StorageProvider {
-  const endpoint =
+  const rawEndpoint =
     settings.cloudflareUploadEndpoint ||
     import.meta.env.VITE_CLOUDFLARE_UPLOAD_ENDPOINT ||
-    '/api/media/upload'
+    'https://noma-r2-api.inventra.workers.dev/api/media/upload'
+  const endpoint =
+    rawEndpoint === '/api/media/upload'
+      ? 'https://noma-r2-api.inventra.workers.dev/api/media/upload'
+      : rawEndpoint
   const publicUrl =
     settings.cloudflarePublicUrl ||
     settings.cloudflareBucketUrl ||

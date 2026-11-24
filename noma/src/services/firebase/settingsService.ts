@@ -17,7 +17,7 @@ export const initialSiteSettings: SiteSettings = {
   whatsappNumber: '2348030006662',
   storageProvider: 'cloudflare_r2',
   cloudflareBucketUrl: '',
-  cloudflareUploadEndpoint: '/api/media/upload',
+  cloudflareUploadEndpoint: 'https://noma-r2-api.inventra.workers.dev/api/media/upload',
   cloudflarePublicUrl: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev',
   geminiApiKey: '',
 }

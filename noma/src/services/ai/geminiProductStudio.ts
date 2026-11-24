@@ -296,9 +296,11 @@ Return ONLY a valid JSON object (no markdown fences) with these exact fields:
   let parsedCopy: Partial<GeminiProductStudioResult> | null = null
   let aiImagePart: { data: string; mimeType: string } | undefined
 
-  // 1. Try Cloudflare Worker endpoint `/api/ai/product-studio` first
+  // 1. Try Cloudflare Worker endpoint `noma-r2-api` first
   try {
-    const workerRes = await fetch('/api/ai/product-studio', {
+    const workerRes = await fetch(
+      'https://noma-r2-api.inventra.workers.dev/api/ai/product-studio',
+      {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

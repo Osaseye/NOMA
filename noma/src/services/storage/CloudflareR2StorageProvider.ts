@@ -48,7 +48,7 @@ export class CloudflareR2StorageProvider implements IStorageProvider {
     const endpoint =
       uploadEndpoint?.trim() ||
       import.meta.env.VITE_CLOUDFLARE_UPLOAD_ENDPOINT ||
-      '/api/media/upload'
+      'https://noma-r2-api.inventra.workers.dev/api/media/upload'
     this.uploadEndpoint = endpoint.replace(/\/+$/, '')
 
     const rawPublic =
