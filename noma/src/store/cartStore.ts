@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartLineEntry } from '../types/commerce'
+import { useAdminStore } from './adminStore'
 
 const LINE_KEY_SEPARATOR = '::'
 
@@ -46,34 +47,55 @@ export function estimateStateDeliveryFee(
   isFreeStandard: boolean
   zoneLabel: string
 } {
-  const clean = (stateName || 'Lagos').toLowerCase().trim()
-  let baseStandard = 7500
-  let baseExpress = 12000
-  let zoneLabel = 'Nationwide Interstate (3 - 5 Days)'
+  const settings = useAdminStore.getState().settings
+  const threshold =
+    typeof settings.freeDeliveryThreshold === 'number'
+      ? settings.freeDeliveryThreshold
+      : FREE_DELIVERY_THRESHOLD
+  const configuredBulky =
+    typeof settings.bulkyItemSurcharge === 'number' ? settings.bulkyItemSurcharge : 4000
 
-  if (clean.includes('lagos')) {
-    baseStandard = 3500
-    baseExpress = 6000
-    zoneLabel = 'Lagos Metro (1 - 2 Days)'
-  } else if (clean.includes('oyo') || clean.includes('ogun') || clean.includes('osun')) {
-    baseStandard = 4500
-    baseExpress = 7500
-    zoneLabel = 'South-West Regional (2 - 3 Days)'
-  } else if (clean.includes('abuja') || clean.includes('fct') || clean.includes('rivers') || clean.includes('edo')) {
-    baseStandard = 6000
-    baseExpress = 9500
-    zoneLabel = 'Major Hub Air/Road (2 - 4 Days)'
+  const clean = (stateName || 'Lagos').toLowerCase().trim()
+  const configuredState = (settings.deliveryStates || []).find(
+    (s) => s.name.toLowerCase().trim() === clean || clean.includes(s.name.toLowerCase().trim())
+  )
+
+  let baseStandard = configuredState?.standardFee ?? 7500
+  let baseExpress = configuredState?.expressFee ?? 12000
+  let zoneLabel = configuredState
+    ? `${configuredState.name} (${configuredState.eta})`
+    : 'Nationwide Interstate (3 - 5 Days)'
+
+  if (!configuredState) {
+    if (clean.includes('lagos')) {
+      baseStandard = 3500
+      baseExpress = 6000
+      zoneLabel = 'Lagos Metro (1 - 2 Days)'
+    } else if (clean.includes('oyo') || clean.includes('ogun') || clean.includes('osun')) {
+      baseStandard = 4500
+      baseExpress = 7500
+      zoneLabel = 'South-West Regional (2 - 3 Days)'
+    } else if (
+      clean.includes('abuja') ||
+      clean.includes('fct') ||
+      clean.includes('rivers') ||
+      clean.includes('edo')
+    ) {
+      baseStandard = 6000
+      baseExpress = 9500
+      zoneLabel = 'Major Hub Air/Road (2 - 4 Days)'
+    }
   }
 
-  const bulkySurcharge = hasBulkyItem ? 4000 : 0
-  const isFreeStandard = !hasBulkyItem && subtotal >= FREE_DELIVERY_THRESHOLD
+  const bulkySurcharge = hasBulkyItem ? configuredBulky : 0
+  const isFreeStandard = !hasBulkyItem && threshold > 0 && subtotal >= threshold
   const standardFee = isFreeStandard ? 0 : baseStandard + bulkySurcharge
   const expressFee = baseExpress + bulkySurcharge
 
   return {
     standardFee,
     expressFee,
-    freeShippingThreshold: FREE_DELIVERY_THRESHOLD,
+    freeShippingThreshold: threshold,
     isFreeStandard,
     zoneLabel,
   }

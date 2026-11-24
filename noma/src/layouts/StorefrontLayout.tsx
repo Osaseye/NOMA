@@ -103,11 +103,25 @@ export function StorefrontLayout() {
     }
   }, [stateMenuOpen])
 
+  const enabledDeliveryStates = useMemo(() => {
+    if (Array.isArray(settings.deliveryStates) && settings.deliveryStates.length > 0) {
+      const enabled = settings.deliveryStates.filter((s) => s.enabled)
+      if (enabled.length > 0) return enabled
+    }
+    return NIGERIAN_STATES_WITH_ETA.map((s) => ({
+      name: s.name,
+      eta: s.eta,
+      enabled: true,
+      standardFee: 3500,
+      expressFee: 6000,
+    }))
+  }, [settings.deliveryStates])
+
   const filteredStates = useMemo(() => {
     const q = stateQuery.trim().toLowerCase()
-    if (!q) return NIGERIAN_STATES_WITH_ETA
-    return NIGERIAN_STATES_WITH_ETA.filter((s) => s.name.toLowerCase().includes(q))
-  }, [stateQuery])
+    if (!q) return enabledDeliveryStates
+    return enabledDeliveryStates.filter((s) => s.name.toLowerCase().includes(q))
+  }, [enabledDeliveryStates, stateQuery])
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-white text-slate-900">
@@ -163,7 +177,11 @@ export function StorefrontLayout() {
                       Select Delivery State
                     </span>
                   </div>
-                  <span className="text-[11px] font-medium text-slate-400">36 States + FCT</span>
+                  <span className="text-[11px] font-medium text-slate-400">
+                    {enabledDeliveryStates.length === 37
+                      ? '36 States + FCT'
+                      : `${enabledDeliveryStates.length} ${enabledDeliveryStates.length === 1 ? 'State' : 'States'}`}
+                  </span>
                 </div>
 
                 {/* Quick Filter Input */}

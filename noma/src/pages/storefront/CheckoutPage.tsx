@@ -20,6 +20,7 @@ import {
   toCartLineEntries,
   useCartStore,
 } from '../../store/cartStore'
+import { useAdminStore } from '../../store/adminStore'
 import { useProductStore } from '../../store/productStore'
 import { useUserStore } from '../../store/userStore'
 import type { OrderItem } from '../../types/commerce'
@@ -88,7 +89,16 @@ function buildPaymentRef(method: string): string {
 export function CheckoutPage() {
   const navigate = useNavigate()
   const { items, clearCart, deliveryState, setDeliveryState } = useCartStore()
+  const { settings } = useAdminStore()
   const { products } = useProductStore()
+
+  const activeDeliveryStates = useMemo(() => {
+    if (Array.isArray(settings.deliveryStates) && settings.deliveryStates.length > 0) {
+      const enabled = settings.deliveryStates.filter((s) => s.enabled).map((s) => s.name)
+      if (enabled.length > 0) return enabled
+    }
+    return NIGERIAN_STATES
+  }, [settings.deliveryStates])
   const { profile, updateDefaultAddress } = useUserStore()
 
   const [fullName, setFullName] = useState(profile.defaultAddress.fullName || profile.name || '')
@@ -485,7 +495,7 @@ export function CheckoutPage() {
                       className={inputClass}
                     >
                       <option value="">Select state</option>
-                      {NIGERIAN_STATES.map((st) => (
+                      {activeDeliveryStates.map((st) => (
                         <option key={st} value={st}>
                           {st}
                         </option>

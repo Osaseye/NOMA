@@ -5,8 +5,11 @@ import { AdminTitle } from '../../components/admin/AdminTitle'
 import { storageService } from '../../services/firebase/storageService'
 import {
   useAdminStore,
+  type DeliveryRider,
+  type DeliveryStateConfig,
   type SiteSettings,
 } from '../../store/adminStore'
+import { DEFAULT_DELIVERY_STATES } from '../../services/firebase/settingsService'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
 
@@ -44,7 +47,7 @@ export function SettingsPage() {
   const { products } = useProductStore()
 
   const [activeTab, setActiveTab] = useState<
-    'storage' | 'curation' | 'banners' | 'contact'
+    'storage' | 'delivery' | 'curation' | 'banners' | 'contact'
   >('storage')
 
   const [draft, setDraft] = useState<Partial<SiteSettings>>({})
@@ -65,6 +68,96 @@ export function SettingsPage() {
     () => draft.geminiApiKeys ?? settings.geminiApiKeys ?? [],
     [draft.geminiApiKeys, settings.geminiApiKeys]
   )
+
+  // Delivery States, State Rider Prices & Internal Riders (Firestore siteSettings)
+  const deliveryStates: DeliveryStateConfig[] = useMemo(
+    () =>
+      draft.deliveryStates ??
+      (Array.isArray(settings.deliveryStates) && settings.deliveryStates.length > 0
+        ? settings.deliveryStates
+        : DEFAULT_DELIVERY_STATES),
+    [draft.deliveryStates, settings.deliveryStates]
+  )
+  const deliveryRiders: DeliveryRider[] = useMemo(
+    () => draft.deliveryRiders ?? settings.deliveryRiders ?? [],
+    [draft.deliveryRiders, settings.deliveryRiders]
+  )
+  const freeDeliveryThreshold =
+    draft.freeDeliveryThreshold ?? settings.freeDeliveryThreshold ?? 250000
+  const bulkyItemSurcharge =
+    draft.bulkyItemSurcharge ?? settings.bulkyItemSurcharge ?? 4000
+
+  const [stateFilterQuery, setStateFilterQuery] = useState('')
+  const [riderName, setRiderName] = useState('')
+  const [riderPhone, setRiderPhone] = useState('')
+  const [riderState, setRiderState] = useState('Lagos')
+  const [riderVehicle, setRiderVehicle] = useState('Dispatch Bike')
+
+  const enabledStatesCount = deliveryStates.filter((s) => s.enabled).length
+
+  const updateSingleState = (
+    stateName: string,
+    patch: Partial<DeliveryStateConfig>
+  ) => {
+    const next = deliveryStates.map((s) =>
+      s.name === stateName ? { ...s, ...patch } : s
+    )
+    setDraft((prev) => ({ ...prev, deliveryStates: next }))
+  }
+
+  const handleSaveDeliverySettings = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateSettings({
+      deliveryStates,
+      deliveryRiders,
+      freeDeliveryThreshold: Math.max(0, Number(freeDeliveryThreshold) || 0),
+      bulkyItemSurcharge: Math.max(0, Number(bulkyItemSurcharge) || 0),
+    })
+    setDraft((prev) => ({
+      ...prev,
+      deliveryStates: undefined,
+      deliveryRiders: undefined,
+      freeDeliveryThreshold: undefined,
+      bulkyItemSurcharge: undefined,
+    }))
+    toast.success('Delivery states, rider prices, and dispatch riders synced to Firestore.')
+  }
+
+  const handleAddRider = () => {
+    if (!riderName.trim() || !riderPhone.trim()) {
+      toast.error('Enter rider name and phone number.')
+      return
+    }
+    const newRider: DeliveryRider = {
+      id: `rider-${Date.now()}`,
+      name: riderName.trim(),
+      phone: riderPhone.trim(),
+      state: riderState,
+      vehicle: riderVehicle.trim() || 'Dispatch Bike',
+      active: true,
+    }
+    const nextRiders = [newRider, ...deliveryRiders]
+    setDraft((prev) => ({ ...prev, deliveryRiders: nextRiders }))
+    updateSettings({ deliveryRiders: nextRiders })
+    setRiderName('')
+    setRiderPhone('')
+    toast.success(`Rider "${newRider.name}" added (internal dispatch only).`)
+  }
+
+  const handleToggleRider = (id: string) => {
+    const nextRiders = deliveryRiders.map((r) =>
+      r.id === id ? { ...r, active: !r.active } : r
+    )
+    setDraft((prev) => ({ ...prev, deliveryRiders: nextRiders }))
+    updateSettings({ deliveryRiders: nextRiders })
+  }
+
+  const handleDeleteRider = (id: string) => {
+    const nextRiders = deliveryRiders.filter((r) => r.id !== id)
+    setDraft((prev) => ({ ...prev, deliveryRiders: nextRiders }))
+    updateSettings({ deliveryRiders: nextRiders })
+    toast.success('Rider removed.')
+  }
 
   // Live Gemini Key Pool State (Key 1..4 on Worker + Key 5..N added here)
   const [liveKeys, setLiveKeys] = useState<LiveKeyStatus[]>([])
@@ -241,6 +334,7 @@ export function SettingsPage() {
         {(
           [
             { key: 'storage', label: 'Cloudflare R2 & Gemini AI' },
+            { key: 'delivery', label: `Delivery & Riders (${enabledStatesCount} States)` },
             { key: 'curation', label: 'Trending & Best Deals' },
             { key: 'banners', label: `Banners (${settings.heroBanners.length})` },
             { key: 'contact', label: 'Store Contact & Top Bar' },
@@ -439,7 +533,310 @@ export function SettingsPage() {
         </form>
       ) : null}
 
-      {/* TAB 2: CURATION (TRENDING & TODAY'S DEALS COMBINED CLEANLY) */}
+      {/* TAB 2: DELIVERY STATES, RIDER PRICES & INTERNAL RIDERS */}
+      {activeTab === 'delivery' ? (
+        <form onSubmit={handleSaveDeliverySettings} className="space-y-10">
+          {/* Global Delivery Thresholds & Coverage Summary */}
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-bold text-slate-950">
+                  Delivery Coverage &amp; Pricing Rules
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Synced live to Firestore. Changes immediately update the storefront state dropdown, cart, and checkout delivery fees.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      deliveryStates: deliveryStates.map((s) => ({ ...s, enabled: true })),
+                    }))
+                  }
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-slate-950"
+                >
+                  Enable All ({deliveryStates.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      deliveryStates: deliveryStates.map((s) => ({
+                        ...s,
+                        enabled: s.name === 'Lagos' || s.name === 'FCT - Abuja',
+                      })),
+                    }))
+                  }
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-slate-950"
+                >
+                  Lagos &amp; Abuja Only
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">
+                  Active Delivery States
+                </label>
+                <div className="flex h-10 items-center rounded-lg border border-slate-200 bg-[#F4F4F5]/60 px-3 text-xs font-bold tabular-nums text-slate-950">
+                  {enabledStatesCount} of {deliveryStates.length} states enabled
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">
+                  Free Standard Delivery Threshold (₦)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={freeDeliveryThreshold}
+                  onChange={(e) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      freeDeliveryThreshold: Number(e.target.value),
+                    }))
+                  }
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold tabular-nums text-slate-950 focus:border-slate-950 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">
+                  Bulky Freight Surcharge (₦)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={500}
+                  value={bulkyItemSurcharge}
+                  onChange={(e) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      bulkyItemSurcharge: Number(e.target.value),
+                    }))
+                  }
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold tabular-nums text-slate-950 focus:border-slate-950 focus:outline-none"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* State-by-State Rider Prices Table */}
+          <section className="space-y-3 border-t border-slate-200 pt-6">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-sm font-bold text-slate-950">
+                  State-by-State Delivery Rider Prices
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Toggle states ON/OFF and set exact Naira rider delivery rates and transit ETAs.
+                </p>
+              </div>
+              <input
+                type="text"
+                value={stateFilterQuery}
+                onChange={(e) => setStateFilterQuery(e.target.value)}
+                placeholder="Filter state (e.g. Lagos, Abuja, Rivers)..."
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none sm:w-64"
+              />
+            </div>
+
+            <div className="max-h-[420px] overflow-y-auto border-y border-slate-200">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead className="sticky top-0 bg-white">
+                  <tr className="border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <th className="py-2.5 pr-3">Deliver</th>
+                    <th className="py-2.5 px-3">State</th>
+                    <th className="py-2.5 px-3">Standard Rider Fee (₦)</th>
+                    <th className="py-2.5 px-3">Express Fee (₦)</th>
+                    <th className="py-2.5 pl-3">Delivery ETA</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {deliveryStates
+                    .filter(
+                      (s) =>
+                        !stateFilterQuery.trim() ||
+                        s.name.toLowerCase().includes(stateFilterQuery.trim().toLowerCase())
+                    )
+                    .map((st) => (
+                      <tr
+                        key={st.name}
+                        className={st.enabled ? '' : 'opacity-50'}
+                      >
+                        <td className="py-2 pr-3">
+                          <input
+                            type="checkbox"
+                            aria-label={`Enable delivery to ${st.name}`}
+                            checked={st.enabled}
+                            onChange={(e) =>
+                              updateSingleState(st.name, { enabled: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-950"
+                          />
+                        </td>
+                        <td className="py-2 px-3 font-semibold text-slate-950 whitespace-nowrap">
+                          {st.name}
+                        </td>
+                        <td className="py-2 px-3">
+                          <input
+                            type="number"
+                            min={0}
+                            step={500}
+                            aria-label={`Standard rider fee for ${st.name}`}
+                            value={st.standardFee}
+                            onChange={(e) =>
+                              updateSingleState(st.name, {
+                                standardFee: Math.max(0, Number(e.target.value) || 0),
+                              })
+                            }
+                            className="h-8 w-28 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold tabular-nums text-slate-950 focus:border-slate-950 focus:outline-none"
+                          />
+                        </td>
+                        <td className="py-2 px-3">
+                          <input
+                            type="number"
+                            min={0}
+                            step={500}
+                            aria-label={`Express fee for ${st.name}`}
+                            value={st.expressFee}
+                            onChange={(e) =>
+                              updateSingleState(st.name, {
+                                expressFee: Math.max(0, Number(e.target.value) || 0),
+                              })
+                            }
+                            className="h-8 w-28 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold tabular-nums text-slate-950 focus:border-slate-950 focus:outline-none"
+                          />
+                        </td>
+                        <td className="py-2 pl-3">
+                          <input
+                            type="text"
+                            aria-label={`ETA for ${st.name}`}
+                            value={st.eta}
+                            onChange={(e) =>
+                              updateSingleState(st.name, { eta: e.target.value })
+                            }
+                            className="h-8 w-28 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:border-slate-950 focus:outline-none"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              type="submit"
+              className="rounded-lg bg-slate-950 px-5 py-2.5 text-xs font-semibold text-white hover:bg-slate-800"
+            >
+              Save Delivery States &amp; Rider Prices
+            </button>
+          </section>
+
+          {/* Internal Delivery Riders Roster (Admin Dispatch Only — Never Shown Publicly) */}
+          <section className="space-y-4 border-t border-slate-200 pt-6">
+            <div>
+              <h2 className="text-sm font-bold text-slate-950">
+                Delivery Riders ({deliveryRiders.length})
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Internal dispatch riders saved in Firestore for order fulfillment. Rider phone numbers are kept private in Admin and never displayed publicly on the storefront.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-5">
+              <input
+                type="text"
+                value={riderName}
+                onChange={(e) => setRiderName(e.target.value)}
+                placeholder="Rider name *"
+                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
+              />
+              <input
+                type="text"
+                value={riderPhone}
+                onChange={(e) => setRiderPhone(e.target.value)}
+                placeholder="Rider phone *"
+                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
+              />
+              <select
+                value={riderState}
+                onChange={(e) => setRiderState(e.target.value)}
+                aria-label="Rider state"
+                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-950 focus:border-slate-950 focus:outline-none"
+              >
+                {deliveryStates.map((s) => (
+                  <option key={s.name} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                value={riderVehicle}
+                onChange={(e) => setRiderVehicle(e.target.value)}
+                placeholder="Bike / Van"
+                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddRider}
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-950 bg-white px-3 text-xs font-semibold text-slate-950 hover:bg-slate-950 hover:text-white"
+              >
+                <Plus size={13} weight="bold" />
+                <span>Add Rider</span>
+              </button>
+            </div>
+
+            {deliveryRiders.length > 0 ? (
+              <div className="divide-y divide-slate-200 border-y border-slate-200">
+                {deliveryRiders.map((rider) => (
+                  <div
+                    key={rider.id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3 text-xs"
+                  >
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-bold text-slate-950">{rider.name}</span>
+                      <span className="text-slate-500">{rider.phone}</span>
+                      <span className="text-slate-400">
+                        {rider.state} &bull; {rider.vehicle}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleRider(rider.id)}
+                        className="text-[11px] font-semibold text-slate-700 hover:text-slate-950"
+                      >
+                        {rider.active ? 'Active' : 'Paused'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRider(rider.id)}
+                        aria-label={`Remove ${rider.name}`}
+                        className="text-slate-400 hover:text-slate-950"
+                      >
+                        <Trash size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="border-y border-slate-200 py-5 text-center text-xs text-slate-400">
+                No dispatch riders added yet.
+              </p>
+            )}
+          </section>
+        </form>
+      ) : null}
+
+      {/* TAB 3: CURATION (TRENDING & TODAY'S DEALS COMBINED CLEANLY) */}
       {activeTab === 'curation' ? (
         <div className="space-y-10">
           {/* Today's Best Deals */}

@@ -16,6 +16,23 @@ export interface HeroBanner {
 
 export type StorageProviderType = 'cloudflare_r2'
 
+export interface DeliveryStateConfig {
+  name: string
+  enabled: boolean
+  standardFee: number
+  expressFee: number
+  eta: string
+}
+
+export interface DeliveryRider {
+  id: string
+  name: string
+  phone: string
+  state: string
+  vehicle: string
+  active: boolean
+}
+
 export interface SiteSettings {
   allProductsBannerImage?: string
   heroBanners: HeroBanner[]
@@ -33,6 +50,10 @@ export interface SiteSettings {
   cloudflarePublicUrl?: string
   geminiApiKey?: string
   geminiApiKeys?: string[]
+  deliveryStates?: DeliveryStateConfig[]
+  deliveryRiders?: DeliveryRider[]
+  freeDeliveryThreshold?: number
+  bulkyItemSurcharge?: number
 }
 
 interface AdminState {
