@@ -477,7 +477,7 @@ export function SettingsPage() {
                       </span>
                       <span
                         className={`text-[11px] font-semibold ${
-                          k.status === 'exhausted'
+                          k.status === 'exhausted' || k.lastError
                             ? 'text-rose-600'
                             : k.status === 'swapped'
                             ? 'text-slate-950 underline underline-offset-4'
@@ -486,7 +486,9 @@ export function SettingsPage() {
                             : 'text-slate-400'
                         }`}
                       >
-                        {statusLabel}
+                        {k.lastError && k.status !== 'swapped' && k.status !== 'active'
+                          ? k.lastError
+                          : statusLabel}
                       </span>
                       {k.source === 'settings' && extraIdx >= 0 ? (
                         <button
