@@ -515,7 +515,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                 ) : (
                   <>
                     <Sparkle size={14} weight="fill" />
-                    <span>Generate White-Background Mockups &amp; Auto-Fill Copy</span>
+                    <span>Remove Background (AI) &amp; Auto-Fill Copy</span>
                   </>
                 )}
               </button>
