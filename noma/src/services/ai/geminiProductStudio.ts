@@ -16,39 +16,67 @@ export interface GeminiProductStudioResult {
   keyFeatures: string[]
   whatsInTheBox: string[]
   badge: string
+  qualityStatus?: string
   usedKeyLabel?: string
+  usedModel?: string
   mockups: StudioMockupVariant[]
 }
 
-function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
+function fileToBase64(file: File | Blob): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {
       const result = String(reader.result || '')
       const commaIdx = result.indexOf(',')
       const base64 = commaIdx >= 0 ? result.slice(commaIdx + 1) : result
-      resolve({ base64, mimeType: file.type || 'image/jpeg' })
+      resolve({ base64, mimeType: file.type || 'image/png' })
     }
     reader.onerror = () => reject(new Error('Failed to read image file'))
     reader.readAsDataURL(file)
   })
 }
 
-function base64ToFile(
-  base64: string,
-  mimeType: string,
-  filename: string
-): { file: File; previewUrl: string } {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  const blob = new Blob([bytes], { type: mimeType })
-  const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg'
-  const file = new File([blob], `${filename}.${ext}`, { type: mimeType })
-  const previewUrl = `data:${mimeType};base64,${base64}`
-  return { file, previewUrl }
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('Failed to preview transparent PNG'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+/**
+ * Runs real neural-network AI background removal (@imgly/background-removal ONNX model)
+ * in the admin's browser to strip any messy shop background into a clean transparent PNG.
+ * Dynamically imported so storefront visitors never download the segmentation runtime.
+ */
+async function removeBackgroundWithNeuralAI(rawFile: File): Promise<StudioMockupVariant[]> {
+  const { removeBackground } = await import('@imgly/background-removal')
+
+  const transparentBlob = await removeBackground(rawFile, {
+    model: 'isnet_fp16',
+    output: {
+      format: 'image/png',
+      quality: 0.95,
+    },
+  })
+
+  const cleanBaseName = rawFile.name.replace(/\.[^/.]+$/, '') || 'product'
+  const transparentFile = new File(
+    [transparentBlob],
+    `${cleanBaseName}-transparent.png`,
+    { type: 'image/png' }
+  )
+  const previewUrl = await blobToDataUrl(transparentBlob)
+
+  return [
+    {
+      id: 'neural-transparent',
+      label: 'AI Transparent Cutout (No Background)',
+      file: transparentFile,
+      previewUrl,
+    },
+  ]
 }
 
 export async function runGeminiProductStudio({
@@ -64,7 +92,6 @@ export async function runGeminiProductStudio({
   apiKey?: string
   extraApiKeys?: string[]
 }): Promise<GeminiProductStudioResult> {
-  const { base64, mimeType } = await fileToBase64(file)
   const categoryListText = categories
     .map((c) => {
       const subs = (c.subcategories || []).map((s) => s.id).join(', ')
@@ -77,21 +104,30 @@ export async function runGeminiProductStudio({
     ...extraApiKeys.map((k) => k.trim()).filter(Boolean),
   ].filter(Boolean)
 
-  const promptText = `You are Noma Marketplace's senior product merchandiser and copywriter in Nigeria.
-Analyze this raw shop product photo${adminNotes ? ` and the admin's notes: "${adminNotes}"` : ''}.
+  const promptText = `You are Noma Marketplace's senior product merchandiser and quality inspector in Nigeria.
+Scan this product photo${adminNotes ? ` and the admin's notes: "${adminNotes}"` : ''}.
+1. Inspect the image to make sure the product is clear and ready for listing.
+2. Write clean, commercial, ready-to-paste product details for our Nigerian retail & wholesale store.
 Available store categories: ${categoryListText || 'clothing, kitchen, electronics, appliances, phones, general'}.
 
 Return ONLY a valid JSON object (no markdown fences) with these exact fields:
 {
+  "qualityStatus": "Short 1-sentence visual quality check (e.g. 'Clear product image, ready for storefront')",
   "name": "Clean, commercial product title",
-  "brand": "Detected or appropriate brand name",
+  "brand": "Detected brand or 'Noma Select'",
   "category": "Exact category id from the available store categories",
   "subCategory": "Matching subcategory id if applicable, or empty string",
-  "description": "Engaging 2-paragraph product write-up highlighting build quality, everyday use in Nigerian homes/wardrobes, and retail or wholesale bulk availability.",
-  "keyFeatures": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
-  "whatsInTheBox": ["Main product", "Factory packaging / accessories"],
+  "description": "Detailed, engaging 2-paragraph product write-up covering materials, build quality, everyday/event use in Nigeria, and retail or wholesale bulk availability.",
+  "keyFeatures": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
+  "whatsInTheBox": ["1 x Main Product", "Protective Packaging"],
   "badge": "Short merchandising badge like 'New Arrival', 'Best Seller', or 'Retail & Bulk'"
 }`
+
+  // Run neural-network background removal AND Gemini 3.5 Flash scan in parallel!
+  const [{ base64, mimeType }, mockups] = await Promise.all([
+    fileToBase64(file),
+    removeBackgroundWithNeuralAI(file),
+  ])
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -117,44 +153,16 @@ Return ONLY a valid JSON object (no markdown fences) with these exact fields:
   const payload = (await workerRes.json().catch(() => null)) as {
     error?: string
     copy?: Partial<GeminiProductStudioResult>
-    studioImages?: Array<{ id: string; label: string; data: string; mimeType: string }>
-    studioImage?: { data: string; mimeType: string }
     usedKeyLabel?: string
+    usedModel?: string
   } | null
 
   if (!workerRes.ok || !payload) {
     throw new Error(
       payload?.error ||
-        `Gemini Product Studio failed (HTTP ${workerRes.status}). Check your API keys in Admin → Settings.`
+        `Gemini scan failed (HTTP ${workerRes.status}). Check your API keys in Admin → Settings.`
     )
   }
-
-  const rawImages = Array.isArray(payload.studioImages) && payload.studioImages.length > 0
-    ? payload.studioImages
-    : payload.studioImage?.data
-    ? [{ id: 'studio-hero', label: 'Studio Hero Shot', ...payload.studioImage }]
-    : []
-
-  if (rawImages.length === 0) {
-    throw new Error(
-      'Gemini did not return any studio images. Check billing/quota on your keys in Admin → Settings.'
-    )
-  }
-
-  const cleanBaseName = file.name.replace(/\.[^/.]+$/, '') || 'product'
-  const mockups: StudioMockupVariant[] = rawImages.map((img) => {
-    const { file: imgFile, previewUrl } = base64ToFile(
-      img.data,
-      img.mimeType || 'image/png',
-      `${cleanBaseName}-${img.id}`
-    )
-    return {
-      id: img.id,
-      label: img.label,
-      file: imgFile,
-      previewUrl,
-    }
-  })
 
   const parsedCopy = payload.copy || {}
   const defaultCat = categories[0]?.id || 'general'
@@ -163,14 +171,16 @@ Return ONLY a valid JSON object (no markdown fences) with these exact fields:
 
   return {
     name: parsedCopy.name || '',
-    brand: parsedCopy.brand || 'Noma',
+    brand: parsedCopy.brand || 'Noma Select',
     category: matchedCat,
     subCategory: parsedCopy.subCategory || '',
     description: parsedCopy.description || '',
     keyFeatures: Array.isArray(parsedCopy.keyFeatures) ? parsedCopy.keyFeatures : [],
     whatsInTheBox: Array.isArray(parsedCopy.whatsInTheBox) ? parsedCopy.whatsInTheBox : [],
     badge: parsedCopy.badge || 'New Arrival',
+    qualityStatus: parsedCopy.qualityStatus,
     usedKeyLabel: payload.usedKeyLabel,
+    usedModel: payload.usedModel,
     mockups,
   }
 }
