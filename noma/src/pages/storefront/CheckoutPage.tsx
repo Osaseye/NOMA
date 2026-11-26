@@ -5,16 +5,21 @@ import {
   Check,
   CircleNotch,
   Clock,
+  Copy,
   Headset,
   Lock,
   MapPin,
   ShoppingBag,
   Truck,
 } from '@phosphor-icons/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../design-system/components/EmptyState'
+import {
+  koraService,
+  type KoraBankTransferAccount,
+} from '../../services/payments/koraService'
 import {
   estimateStateDeliveryFee,
   toCartLineEntries,
@@ -129,6 +134,10 @@ export function CheckoutPage() {
   const [expiry, setExpiry] = useState('')
   const [cvv, setCvv] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Live Kora Bank Transfer Payment State
+  const [koraTransfer, setKoraTransfer] = useState<KoraBankTransferAccount | null>(null)
+  const [verifyingKora, setVerifyingKora] = useState(false)
 
   const cartEntries = useMemo(() => toCartLineEntries(items), [items])
 
@@ -249,29 +258,8 @@ export function CheckoutPage() {
     )
   }
 
-  const handleSubmitOrder = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (isSubmitting) return
-
-    if (checkoutItems.length === 0) {
-      toast.error('Your bag is empty. Add items before checking out.')
-      return
-    }
-
-    if (
-      !fullName.trim() ||
-      !phoneNumber.trim() ||
-      !state ||
-      !city.trim() ||
-      !neighborhood.trim() ||
-      !address.trim()
-    ) {
-      toast.error('Please complete all required delivery fields.')
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
+  const finalizeAndSaveOrder = useCallback(
+    async (confirmedPaymentRef: string, orderStatus: 'placed' | 'processing' = 'placed') => {
       if (saveAddress) {
         updateDefaultAddress({
           fullName: fullName.trim(),
@@ -306,20 +294,19 @@ export function CheckoutPage() {
       )
 
       const deliveryArea = [neighborhood.trim(), city.trim(), state].filter(Boolean).join(', ')
-      const paymentRef = buildPaymentRef(paymentMethod)
 
       const savedOrder = await useProductStore.getState().addOrder({
         id: '',
         customer: fullName.trim(),
         phone: phoneNumber.trim(),
         ...(emailAddress.trim() ? { email: emailAddress.trim() } : {}),
-        status: 'placed',
+        status: orderStatus,
         total: grandTotal,
         deliveryFee: shippingFee,
         deliveryArea,
         baseAmountOwed,
         markupEarned,
-        paymentRef,
+        paymentRef: confirmedPaymentRef,
         items: orderItems,
         deliveryMethod,
         paymentMethod,
@@ -332,13 +319,113 @@ export function CheckoutPage() {
       })
 
       clearCart()
+      setKoraTransfer(null)
       toast.success(`Order ${savedOrder.id} confirmed!`)
       navigate(`/order-success?id=${encodeURIComponent(savedOrder.id)}`, {
         state: { order: savedOrder },
       })
+    },
+    [
+      address,
+      checkoutItems,
+      city,
+      clearCart,
+      deliveryMethod,
+      emailAddress,
+      fullName,
+      grandTotal,
+      navigate,
+      neighborhood,
+      paymentMethod,
+      phoneNumber,
+      profile.uid,
+      saveAddress,
+      shippingFee,
+      state,
+      additionalInfo,
+      updateDefaultAddress,
+    ]
+  )
+
+  const handleVerifyKoraTransfer = useCallback(
+    async (silent = false) => {
+      if (!koraTransfer || verifyingKora) return
+      setVerifyingKora(true)
+      try {
+        const res = await koraService.verifyCharge(koraTransfer.reference)
+        if (res.paid) {
+          toast.success('Bank transfer confirmed via Kora!')
+          await finalizeAndSaveOrder(koraTransfer.reference, 'processing')
+        } else if (!silent) {
+          toast.info('Transfer not detected yet. Please wait a few seconds after sending and tap Verify again.')
+        }
+      } catch {
+        if (!silent) {
+          toast.error('Could not reach payment verification service. Try again shortly.')
+        }
+      } finally {
+        setVerifyingKora(false)
+      }
+    },
+    [finalizeAndSaveOrder, koraTransfer, verifyingKora]
+  )
+
+  // Auto-poll Kora every 5 seconds while the virtual bank account screen is open
+  useEffect(() => {
+    if (!koraTransfer) return
+    const timer = window.setInterval(() => {
+      handleVerifyKoraTransfer(true)
+    }, 5000)
+    return () => window.clearInterval(timer)
+  }, [koraTransfer, handleVerifyKoraTransfer])
+
+  const handleSubmitOrder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isSubmitting) return
+
+    if (checkoutItems.length === 0) {
+      toast.error('Your bag is empty. Add items before checking out.')
+      return
+    }
+
+    if (
+      !fullName.trim() ||
+      !phoneNumber.trim() ||
+      !state ||
+      !city.trim() ||
+      !neighborhood.trim() ||
+      !address.trim()
+    ) {
+      toast.error('Please complete all required delivery fields.')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      // Live Kora Bank Transfer flow (generates one-time bank & account number via Cloudflare Worker)
+      if (paymentMethod === 'transfer') {
+        const ref = `NMA-KORA-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`
+        const account = await koraService.initiateBankTransfer({
+          amount: grandTotal,
+          customerName: fullName.trim(),
+          customerEmail: emailAddress.trim() || undefined,
+          reference: ref,
+          narration: `Noma Order for ${fullName.trim()}`,
+        })
+        setKoraTransfer(account)
+        toast.success('Transfer details ready. Send the exact amount to complete your order.')
+        return
+      }
+
+      const paymentRef = buildPaymentRef(paymentMethod)
+      await finalizeAndSaveOrder(paymentRef, 'placed')
     } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Could not submit your order. Please check your connection and try again.'
       console.error('Order submission failed:', err)
-      toast.error('Could not submit your order. Please check your connection and try again.')
+      toast.error(msg)
     } finally {
       setIsSubmitting(false)
     }
@@ -653,23 +740,13 @@ export function CheckoutPage() {
                   {[
                     {
                       id: 'transfer',
-                      title: 'Bank Transfer',
-                      subtitle: 'Pay via Naira bank transfer',
+                      title: 'Instant Bank Transfer (Kora)',
+                      subtitle: 'Get a one-time Naira account number & auto-verify',
                     },
                     {
                       id: 'pod',
                       title: 'Pay on Delivery',
                       subtitle: 'Pay when your order arrives',
-                    },
-                    {
-                      id: 'card',
-                      title: 'Debit / Credit Card',
-                      subtitle: 'Verve, Mastercard, Visa',
-                    },
-                    {
-                      id: 'ussd',
-                      title: 'USSD / Mobile Transfer',
-                      subtitle: 'Quick bank code payment',
                     },
                   ].map((pm) => {
                     const isSelected = paymentMethod === pm.id
@@ -701,6 +778,105 @@ export function CheckoutPage() {
                     )
                   })}
                 </div>
+
+                {koraTransfer ? (
+                  <div className="mt-5 space-y-4 rounded-2xl border border-slate-900 bg-[#F4F4F5] p-5">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          Kora Instant Bank Transfer
+                        </span>
+                        <h3 className="mt-0.5 text-sm font-bold text-slate-950">
+                          Transfer exact amount to this one-time account
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setKoraTransfer(null)}
+                        className="text-xs font-semibold text-slate-500 hover:text-slate-950"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl bg-white p-3.5">
+                        <span className="block text-[11px] text-slate-400">Bank Name</span>
+                        <strong className="mt-0.5 block text-sm font-bold text-slate-950">
+                          {koraTransfer.bankName}
+                        </strong>
+                      </div>
+                      <div className="rounded-xl bg-white p-3.5">
+                        <span className="block text-[11px] text-slate-400">Account Name</span>
+                        <strong className="mt-0.5 block text-sm font-bold text-slate-950">
+                          {koraTransfer.accountName}
+                        </strong>
+                      </div>
+                      <div className="flex items-center justify-between rounded-xl bg-white p-3.5">
+                        <div>
+                          <span className="block text-[11px] text-slate-400">Account Number</span>
+                          <strong className="mt-0.5 block font-mono text-base font-bold tracking-wider text-slate-950">
+                            {koraTransfer.accountNumber}
+                          </strong>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(koraTransfer.accountNumber)
+                            toast.success('Account number copied!')
+                          }}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-900 hover:border-slate-950"
+                        >
+                          <Copy size={13} />
+                          <span>Copy</span>
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between rounded-xl bg-white p-3.5">
+                        <div>
+                          <span className="block text-[11px] text-slate-400">Exact Amount</span>
+                          <strong className="mt-0.5 block text-base font-bold tabular-nums text-slate-950">
+                            {formatNaira(koraTransfer.amountExpected || koraTransfer.amount)}
+                          </strong>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(
+                              String(koraTransfer.amountExpected || koraTransfer.amount)
+                            )
+                            toast.success('Amount copied!')
+                          }}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-900 hover:border-slate-950"
+                        >
+                          <Copy size={13} />
+                          <span>Copy</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-start justify-between gap-3 pt-1 sm:flex-row sm:items-center">
+                      <span className="inline-flex items-center gap-2 text-xs text-slate-500">
+                        <CircleNotch size={14} className="animate-spin text-slate-900" />
+                        <span>Listening automatically for your transfer...</span>
+                      </span>
+                      <button
+                        type="button"
+                        disabled={verifyingKora}
+                        onClick={() => handleVerifyKoraTransfer(false)}
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        {verifyingKora ? (
+                          <>
+                            <CircleNotch size={14} className="animate-spin" />
+                            <span>Checking...</span>
+                          </>
+                        ) : (
+                          <span>I&apos;ve Sent the Transfer — Verify Now</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
 
                 {paymentMethod === 'card' ? (
                   <div className="mt-4 space-y-4 rounded-xl bg-[#F4F4F5] p-4 sm:p-5">

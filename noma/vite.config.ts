@@ -87,6 +87,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'zustand'],
-    exclude: ['@imgly/background-removal', 'onnxruntime-web'],
   },
 })
