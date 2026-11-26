@@ -4,12 +4,10 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   ArrowRight,
   Lock,
-  MapPin,
   Minus,
   Plus,
   ShoppingBag,
   Trash,
-  Truck,
   WhatsappLogo,
   X,
 } from '@phosphor-icons/react'
@@ -25,29 +23,6 @@ import {
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
 
-const NIGERIAN_STATES = [
-  'Lagos',
-  'FCT - Abuja',
-  'Oyo',
-  'Ogun',
-  'Rivers',
-  'Edo',
-  'Delta',
-  'Enugu',
-  'Anambra',
-  'Kano',
-  'Kaduna',
-  'Akwa Ibom',
-  'Cross River',
-  'Imo',
-  'Kwara',
-  'Osun',
-  'Ondo',
-  'Ekiti',
-  'Plateau',
-  'Abia',
-]
-
 export function MiniCartDrawer() {
   const navigate = useNavigate()
   const reduceMotion = useReducedMotion()
@@ -59,7 +34,6 @@ export function MiniCartDrawer() {
     removeLine,
     clearCart,
     deliveryState,
-    setDeliveryState,
   } = useCartStore()
   const { products } = useProductStore()
   const { settings } = useAdminStore()
@@ -100,7 +74,6 @@ export function MiniCartDrawer() {
     [deliveryState, hasBulkyItem, subtotal],
   )
 
-  const grandTotal = subtotal + (cartLines.length > 0 ? deliveryEstimate.standardFee : 0)
   const remainingForFreeShipping = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal)
   const freeShippingProgress = Math.min(100, Math.round((subtotal / FREE_DELIVERY_THRESHOLD) * 100))
 
@@ -128,9 +101,9 @@ export function MiniCartDrawer() {
       (l, idx) =>
         `${idx + 1}. ${l.product.name}${l.size ? ` (Size: ${l.size})` : ''} x${l.quantity} - ${formatNaira(l.lineTotal)}`,
     )
-    const msg = `Hello Noma, I would like to place an order:\n\n${summaryLines.join('\n')}\n\nDelivery State: ${deliveryState}\nSubtotal: ${formatNaira(subtotal)}\nEstimated Total: ${formatNaira(grandTotal)}`
+    const msg = `Hello Noma, I would like to place an order:\n\n${summaryLines.join('\n')}\n\nDelivery State: ${deliveryState}\nSubtotal: ${formatNaira(subtotal)}`
     return `${whatsappBaseUrl}?text=${encodeURIComponent(msg)}`
-  }, [cartLines, deliveryState, grandTotal, subtotal, whatsappBaseUrl])
+  }, [cartLines, deliveryState, subtotal, whatsappBaseUrl])
 
   return (
     <AnimatePresence>
@@ -144,9 +117,9 @@ export function MiniCartDrawer() {
           <motion.div
             initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-slate-900/50"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]"
             onClick={closeDrawer}
           />
 
@@ -154,15 +127,14 @@ export function MiniCartDrawer() {
             initial={reduceMotion ? { x: 0 } : { x: '100%' }}
             animate={{ x: 0 }}
             exit={reduceMotion ? { x: 0 } : { x: '100%' }}
-            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 flex h-[100dvh] w-full max-w-md flex-col bg-white text-slate-900 shadow-2xl"
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 flex h-[100dvh] w-full max-w-[400px] flex-col bg-white text-slate-900 shadow-2xl"
           >
-            {/* Header Bar */}
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+            {/* Minimal Airy Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div className="flex items-center gap-2.5">
-                <ShoppingBag size={20} weight="regular" className="text-[#1049EB]" />
-                <h2 className="text-base font-bold text-slate-900">Your Bag</h2>
-                <span className="rounded-full bg-[#FEB719] px-2.5 py-0.5 text-xs font-bold tabular-nums text-slate-950">
+                <h2 className="text-base font-bold tracking-tight text-slate-950">Your Bag</h2>
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#FEB719] px-1.5 text-[11px] font-bold tabular-nums text-slate-950">
                   {totalCount}
                 </span>
               </div>
@@ -177,7 +149,7 @@ export function MiniCartDrawer() {
                     }}
                     className="text-xs font-medium text-slate-400 transition-colors hover:text-rose-600"
                   >
-                    Clear all
+                    Clear
                   </button>
                 ) : null}
 
@@ -185,82 +157,52 @@ export function MiniCartDrawer() {
                   type="button"
                   onClick={closeDrawer}
                   aria-label="Close shopping bag"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                 >
-                  <X size={16} weight="bold" />
+                  <X size={17} weight="bold" />
                 </button>
               </div>
             </div>
 
-            {/* Delivery State & Free Shipping Progress */}
-            <div className="border-b border-slate-100 bg-[#F4F4F5] px-5 py-3">
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <MapPin size={14} weight="fill" className="text-[#1049EB]" />
-                  <span className="text-slate-500">Deliver to:</span>
-                  <select
-                    value={deliveryState}
-                    onChange={(e) => setDeliveryState(e.target.value)}
-                    aria-label="Select delivery state"
-                    className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-900 focus:border-slate-900 focus:outline-none"
-                  >
-                    {NIGERIAN_STATES.map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <span className="text-[11px] font-medium text-slate-500">
-                  {deliveryEstimate.zoneLabel.split('(')[1]?.replace(')', '') || '2 - 5 Days'}
-                </span>
-              </div>
-
-              {!hasBulkyItem ? (
-                <div className="mt-2.5">
-                  <div className="flex items-center justify-between text-xs">
-                    {deliveryEstimate.isFreeStandard ? (
-                      <span className="font-semibold text-emerald-700">
-                        Free standard delivery unlocked!
-                      </span>
-                    ) : (
-                      <span className="text-slate-600">
-                        Add{' '}
-                        <strong className="font-bold text-slate-900">
-                          {formatNaira(remainingForFreeShipping)}
-                        </strong>{' '}
-                        more for free delivery
-                      </span>
-                    )}
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      {freeShippingProgress}%
+            {/* Slim 1-Line Free Delivery Progress (Zero Bulky Grey Box) */}
+            {cartLines.length > 0 && !hasBulkyItem ? (
+              <div className="border-b border-slate-100 px-6 py-2.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  {deliveryEstimate.isFreeStandard ? (
+                    <span className="font-semibold text-emerald-700">
+                      Free standard delivery unlocked
                     </span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#1049EB] to-[#FEB719] transition-all duration-300"
-                      style={{ width: `${freeShippingProgress}%` }}
-                    />
-                  </div>
+                  ) : (
+                    <span className="text-slate-500">
+                      Add{' '}
+                      <strong className="font-semibold tabular-nums text-slate-900">
+                        {formatNaira(remainingForFreeShipping)}
+                      </strong>{' '}
+                      for free delivery
+                    </span>
+                  )}
+                  <span className="font-semibold tabular-nums text-slate-400">
+                    {freeShippingProgress}%
+                  </span>
                 </div>
-              ) : (
-                <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-slate-700">
-                  <Truck size={14} weight="regular" />
-                  <span>Bulky delivery rate applies ({formatNaira(deliveryEstimate.standardFee)})</span>
+                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#1049EB] to-[#FEB719] transition-all duration-300"
+                    style={{ width: `${freeShippingProgress}%` }}
+                  />
                 </div>
-              )}
-            </div>
+              </div>
+            ) : null}
 
-            {/* Bag Items Body */}
+            {/* Spacious Bag Items List */}
             {cartLines.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                  <ShoppingBag size={26} weight="regular" />
+              <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 text-slate-400">
+                  <ShoppingBag size={22} weight="regular" />
                 </div>
-                <p className="text-base font-bold text-slate-900">Your bag is empty</p>
-                <p className="mt-1 max-w-[240px] text-xs leading-relaxed text-slate-500">
-                  Browse shoes, fashion, home appliances, and everyday essentials.
+                <p className="text-base font-bold text-slate-950">Your bag is empty</p>
+                <p className="mt-1 max-w-[230px] text-xs leading-relaxed text-slate-500">
+                  Explore shoes, fashion, home appliances, and everyday essentials.
                 </p>
                 <button
                   type="button"
@@ -268,41 +210,41 @@ export function MiniCartDrawer() {
                     closeDrawer()
                     navigate('/catalog')
                   }}
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-6 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
                 >
                   <span>Start Shopping</span>
                   <ArrowRight size={14} weight="bold" />
                 </button>
               </div>
             ) : (
-              <div className="no-scrollbar flex-1 divide-y divide-slate-100 overflow-y-auto px-5">
+              <div className="no-scrollbar flex-1 divide-y divide-slate-100 overflow-y-auto px-6">
                 {cartLines.map((line) => (
-                  <div key={line.key} className="flex gap-3.5 py-4">
+                  <div key={line.key} className="flex items-start gap-4 py-4">
                     <Link
                       to={`/product/${line.product.slug || line.product.id}`}
                       onClick={closeDrawer}
-                      className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F4F5] p-2"
+                      className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F4F5] p-1.5"
                     >
                       <img
                         src={line.product.image}
                         alt={line.product.name}
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-contain mix-blend-multiply"
                       />
                     </Link>
 
-                    <div className="flex min-w-0 flex-1 flex-col justify-between">
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="min-w-0">
                           <Link
                             to={`/product/${line.product.slug || line.product.id}`}
                             onClick={closeDrawer}
-                            className="line-clamp-2 text-xs font-semibold leading-snug text-slate-900 hover:underline"
+                            className="line-clamp-2 text-xs font-semibold leading-snug text-slate-900 hover:text-[#1049EB]"
                           >
                             {line.product.name}
                           </Link>
                           {line.size ? (
-                            <span className="mt-1 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                              Size: {line.size}
+                            <span className="mt-0.5 block text-[11px] text-slate-400">
+                              Size {line.size}
                             </span>
                           ) : null}
                         </div>
@@ -314,45 +256,38 @@ export function MiniCartDrawer() {
                             toast.info(`Removed ${line.product.name}`)
                           }}
                           aria-label={`Remove ${line.product.name}`}
-                          className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                          className="shrink-0 rounded-full p-1 text-slate-300 transition-colors hover:text-rose-600"
                         >
-                          <Trash size={15} weight="regular" />
+                          <Trash size={14} weight="regular" />
                         </button>
                       </div>
 
-                      <div className="mt-2.5 flex items-center justify-between">
-                        <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white">
+                      <div className="flex items-center justify-between">
+                        <div className="inline-flex items-center rounded-full border border-slate-200 bg-white">
                           <button
                             type="button"
                             onClick={() => setItemQuantity(line.key, line.quantity - 1)}
                             aria-label="Decrease quantity"
-                            className="flex h-7 w-7 items-center justify-center text-slate-600 transition-colors hover:bg-slate-50"
+                            className="flex h-6 w-7 items-center justify-center text-slate-500 transition-colors hover:text-slate-950"
                           >
-                            <Minus size={11} weight="bold" />
+                            <Minus size={10} weight="bold" />
                           </button>
-                          <span className="min-w-[28px] px-1.5 text-center text-xs font-bold tabular-nums text-slate-900">
+                          <span className="min-w-[22px] text-center text-xs font-bold tabular-nums text-slate-900">
                             {line.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => setItemQuantity(line.key, line.quantity + 1)}
                             aria-label="Increase quantity"
-                            className="flex h-7 w-7 items-center justify-center text-slate-600 transition-colors hover:bg-slate-50"
+                            className="flex h-6 w-7 items-center justify-center text-slate-500 transition-colors hover:text-slate-950"
                           >
-                            <Plus size={11} weight="bold" />
+                            <Plus size={10} weight="bold" />
                           </button>
                         </div>
 
-                        <div className="text-right">
-                          <span className="block text-xs font-bold tabular-nums text-slate-900">
-                            {formatNaira(line.lineTotal)}
-                          </span>
-                          {line.quantity > 1 ? (
-                            <span className="block text-[10px] tabular-nums text-slate-400">
-                              {formatNaira(line.product.finalPrice)} each
-                            </span>
-                          ) : null}
-                        </div>
+                        <span className="text-sm font-bold tabular-nums text-slate-950">
+                          {formatNaira(line.lineTotal)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -360,30 +295,19 @@ export function MiniCartDrawer() {
               </div>
             )}
 
-            {/* Sticky Bottom Summary & Actions */}
+            {/* Slim, Clean Bottom Checkout Bar */}
             {cartLines.length > 0 ? (
-              <div className="border-t border-slate-200 bg-white p-5">
-                <div className="mb-4 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span>Subtotal ({totalCount} items)</span>
-                    <span className="font-semibold tabular-nums text-slate-800">
-                      {formatNaira(subtotal)}
+              <div className="border-t border-slate-100 bg-white px-6 py-4">
+                <div className="mb-3.5 flex items-baseline justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500">Subtotal</span>
+                    <span className="ml-1.5 text-[11px] text-slate-400">
+                      • Delivery at checkout
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span>Delivery ({deliveryState})</span>
-                    <span className="font-semibold tabular-nums text-slate-800">
-                      {deliveryEstimate.isFreeStandard
-                        ? 'Free'
-                        : formatNaira(deliveryEstimate.standardFee)}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between border-t border-slate-100 pt-2.5">
-                    <span className="text-sm font-bold text-slate-900">Estimated Total</span>
-                    <span className="text-lg font-bold tabular-nums text-slate-900">
-                      {formatNaira(grandTotal)}
-                    </span>
-                  </div>
+                  <span className="text-lg font-extrabold tracking-tight tabular-nums text-slate-950">
+                    {formatNaira(subtotal)}
+                  </span>
                 </div>
 
                 <button
@@ -392,28 +316,29 @@ export function MiniCartDrawer() {
                     closeDrawer()
                     navigate('/checkout')
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1049EB] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
                 >
-                  <Lock size={16} weight="bold" />
-                  <span>Proceed to Checkout</span>
+                  <Lock size={15} weight="bold" />
+                  <span>Checkout</span>
                 </button>
 
-                <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+                <div className="mt-3 flex items-center justify-center gap-4 text-xs font-medium text-slate-500">
                   <Link
                     to="/cart"
                     onClick={closeDrawer}
-                    className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                    className="transition-colors hover:text-slate-950 hover:underline"
                   >
-                    View Full Bag
+                    View full bag
                   </Link>
+                  <span className="text-slate-200">|</span>
                   <a
                     href={whatsappOrderHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50"
+                    className="inline-flex items-center gap-1 transition-colors hover:text-emerald-700"
                   >
-                    <WhatsappLogo size={16} weight="fill" className="text-emerald-600" />
-                    <span>WhatsApp Order</span>
+                    <WhatsappLogo size={14} weight="fill" className="text-emerald-600" />
+                    <span>WhatsApp order</span>
                   </a>
                 </div>
               </div>

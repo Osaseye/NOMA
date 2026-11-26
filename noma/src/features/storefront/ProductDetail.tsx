@@ -493,46 +493,50 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
               {product.name}
             </h1>
 
-            {/* Price & Stock Box */}
-            <div className="rounded-xl bg-[#F4F4F5] p-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <div>
-                  <div className="flex flex-wrap items-baseline gap-2.5">
-                    <strong className="text-2xl font-bold tabular-nums text-slate-900 sm:text-3xl">
-                      {formatNaira(product.finalPrice)}
-                    </strong>
-                    {hasCompareAt && product.compareAtPrice ? (
-                      <span className="text-sm tabular-nums text-slate-400 line-through">
-                        {formatNaira(product.compareAtPrice)}
-                      </span>
-                    ) : null}
-                  </div>
-                  {hasCompareAt && savingsAmount > 0 ? (
-                    <span className="mt-1 block text-xs font-semibold text-emerald-700">
-                      You save {formatNaira(savingsAmount)}
+            {/* Clean Open Editorial Price & Stock Display (Zero Grey Box) */}
+            <div className="border-y border-slate-100 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-baseline gap-2.5">
+                  <strong className="text-3xl font-extrabold tracking-tight tabular-nums text-slate-950 sm:text-4xl">
+                    {formatNaira(product.finalPrice)}
+                  </strong>
+                  {hasCompareAt && product.compareAtPrice ? (
+                    <span className="text-sm font-medium tabular-nums text-slate-400 line-through">
+                      {formatNaira(product.compareAtPrice)}
+                    </span>
+                  ) : null}
+                  {hasCompareAt && discountPercent > 0 ? (
+                    <span className="rounded-full bg-[#1049EB] px-2.5 py-0.5 text-[11px] font-bold text-white">
+                      -{discountPercent}%
                     </span>
                   ) : null}
                 </div>
 
                 <div className="text-xs font-semibold">
                   {product.stockQty > 5 ? (
-                    <span className="inline-flex items-center gap-1.5 text-emerald-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/60 px-2.5 py-1 text-emerald-700">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                       <span>In stock ({product.stockQty})</span>
                     </span>
                   ) : product.stockQty > 0 ? (
-                    <span className="inline-flex items-center gap-1.5 text-amber-800">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/80 bg-amber-50/70 px-2.5 py-1 text-amber-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#FEB719]" />
                       <span>Only {product.stockQty} left</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-rose-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/80 bg-rose-50/70 px-2.5 py-1 text-rose-700">
                       <span className="h-1.5 w-1.5 rounded-full bg-rose-600" />
                       <span>Out of stock</span>
                     </span>
                   )}
                 </div>
               </div>
+
+              {hasCompareAt && savingsAmount > 0 ? (
+                <p className="mt-1.5 text-xs font-medium text-emerald-700">
+                  You save {formatNaira(savingsAmount)} on this item
+                </p>
+              ) : null}
             </div>
 
             {/* Size Variant Pills */}
