@@ -1,69 +1,27 @@
 import { ArrowUpRight } from '@phosphor-icons/react'
 import { motion } from 'motion/react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProductStore } from '../../store/productStore'
+import { resolveEditorialCategoryImage } from '../../utils/categoryImages'
 
-const EDITORIAL_CATEGORY_IMAGES: Record<string, string> = {
-  bicycles: '/images/cat-bicycles-real.jpg',
-  cycling: '/images/cat-bicycles-real.jpg',
-  outdoor: '/images/cat-bicycles-real.jpg',
-  clothing: '/images/cat-fashion-real.jpg',
-  fashion: '/images/cat-fashion-real.jpg',
-  shoes: '/images/cat-fashion-real.jpg',
-  footwear: '/images/cat-fashion-real.jpg',
-  cookware: '/images/cat-cookware-real.jpg',
-  kitchen: '/images/cat-cookware-real.jpg',
-  cooking: '/images/cat-cookware-real.jpg',
-  food: '/images/cat-groceries-real.jpg',
-  groceries: '/images/cat-groceries-real.jpg',
-  grocery: '/images/cat-groceries-real.jpg',
-  appliances: '/images/cat-appliances-real.jpg',
-  'home-appliances': '/images/cat-appliances-real.jpg',
-  perfumes: '/images/cat-perfumes-real.jpg',
-  fragrances: '/images/cat-perfumes-real.jpg',
-  beauty: '/images/cat-perfumes-real.jpg',
-  electronics: '/images/cat-electronics.png',
-  phones: '/images/cat-phones.png',
-  power: '/images/cat-power.png',
-  solar: '/images/cat-power.png',
-  living: '/images/cat-living.png',
-  'home-essentials': '/images/cat-living.png',
-  general: '/images/cat-living.png',
-}
-
-function resolveEditorialCategoryImage(catId: string, catLabel: string, customImage?: string): string {
-  const cleanId = catId.toLowerCase()
-  const cleanLabel = catLabel.toLowerCase()
-
-  if (EDITORIAL_CATEGORY_IMAGES[cleanId]) {
-    return EDITORIAL_CATEGORY_IMAGES[cleanId]
+function seededShuffle<T>(items: T[], seed: number): T[] {
+  const arr = [...items]
+  let s = seed
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    s = (s * 1664525 + 1013904223) >>> 0
+    const j = s % (i + 1)
+    const tmp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = tmp
   }
-  if (cleanLabel.includes('bicycle') || cleanLabel.includes('cycl')) {
-    return '/images/cat-bicycles-real.jpg'
-  }
-  if (cleanLabel.includes('cloth') || cleanLabel.includes('fashion') || cleanLabel.includes('shoe') || cleanLabel.includes('wear')) {
-    return '/images/cat-fashion-real.jpg'
-  }
-  if (cleanLabel.includes('cook') || cleanLabel.includes('kitchen')) {
-    return '/images/cat-cookware-real.jpg'
-  }
-  if (cleanLabel.includes('food') || cleanLabel.includes('grocer') || cleanLabel.includes('pantry')) {
-    return '/images/cat-groceries-real.jpg'
-  }
-  if (cleanLabel.includes('appliance')) {
-    return '/images/cat-appliances-real.jpg'
-  }
-  if (cleanLabel.includes('perfume') || cleanLabel.includes('fragrance') || cleanLabel.includes('scent')) {
-    return '/images/cat-perfumes-real.jpg'
-  }
-  if (customImage && !customImage.includes('unsplash.com')) {
-    return customImage
-  }
-  return '/images/cat-fashion-real.jpg'
+  return arr
 }
 
 export function ShopByCategory() {
   const { categories, products } = useProductStore()
+  // Fresh random seed per visit so different categories rotate into the 6 featured slots
+  const [visitSeed] = useState(() => Math.floor(Math.random() * 1_000_000_000))
 
   const getCategoryCount = (catId: string) =>
     products.filter(
@@ -74,7 +32,10 @@ export function ShopByCategory() {
         (catId === 'cooking' && p.category === 'kitchen'),
     ).length
 
-  const displayCategories = categories.slice(0, 6)
+  const displayCategories = useMemo(() => {
+    if (categories.length <= 6) return categories
+    return seededShuffle(categories, visitSeed).slice(0, 6)
+  }, [categories, visitSeed])
 
   return (
     <section>
@@ -95,7 +56,7 @@ export function ShopByCategory() {
           </Link>
         </div>
 
-        {/* Full-Bleed Portrait Editorial Photography Tiles */}
+        {/* Full-Bleed Portrait Editorial Photography Tiles (Shuffled Each Visit) */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
           {displayCategories.map((cat, idx) => {
             const count = getCategoryCount(cat.id)

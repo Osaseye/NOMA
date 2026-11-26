@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { EmptyState } from '../../design-system/components/EmptyState'
 import { useProductStore } from '../../store/productStore'
 import type { Category } from '../../types/commerce'
+import { resolveEditorialCategoryImage } from '../../utils/categoryImages'
 
 export function CategoryMarkupGrid({ categories }: { categories: Category[] }) {
   const { deleteCategory, products } = useProductStore()
@@ -48,17 +49,11 @@ export function CategoryMarkupGrid({ categories }: { categories: Category[] }) {
               <tr key={cat.id} className="transition-colors hover:bg-[#F4F4F5]/50">
                 <td className="py-3.5 pr-4">
                   <div className="flex items-center gap-3">
-                    {cat.image ? (
-                      <img
-                        src={cat.image}
-                        alt={cat.label}
-                        className="h-10 w-10 shrink-0 rounded-lg bg-[#F4F4F5] object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F4F4F5] font-bold text-slate-600">
-                        {cat.label[0]?.toUpperCase()}
-                      </div>
-                    )}
+                    <img
+                      src={resolveEditorialCategoryImage(cat.id, cat.label, cat.image)}
+                      alt={cat.label}
+                      className="h-10 w-10 shrink-0 rounded-lg bg-[#F4F4F5] object-cover"
+                    />
                     <div>
                       <Link
                         to={`/admin/categories/${cat.id}/edit`}
