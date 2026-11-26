@@ -19,7 +19,6 @@ import { useUserStore } from '../../store/userStore'
 export function WishlistPage() {
   const [searchParams] = useSearchParams()
   const addItem = useCartStore((s) => s.addItem)
-  const openDrawer = useCartStore((s) => s.openDrawer)
   const { products } = useProductStore()
   const { wishlistProductIds, profile } = useUserStore()
 
@@ -56,7 +55,7 @@ export function WishlistPage() {
     })
 
     if (addedCount > 0) {
-      openDrawer()
+      toast.success(`Added ${addedCount} item${addedCount === 1 ? '' : 's'} to bag`)
     } else {
       toast.info('No in-stock items could be added automatically.')
     }

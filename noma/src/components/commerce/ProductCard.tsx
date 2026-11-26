@@ -16,7 +16,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [added, setAdded] = useState(false)
   const navigate = useNavigate()
   const addItem = useCartStore((state) => state.addItem)
-  const openDrawer = useCartStore((state) => state.openDrawer)
   const toggleWishlist = useUserStore((state) => state.toggleWishlist)
   const isWishlisted = useUserStore((state) => state.isInWishlist(product.id))
 
@@ -50,7 +49,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
     addItem(product.id)
     setAdded(true)
-    openDrawer()
     window.setTimeout(() => setAdded(false), 1200)
   }
 

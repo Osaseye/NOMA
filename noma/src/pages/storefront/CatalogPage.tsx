@@ -74,7 +74,6 @@ export function CatalogPage() {
   const navigate = useNavigate()
   const { products, categories } = useProductStore()
   const addItem = useCartStore((s) => s.addItem)
-  const openDrawer = useCartStore((s) => s.openDrawer)
   const { isInWishlist, toggleWishlist } = useUserStore()
 
   const activeCategoryKey = categoryId || 'all'
@@ -195,7 +194,7 @@ export function CatalogPage() {
       return
     }
     addItem(product.id)
-    openDrawer()
+    toast.success(`${product.name} added to bag`)
   }
 
   const activeFilterCount =

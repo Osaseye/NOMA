@@ -53,7 +53,6 @@ const QA_ITEMS = [
 export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
   const navigate = useNavigate()
   const { toggleWishlist, isInWishlist } = useUserStore()
-  const openDrawer = useCartStore((state) => state.openDrawer)
   const deliveryState = useCartStore((state) => state.deliveryState)
   const wishlisted = isInWishlist(product.id)
 
@@ -239,7 +238,7 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
       return
     }
     onAddToCart(selectedSize || undefined, quantity)
-    openDrawer()
+    toast.success(`Added ${quantity} to bag`)
   }
 
   const handleBuyNow = () => {

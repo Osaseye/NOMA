@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   ArrowRight,
   CaretRight,
@@ -36,6 +37,25 @@ export const StoreHeader: React.FC = () => {
     () => toCartLineEntries(items).reduce((sum, entry) => sum + entry.quantity, 0),
     [items],
   )
+
+  const prevTotalRef = useRef(totalItems)
+  const [bagBumpDelta, setBagBumpDelta] = useState<{ id: number; delta: number } | null>(null)
+
+  useEffect(() => {
+    const diff = totalItems - prevTotalRef.current
+    prevTotalRef.current = totalItems
+    if (diff > 0) {
+      const id = Date.now()
+      const showTimer = window.setTimeout(() => setBagBumpDelta({ id, delta: diff }), 0)
+      const hideTimer = window.setTimeout(() => {
+        setBagBumpDelta((curr) => (curr?.id === id ? null : curr))
+      }, 950)
+      return () => {
+        window.clearTimeout(showTimer)
+        window.clearTimeout(hideTimer)
+      }
+    }
+  }, [totalItems])
 
   const wishlistCount = useUserStore((state) => state.wishlistProductIds.length)
   const products = useProductStore((state) => state.products)
@@ -315,19 +335,42 @@ export const StoreHeader: React.FC = () => {
               <span className="hidden lg:inline">Account</span>
             </Link>
 
-            {/* Sleek Charcoal Bag Button (Opens Slide-Out Drawer) */}
-            <button
+            {/* Sleek Charcoal Bag Button (Opens Slide-Out Drawer on click; animates count on add) */}
+            <motion.button
               type="button"
               onClick={openDrawer}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-900 px-4 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+              animate={bagBumpDelta ? { scale: [1, 1.09, 0.97, 1] } : { scale: 1 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+              className="relative inline-flex h-10 items-center gap-2 rounded-full bg-slate-900 px-4 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
               aria-label="Open Shopping Bag"
             >
               <ShoppingBag size={17} weight="regular" />
               <span className="hidden sm:inline">Bag</span>
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/15 px-1.5 text-[11px] font-bold tabular-nums text-white">
+              <motion.span
+                key={totalItems}
+                initial={{ scale: 0.7, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 520, damping: 24 }}
+                className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/15 px-1.5 text-[11px] font-bold tabular-nums text-white"
+              >
                 {totalItems}
-              </span>
-            </button>
+              </motion.span>
+
+              <AnimatePresence>
+                {bagBumpDelta ? (
+                  <motion.span
+                    key={bagBumpDelta.id}
+                    initial={{ opacity: 0, y: 6, scale: 0.75 }}
+                    animate={{ opacity: 1, y: -22, scale: 1 }}
+                    exit={{ opacity: 0, y: -32, scale: 0.85 }}
+                    transition={{ duration: 0.45, ease: 'easeOut' }}
+                    className="pointer-events-none absolute -right-1 top-0 rounded-full bg-slate-950 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white shadow-md ring-1 ring-white/25"
+                  >
+                    +{bagBumpDelta.delta}
+                  </motion.span>
+                ) : null}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
 
