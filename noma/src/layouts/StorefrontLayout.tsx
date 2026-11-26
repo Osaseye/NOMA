@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   CaretDown,
   Check,
@@ -12,6 +13,7 @@ import { MiniCartDrawer } from '../components/commerce/MiniCartDrawer'
 import { FloatingWhatsApp } from '../components/layout/FloatingWhatsApp'
 import { StoreFooter } from '../components/layout/StoreFooter'
 import { StoreHeader } from '../components/layout/StoreHeader'
+import { PageTransition } from '../components/ui/MotionPrimitives'
 import { ScrollToTop } from '../components/ui/ScrollToTop'
 import { brand } from '../constants/brand'
 import { useAdminStore } from '../store/adminStore'
@@ -72,6 +74,8 @@ function NigeriaFlagIcon({ className = 'h-3.5 w-5' }: { className?: string }) {
 }
 
 export function StorefrontLayout() {
+  const location = useLocation()
+  const prefersReducedMotion = useReducedMotion()
   const { settings } = useAdminStore()
   const deliveryState = useCartStore((state) => state.deliveryState)
   const setDeliveryState = useCartStore((state) => state.setDeliveryState)
@@ -168,8 +172,15 @@ export function StorefrontLayout() {
             </button>
 
             {/* Custom Designed Nigerian States Dropdown Popover (Right-aligned on mobile, centered on sm+) */}
-            {stateMenuOpen ? (
-              <div className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[300px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl sm:left-1/2 sm:right-auto sm:w-80 sm:max-w-none sm:-translate-x-1/2">
+            <AnimatePresence>
+              {stateMenuOpen ? (
+                <motion.div
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={prefersReducedMotion ? undefined : { opacity: 0, y: 4, scale: 0.98 }}
+                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[300px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl sm:left-1/2 sm:right-auto sm:w-80 sm:max-w-none sm:-translate-x-1/2"
+                >
                 <div className="mb-2.5 flex items-center justify-between px-1">
                   <div className="flex items-center gap-1.5">
                     <NigeriaFlagIcon />
@@ -245,8 +256,9 @@ export function StorefrontLayout() {
                     })
                   )}
                 </div>
-              </div>
-            ) : null}
+              </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
 
           {/* Right: Subtle Quick Links */}
@@ -267,7 +279,9 @@ export function StorefrontLayout() {
       <MiniCartDrawer />
 
       <main className="flex-1">
-        <Outlet />
+        <PageTransition key={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </main>
 
       <StoreFooter />

@@ -1,3 +1,4 @@
+import { ScrollReveal } from '../../components/ui/MotionPrimitives'
 import { CuratedBanners } from '../../features/storefront/CuratedBanners'
 import { HomeHero } from '../../features/storefront/HomeHero'
 import { NewsletterCTA } from '../../features/storefront/NewsletterCTA'
@@ -10,12 +11,24 @@ export function HomePage() {
   return (
     <div className="space-y-12 pb-16 sm:space-y-16">
       <HomeHero />
-      <TrustStrip />
-      <ShopByCategory />
-      <TrendingNow />
-      <TodaysBestDeals />
-      <CuratedBanners />
-      <NewsletterCTA />
+      <ScrollReveal y={16}>
+        <TrustStrip />
+      </ScrollReveal>
+      <ScrollReveal>
+        <ShopByCategory />
+      </ScrollReveal>
+      <ScrollReveal>
+        <TrendingNow />
+      </ScrollReveal>
+      <ScrollReveal>
+        <TodaysBestDeals />
+      </ScrollReveal>
+      <ScrollReveal>
+        <CuratedBanners />
+      </ScrollReveal>
+      <ScrollReveal>
+        <NewsletterCTA />
+      </ScrollReveal>
     </div>
   )
 }

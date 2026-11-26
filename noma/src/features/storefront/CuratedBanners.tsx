@@ -1,5 +1,6 @@
 import { ArrowUpRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
+import { StaggerGrid, StaggerItem } from '../../components/ui/MotionPrimitives'
 import { useAdminStore } from '../../store/adminStore'
 
 const DEFAULT_EDITORIAL_COLLECTIONS = [
@@ -65,36 +66,37 @@ export function CuratedBanners() {
         </div>
 
         {/* Full-Bleed Editorial Visual Collection Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 sm:gap-5">
+        <StaggerGrid className="grid grid-cols-1 gap-4 md:grid-cols-3 sm:gap-5">
           {collections.map((item) => (
-            <Link
-              key={item.id}
-              to={item.targetUrl}
-              className="group relative aspect-[16/11] w-full overflow-hidden rounded-2xl bg-slate-900"
-            >
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                loading="lazy"
-                className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+            <StaggerItem key={item.id}>
+              <Link
+                to={item.targetUrl}
+                className="group relative block aspect-[16/11] w-full overflow-hidden rounded-2xl bg-slate-900 transition-transform duration-300 hover:-translate-y-0.5"
+              >
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  loading="lazy"
+                  className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6">
-                <div className="max-w-sm">
-                  <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/80">
-                    {item.subtitle}
-                  </p>
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6">
+                  <div className="max-w-sm">
+                    <h3 className="text-lg font-bold text-white">{item.title}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/80">
+                      {item.subtitle}
+                    </p>
+                  </div>
+
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all duration-300 group-hover:scale-105 group-hover:bg-[#FEB719]">
+                    <ArrowUpRight size={17} weight="bold" />
+                  </span>
                 </div>
-
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all duration-300 group-hover:scale-105 group-hover:bg-[#FEB719]">
-                  <ArrowUpRight size={17} weight="bold" />
-                </span>
-              </div>
-            </Link>
+              </Link>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGrid>
       </div>
     </section>
   )

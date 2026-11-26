@@ -1,11 +1,15 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Check, Heart, Plus, Star } from '@phosphor-icons/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { toast } from 'sonner'
 import type { Product } from '../../types/commerce'
 import { useCartStore } from '../../store/cartStore'
 import { useUserStore } from '../../store/userStore'
 import { formatNaira } from '../../utils/pricing'
+
+const MotionLink = motion.create(Link)
+const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
 interface ProductCardProps {
   product: Product
@@ -14,6 +18,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [added, setAdded] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
   const navigate = useNavigate()
   const addItem = useCartStore((state) => state.addItem)
   const toggleWishlist = useUserStore((state) => state.toggleWishlist)
@@ -60,9 +65,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   }
 
   return (
-    <Link
+    <MotionLink
       to={`/product/${product.slug || product.id}`}
-      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/70 bg-white p-3 transition-all duration-200 hover:border-slate-300 hover:shadow-md sm:p-4"
+      whileHover={prefersReducedMotion ? undefined : { y: -3 }}
+      transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+      className="group relative flex h-full flex-col justify-between rounded-2xl border border-slate-200/70 bg-white p-3 transition-[border-color,box-shadow] duration-200 hover:border-slate-300 hover:shadow-md sm:p-4"
     >
       <div>
         {/* Soft Rounded Product Image Well */}
@@ -106,9 +113,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
 
           {/* Top-Right Wishlist Button */}
-          <button
+          <motion.button
             type="button"
             onClick={handleWishlist}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.92 }}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
             className={`absolute right-2.5 top-2.5 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
               isWishlisted
@@ -117,7 +125,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             }`}
           >
             <Heart size={15} weight={isWishlisted ? 'fill' : 'regular'} />
-          </button>
+          </motion.button>
         </div>
 
         {/* Category & Product Title */}
@@ -154,10 +162,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {!isOutOfStock ? (
-          <button
+          <motion.button
             type="button"
             onClick={handleAddToCart}
-            className={`inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-3.5 text-xs font-semibold transition-all ${
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+            className={`inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-3.5 text-xs font-semibold transition-colors ${
               added
                 ? 'bg-emerald-600 text-white'
                 : 'bg-slate-900 text-white hover:bg-[#1049EB]'
@@ -174,9 +183,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 <span>{hasSizes ? 'Options' : 'Add'}</span>
               </>
             )}
-          </button>
+          </motion.button>
         ) : null}
       </div>
-    </Link>
+    </MotionLink>
   )
 }

@@ -1,24 +1,65 @@
 import { ArrowUpRight } from '@phosphor-icons/react'
+import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { useProductStore } from '../../store/productStore'
 
-const CATEGORY_STUDIO_IMAGES: Record<string, string> = {
-  clothing: '/images/cat-clothing.png',
-  fashion: '/images/cat-clothing.png',
-  shoes: '/images/cat-clothing.png',
+const EDITORIAL_CATEGORY_IMAGES: Record<string, string> = {
+  bicycles: '/images/cat-bicycles-real.jpg',
+  cycling: '/images/cat-bicycles-real.jpg',
+  outdoor: '/images/cat-bicycles-real.jpg',
+  clothing: '/images/cat-fashion-real.jpg',
+  fashion: '/images/cat-fashion-real.jpg',
+  shoes: '/images/cat-fashion-real.jpg',
+  footwear: '/images/cat-fashion-real.jpg',
+  cookware: '/images/cat-cookware-real.jpg',
+  kitchen: '/images/cat-cookware-real.jpg',
+  cooking: '/images/cat-cookware-real.jpg',
+  food: '/images/cat-groceries-real.jpg',
+  groceries: '/images/cat-groceries-real.jpg',
+  grocery: '/images/cat-groceries-real.jpg',
+  appliances: '/images/cat-appliances-real.jpg',
+  'home-appliances': '/images/cat-appliances-real.jpg',
+  perfumes: '/images/cat-perfumes-real.jpg',
+  fragrances: '/images/cat-perfumes-real.jpg',
+  beauty: '/images/cat-perfumes-real.jpg',
   electronics: '/images/cat-electronics.png',
-  appliances: '/images/cat-appliances.png',
-  kitchen: '/images/cat-kitchen.png',
-  cooking: '/images/cat-kitchen.png',
   phones: '/images/cat-phones.png',
   power: '/images/cat-power.png',
   solar: '/images/cat-power.png',
   living: '/images/cat-living.png',
   'home-essentials': '/images/cat-living.png',
-  bicycles: '/images/cat-living.png',
-  outdoor: '/images/cat-living.png',
-  wines: '/images/cat-kitchen.png',
   general: '/images/cat-living.png',
+}
+
+function resolveEditorialCategoryImage(catId: string, catLabel: string, customImage?: string): string {
+  const cleanId = catId.toLowerCase()
+  const cleanLabel = catLabel.toLowerCase()
+
+  if (EDITORIAL_CATEGORY_IMAGES[cleanId]) {
+    return EDITORIAL_CATEGORY_IMAGES[cleanId]
+  }
+  if (cleanLabel.includes('bicycle') || cleanLabel.includes('cycl')) {
+    return '/images/cat-bicycles-real.jpg'
+  }
+  if (cleanLabel.includes('cloth') || cleanLabel.includes('fashion') || cleanLabel.includes('shoe') || cleanLabel.includes('wear')) {
+    return '/images/cat-fashion-real.jpg'
+  }
+  if (cleanLabel.includes('cook') || cleanLabel.includes('kitchen')) {
+    return '/images/cat-cookware-real.jpg'
+  }
+  if (cleanLabel.includes('food') || cleanLabel.includes('grocer') || cleanLabel.includes('pantry')) {
+    return '/images/cat-groceries-real.jpg'
+  }
+  if (cleanLabel.includes('appliance')) {
+    return '/images/cat-appliances-real.jpg'
+  }
+  if (cleanLabel.includes('perfume') || cleanLabel.includes('fragrance') || cleanLabel.includes('scent')) {
+    return '/images/cat-perfumes-real.jpg'
+  }
+  if (customImage && !customImage.includes('unsplash.com')) {
+    return customImage
+  }
+  return '/images/cat-fashion-real.jpg'
 }
 
 export function ShopByCategory() {
@@ -32,17 +73,6 @@ export function ShopByCategory() {
         (catId === 'kitchen' && p.category === 'cooking') ||
         (catId === 'cooking' && p.category === 'kitchen'),
     ).length
-
-  const resolveCategoryImage = (catId: string, customImage?: string) => {
-    if (customImage && !customImage.includes('unsplash.com')) {
-      return customImage
-    }
-    const clean = catId.toLowerCase()
-    if (CATEGORY_STUDIO_IMAGES[clean]) {
-      return CATEGORY_STUDIO_IMAGES[clean]
-    }
-    return '/images/cat-clothing.png'
-  }
 
   const displayCategories = categories.slice(0, 6)
 
@@ -65,49 +95,60 @@ export function ShopByCategory() {
           </Link>
         </div>
 
-        {/* Full-Bleed Portrait Visual Gallery Tiles (Zero Clunky White Outer Card Boxes) */}
+        {/* Full-Bleed Portrait Editorial Photography Tiles */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
-          {displayCategories.map((cat) => {
+          {displayCategories.map((cat, idx) => {
             const count = getCategoryCount(cat.id)
-            const imageSrc = resolveCategoryImage(cat.id, cat.image)
+            const imageSrc = resolveEditorialCategoryImage(cat.id, cat.label, cat.image)
 
             return (
-              <Link
+              <motion.div
                 key={cat.id}
-                to={`/category/${cat.id}`}
-                className="group relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-900"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 'some' }}
+                transition={{
+                  duration: 0.42,
+                  delay: idx * 0.055,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
               >
-                <img
-                  src={imageSrc}
-                  alt={cat.label}
-                  loading="lazy"
-                  className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
-                />
+                <Link
+                  to={`/category/${cat.id}`}
+                  className="group relative block aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-900"
+                >
+                  <img
+                    src={imageSrc}
+                    alt={cat.label}
+                    loading="lazy"
+                    className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                  />
 
-                {/* Smooth Editorial Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity group-hover:from-black/90" />
+                  {/* Smooth Editorial Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent transition-opacity group-hover:from-black/90" />
 
-                {/* Top-Right Floating Item Count Pill */}
-                <span className="absolute right-3 top-3 rounded-full bg-black/35 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-md">
-                  {count}
-                </span>
+                  {/* Top-Right Floating Item Count Pill */}
+                  <span className="absolute right-3 top-3 rounded-full bg-black/40 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-white backdrop-blur-md">
+                    {count}
+                  </span>
 
-                {/* Bottom Floating Category Title & Hover Arrow */}
-                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-4">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-sm font-bold text-white sm:text-base">
-                      {cat.label}
-                    </h3>
-                    <span className="mt-0.5 block text-[11px] font-medium text-white/75">
-                      Explore &rarr;
+                  {/* Bottom Floating Category Title & Hover Arrow */}
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-4">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-bold text-white sm:text-base">
+                        {cat.label}
+                      </h3>
+                      <span className="mt-0.5 block text-[11px] font-medium text-white/80">
+                        Explore &rarr;
+                      </span>
+                    </div>
+
+                    <span className="flex h-8 w-8 shrink-0 translate-y-1 items-center justify-center rounded-full bg-[#FEB719] text-slate-950 opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                      <ArrowUpRight size={15} weight="bold" />
                     </span>
                   </div>
-
-                  <span className="flex h-8 w-8 shrink-0 translate-y-1 items-center justify-center rounded-full bg-[#FEB719] text-slate-950 opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    <ArrowUpRight size={15} weight="bold" />
-                  </span>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             )
           })}
         </div>

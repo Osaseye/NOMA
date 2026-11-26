@@ -1,12 +1,15 @@
 import { ArrowRight } from '@phosphor-icons/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ProductCard } from '../../components/commerce/ProductCard'
+import { StaggerGrid, StaggerItem } from '../../components/ui/MotionPrimitives'
 import { useProductStore } from '../../store/productStore'
 
 export function TrendingNow() {
   const { products, categories } = useProductStore()
   const [activeTab, setActiveTab] = useState('all')
+  const prefersReducedMotion = useReducedMotion()
 
   const filterTabs = [
     { id: 'all', label: 'All' },
@@ -46,13 +49,24 @@ export function TrendingNow() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`relative shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                     isActive
-                      ? 'bg-[#1049EB] text-white'
+                      ? 'text-white'
                       : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
-                  {tab.label}
+                  {isActive ? (
+                    <motion.span
+                      layoutId="trending-active-tab"
+                      transition={
+                        prefersReducedMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 460, damping: 34 }
+                      }
+                      className="absolute inset-0 rounded-full bg-[#1049EB]"
+                    />
+                  ) : null}
+                  <span className="relative z-10">{tab.label}</span>
                 </button>
               )
             })}
@@ -60,11 +74,20 @@ export function TrendingNow() {
         </div>
 
         {/* Wide 4-Column Product Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {displayProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <AnimatePresence mode="wait">
+          <StaggerGrid
+            key={activeTab}
+            animateOnMount
+            staggerDelay={0.045}
+            className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
+          >
+            {displayProducts.map((product) => (
+              <StaggerItem key={product.id} className="h-full">
+                <ProductCard product={product} />
+              </StaggerItem>
+            ))}
+          </StaggerGrid>
+        </AnimatePresence>
 
         <div className="mt-8 text-center">
           <Link

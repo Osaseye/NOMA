@@ -1,8 +1,11 @@
 import { ArrowRight, CaretLeft, CaretRight, WhatsappLogo } from '@phosphor-icons/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { brand } from '../../constants/brand'
 import { useAdminStore } from '../../store/adminStore'
+
+const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
 const HERO_SLIDES = [
   {
@@ -64,6 +67,7 @@ const HERO_SLIDES = [
 
 export function HomeHero() {
   const { settings } = useAdminStore()
+  const prefersReducedMotion = useReducedMotion()
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const touchStartX = useRef<number | null>(null)
@@ -134,36 +138,99 @@ export function HomeHero() {
 
           {/* Floating Hero Content */}
           <div className="absolute inset-0 z-30 flex flex-col justify-end p-6 pb-16 sm:justify-center sm:p-12 lg:p-16">
-            <div className="max-w-2xl">
-              <h1 className="text-2xl font-bold leading-[1.12] tracking-tight text-white drop-shadow-xs sm:text-5xl lg:text-[3.35rem]">
-                {currentSlide.title}
-              </h1>
-
-              <p className="mt-3.5 max-w-xl text-xs leading-relaxed text-white/90 sm:mt-4 sm:text-base">
-                {currentSlide.subtitle}
-              </p>
-
-              {/* Floating Action Buttons */}
-              <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
-                <Link
-                  to={currentSlide.ctaHref}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1049EB] px-6 py-3 text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] hover:bg-[#0D3BC2] sm:px-7 sm:py-3.5 sm:text-sm"
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide.id}
+                initial={prefersReducedMotion ? false : 'hidden'}
+                animate="visible"
+                exit={prefersReducedMotion ? undefined : 'exit'}
+                variants={{
+                  hidden: {},
+                  visible: {
+                    transition: { staggerChildren: 0.065, delayChildren: 0.02 },
+                  },
+                  exit: {
+                    opacity: 0,
+                    y: -8,
+                    transition: { duration: 0.16, ease: EASE_OUT_EXPO },
+                  },
+                }}
+                className="max-w-2xl"
+              >
+                <motion.span
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.34, ease: EASE_OUT_EXPO },
+                    },
+                  }}
+                  className="mb-3 inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/95 backdrop-blur-md"
                 >
-                  <span>{currentSlide.ctaText}</span>
-                  <ArrowRight size={16} weight="bold" />
-                </Link>
+                  {currentSlide.navLabel}
+                </motion.span>
 
-                <a
-                  href={`${whatsappUrl}?text=${encodeURIComponent('Hello Noma, I would like to inquire about bulk/wholesale or retail orders.')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 bg-black/40 px-5 py-3 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-black/60 sm:px-6 sm:py-3.5 sm:text-sm"
+                <motion.h1
+                  variants={{
+                    hidden: { opacity: 0, y: 16 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.42, ease: EASE_OUT_EXPO },
+                    },
+                  }}
+                  className="text-2xl font-bold leading-[1.12] tracking-tight text-white drop-shadow-xs sm:text-5xl lg:text-[3.35rem]"
                 >
-                  <WhatsappLogo size={18} weight="fill" className="text-emerald-400" />
-                  <span>Wholesale &amp; Bulk Desk</span>
-                </a>
-              </div>
-            </div>
+                  {currentSlide.title}
+                </motion.h1>
+
+                <motion.p
+                  variants={{
+                    hidden: { opacity: 0, y: 14 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.4, ease: EASE_OUT_EXPO },
+                    },
+                  }}
+                  className="mt-3.5 max-w-xl text-xs leading-relaxed text-white/90 sm:mt-4 sm:text-base"
+                >
+                  {currentSlide.subtitle}
+                </motion.p>
+
+                {/* Floating Action Buttons */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 12 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.38, ease: EASE_OUT_EXPO },
+                    },
+                  }}
+                  className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8"
+                >
+                  <Link
+                    to={currentSlide.ctaHref}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1049EB] px-6 py-3 text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] hover:bg-[#0D3BC2] active:scale-[0.98] sm:px-7 sm:py-3.5 sm:text-sm"
+                  >
+                    <span>{currentSlide.ctaText}</span>
+                    <ArrowRight size={16} weight="bold" />
+                  </Link>
+
+                  <a
+                    href={`${whatsappUrl}?text=${encodeURIComponent('Hello Noma, I would like to inquire about bulk/wholesale or retail orders.')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 bg-black/40 px-5 py-3 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-black/60 active:scale-[0.98] sm:px-6 sm:py-3.5 sm:text-sm"
+                  >
+                    <WhatsappLogo size={18} weight="fill" className="text-emerald-400" />
+                    <span>Wholesale &amp; Bulk Desk</span>
+                  </a>
+                </motion.div>
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Bottom Interactive Slide Bar: Labeled Pills on Desktop + Dots & Arrows */}

@@ -67,9 +67,25 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/orders/:orderId',
+        element: lazyView(() =>
+          import('../pages/storefront/CustomerOrderDetailPage').then(
+            (m) => m.CustomerOrderDetailPage,
+          ),
+        ),
+      },
+      {
         path: '/track-order',
         element: lazyView(() =>
           import('../pages/storefront/MyOrdersPage').then((m) => m.MyOrdersPage),
+        ),
+      },
+      {
+        path: '/track-order/:orderId',
+        element: lazyView(() =>
+          import('../pages/storefront/CustomerOrderDetailPage').then(
+            (m) => m.CustomerOrderDetailPage,
+          ),
         ),
       },
       {
