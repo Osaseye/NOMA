@@ -17,7 +17,7 @@ export const NOMA_EMAIL_HEADER_BANNER_URL =
   'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/noma-email-header-banner.jpg'
 
 export const DEFAULT_STOREFRONT_URL = 'https://noma-africa.vercel.app'
-export const DEFAULT_WHATSAPP_URL = 'https://wa.me/2348030006662'
+export const DEFAULT_WHATSAPP_URL = 'https://wa.me/2348104189461'
 
 export interface RenderedEmail {
   subject: string
@@ -631,6 +631,399 @@ export function adminSupportAlertEmail(data: AdminSupportAlertEmailData): Render
 
   return {
     subject: `Support Message: ${data.subject || data.senderName}`,
+    html,
+    text,
+  }
+}
+
+// ============================================================================
+// LIFECYCLE, MARKETING, SEASONAL PROMO & PHASE 2 VENDOR TEMPLATES
+// ============================================================================
+
+export interface CustomerWelcomeEmailData {
+  customerName: string
+  storefrontUrl?: string
+  whatsappUrl?: string
+}
+
+/**
+ * 7. `customer_welcome` — Sent after successful customer account registration.
+ */
+export function customerWelcomeEmail(data: CustomerWelcomeEmailData): RenderedEmail {
+  const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
+  const waUrl = data.whatsappUrl || DEFAULT_WHATSAPP_URL
+  const firstName = firstNameOf(data.customerName)
+
+  const bodyHtml = [
+    paragraph(`Hi ${escapeHtml(firstName)},`),
+    paragraph(
+      `Welcome to Noma. Your account is ready, and we're glad to have you with us.`,
+    ),
+    leadInLine(
+      'Faster checkout:',
+      `Save your delivery address once in ${inlineLink('your account', `${baseUrl}/account`)} and breeze through future orders.`,
+    ),
+    leadInLine(
+      'Live order tracking:',
+      `Every order you place is tracked step-by-step from confirmation to doorstep delivery on your ${inlineLink('orders page', `${baseUrl}/orders`)}.`,
+    ),
+    leadInLine(
+      'Start exploring:',
+      `Browse fashion, footwear, home appliances, cookware, and everyday essentials in ${inlineLink('the Noma catalog', `${baseUrl}/catalog`)}.`,
+      0,
+    ),
+  ].join('')
+
+  const html = renderNomaEmailLayout({
+    preheader: `Welcome to Noma Marketplace, ${firstName}. Your account is ready.`,
+    heading: `Welcome to Noma, ${firstName}`,
+    bodyHtml,
+    footerLine2: `Need help with anything? Reply to this email or chat with us on WhatsApp (${waUrl.replace('https://', '')}).`,
+  })
+
+  const text = [
+    `Hi ${firstName},`,
+    '',
+    'Welcome to Noma. Your account is ready.',
+    `Account & saved address: ${baseUrl}/account`,
+    `Track orders: ${baseUrl}/orders`,
+    `Browse catalog: ${baseUrl}/catalog`,
+    '',
+    'Warm regards,',
+    'The Noma Team',
+  ].join('\n')
+
+  return {
+    subject: `Welcome to Noma Marketplace, ${firstName}`,
+    html,
+    text,
+  }
+}
+
+export interface NewsletterWelcomeEmailData {
+  subscriberName?: string
+  storefrontUrl?: string
+  unsubscribeUrl?: string
+}
+
+/**
+ * 8. `newsletter_welcome` — Sent when someone joins Noma Insider / newsletter updates.
+ */
+export function newsletterWelcomeEmail(data: NewsletterWelcomeEmailData): RenderedEmail {
+  const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
+  const greeting = data.subscriberName ? `Hi ${escapeHtml(firstNameOf(data.subscriberName))},` : 'Hello,'
+
+  const bodyHtml = [
+    paragraph(greeting),
+    paragraph(
+      `Thanks for joining Noma Insider. We keep our emails short, thoughtful, and worth opening — only writing when there is something genuinely useful to share.`,
+    ),
+    leadInLine(
+      'What you can expect:',
+      `Early notice on fresh arrivals, restocks on bestsellers, seasonal offers, and occasional wholesale drops.`,
+    ),
+    leadInLine(
+      'While you are here:',
+      `Take a look at ${inlineLink('what is trending on Noma right now', `${baseUrl}/catalog`)}.`,
+      0,
+    ),
+  ].join('')
+
+  const html = renderNomaEmailLayout({
+    preheader: `You're on the Noma Insider list for new drops and seasonal offers.`,
+    heading: `You're on the Noma Insider list`,
+    bodyHtml,
+    footerLine2: data.unsubscribeUrl
+      ? `You can unsubscribe anytime at ${data.unsubscribeUrl}.`
+      : 'You received this because you subscribed to Noma updates.',
+  })
+
+  const text = [
+    data.subscriberName ? `Hi ${firstNameOf(data.subscriberName)},` : 'Hello,',
+    '',
+    "Thanks for joining Noma Insider. We'll send you early notice on new arrivals, restocks, and seasonal offers.",
+    `Browse what's trending: ${baseUrl}/catalog`,
+    '',
+    'Warm regards,',
+    'The Noma Team',
+  ].join('\n')
+
+  return {
+    subject: `Welcome to Noma Insider`,
+    html,
+    text,
+  }
+}
+
+export interface StoreUpdateEmailData {
+  recipientName?: string
+  title: string
+  introParagraph: string
+  highlights: Array<{ leadIn: string; detail: string }>
+  ctaLabel?: string
+  ctaUrl?: string
+  storefrontUrl?: string
+}
+
+/**
+ * 9. `store_update` — Clean letter template for platform updates, delivery news, or order packing notes.
+ */
+export function storeUpdateEmail(data: StoreUpdateEmailData): RenderedEmail {
+  const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
+  const greeting = data.recipientName ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},` : 'Hello,'
+
+  const bodyHtml = [
+    paragraph(greeting),
+    paragraph(escapeHtml(data.introParagraph)),
+    ...data.highlights.map((h, idx) =>
+      leadInLine(
+        h.leadIn.endsWith(':') ? h.leadIn : `${h.leadIn}:`,
+        escapeHtml(h.detail),
+        idx === data.highlights.length - 1 && !data.ctaLabel ? 0 : 12,
+      ),
+    ),
+    data.ctaLabel
+      ? paragraph(
+          inlineLink(data.ctaLabel, data.ctaUrl || `${baseUrl}/catalog`),
+          0,
+        )
+      : '',
+  ].join('')
+
+  const html = renderNomaEmailLayout({
+    preheader: data.introParagraph.slice(0, 110),
+    heading: data.title,
+    bodyHtml,
+  })
+
+  const text = [
+    data.recipientName ? `Hi ${firstNameOf(data.recipientName)},` : 'Hello,',
+    '',
+    data.introParagraph,
+    '',
+    ...data.highlights.map((h) => `${h.leadIn}: ${h.detail}`),
+    data.ctaLabel ? `\n${data.ctaLabel}: ${data.ctaUrl || `${baseUrl}/catalog`}` : '',
+    '',
+    'Warm regards,',
+    'The Noma Team',
+  ].join('\n')
+
+  return {
+    subject: `${data.title} — Noma Marketplace`,
+    html,
+    text,
+  }
+}
+
+export interface NewArrivalsEmailData {
+  recipientName?: string
+  headline?: string
+  introNote?: string
+  items: Array<{
+    name: string
+    category?: string
+    price: number
+    slug: string
+  }>
+  storefrontUrl?: string
+}
+
+/**
+ * 10. `new_arrivals` — Clean hairline list showcasing newly added items or restocks on Noma.
+ */
+export function newArrivalsEmail(data: NewArrivalsEmailData): RenderedEmail {
+  const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
+  const greeting = data.recipientName ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},` : 'Hello,'
+  const heading = data.headline || 'Fresh arrivals just landed on Noma'
+  const intro =
+    data.introNote ||
+    'We just added a new batch of quality-checked pieces across our store. Here are a few highlights now in stock:'
+
+  const rowsHtml = data.items
+    .map((item) => {
+      const url = `${baseUrl}/product/${encodeURIComponent(item.slug)}`
+      const catText = item.category ? ` · ${escapeHtml(item.category)}` : ''
+      return `
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;font-family:${FONT_STACK};font-size:14px;line-height:1.5;color:#1F2937;">
+            ${inlineLink(item.name, url)}<span style="color:#6B7280;">${catText}</span>
+          </td>
+          <td align="right" style="padding:12px 0 12px 16px;border-bottom:1px solid #E5E7EB;font-family:${FONT_STACK};font-size:14px;font-weight:600;color:#0F172A;white-space:nowrap;font-variant-numeric:tabular-nums;">
+            ${escapeHtml(formatNairaEmail(item.price))}
+          </td>
+        </tr>`
+    })
+    .join('')
+
+  const listTable = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 22px 0;border-top:1px solid #E5E7EB;border-collapse:collapse;">
+      ${rowsHtml}
+    </table>`
+
+  const bodyHtml = [
+    paragraph(greeting),
+    paragraph(escapeHtml(intro)),
+    listTable,
+    leadInLine(
+      'See everything new:',
+      `Explore the full collection on ${inlineLink('Noma Marketplace', `${baseUrl}/catalog`)}.`,
+      0,
+    ),
+  ].join('')
+
+  const html = renderNomaEmailLayout({
+    preheader: `${heading} — see what just landed on Noma.`,
+    heading,
+    bodyHtml,
+  })
+
+  const text = [
+    data.recipientName ? `Hi ${firstNameOf(data.recipientName)},` : 'Hello,',
+    '',
+    intro,
+    '',
+    ...data.items.map(
+      (item) =>
+        `- ${item.name}: ${formatNairaEmail(item.price)} (${baseUrl}/product/${encodeURIComponent(item.slug)})`,
+    ),
+    '',
+    `Explore all products: ${baseUrl}/catalog`,
+    '',
+    'Warm regards,',
+    'The Noma Team',
+  ].join('\n')
+
+  return {
+    subject: `${heading} — Noma`,
+    html,
+    text,
+  }
+}
+
+export interface SeasonalPromoEmailData {
+  recipientName?: string
+  campaignName: string // e.g., "Christmas & Holiday Sale", "Detty December Deals", "Black Friday", "Eid Offer"
+  headline: string
+  message: string
+  offerSummary: string // e.g., "Up to 25% off selected fashion, cookware, and appliances"
+  promoCode?: string
+  validUntil?: string
+  ctaLabel?: string
+  ctaUrl?: string
+  storefrontUrl?: string
+}
+
+/**
+ * 11. `seasonal_promo` — Tasteful letter-style template for Christmas, holiday sales, flash deals, and promos.
+ */
+export function seasonalPromoEmail(data: SeasonalPromoEmailData): RenderedEmail {
+  const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
+  const greeting = data.recipientName ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},` : 'Hello,'
+  const targetUrl = data.ctaUrl || `${baseUrl}/catalog`
+
+  const bodyHtml = [
+    paragraph(greeting),
+    paragraph(escapeHtml(data.message)),
+    leadInLine('The offer:', escapeHtml(data.offerSummary)),
+    data.promoCode
+      ? leadInLine(
+          'Promo code:',
+          `<strong style="color:#0F172A;font-family:monospace;letter-spacing:0.04em;">${escapeHtml(data.promoCode)}</strong> at checkout.`,
+        )
+      : '',
+    data.validUntil ? leadInLine('Available until:', escapeHtml(data.validUntil)) : '',
+    leadInLine(
+      'Shop early:',
+      `Popular sizes and bestsellers move quickly — ${inlineLink(data.ctaLabel || 'shop the sale on Noma', targetUrl)}.`,
+      0,
+    ),
+  ].join('')
+
+  const html = renderNomaEmailLayout({
+    preheader: `${data.campaignName}: ${data.offerSummary}`,
+    heading: data.headline,
+    bodyHtml,
+  })
+
+  const text = [
+    data.recipientName ? `Hi ${firstNameOf(data.recipientName)},` : 'Hello,',
+    '',
+    data.message,
+    '',
+    `The offer: ${data.offerSummary}`,
+    data.promoCode ? `Promo code: ${data.promoCode}` : '',
+    data.validUntil ? `Available until: ${data.validUntil}` : '',
+    `Shop now: ${targetUrl}`,
+    '',
+    'Warm regards,',
+    'The Noma Team',
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  return {
+    subject: `${data.campaignName} — ${data.headline}`,
+    html,
+    text,
+  }
+}
+
+export interface VendorWelcomeEmailData {
+  vendorName: string
+  storeName: string
+  portalUrl?: string
+  storefrontUrl?: string
+  whatsappUrl?: string
+}
+
+/**
+ * 12. `vendor_approved` (Phase 2) — Sent when an Instagram/WhatsApp vendor is approved to open a sub-store on Noma.
+ */
+export function vendorWelcomeEmail(data: VendorWelcomeEmailData): RenderedEmail {
+  const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
+  const portalUrl = data.portalUrl || `${baseUrl}/admin`
+  const waUrl = data.whatsappUrl || DEFAULT_WHATSAPP_URL
+  const firstName = firstNameOf(data.vendorName)
+
+  const bodyHtml = [
+    paragraph(`Hi ${escapeHtml(firstName)},`),
+    paragraph(
+      `Welcome aboard — <strong style="color:#0F172A;">${escapeHtml(data.storeName)}</strong> has been approved to sell on Noma Marketplace.`,
+    ),
+    leadInLine(
+      'Upload your products:',
+      `Sign in to ${inlineLink('your Noma Vendor Portal', portalUrl)} to upload product photos. Our AI listing assistant will help draft clean titles, descriptions, and specs for review.`,
+    ),
+    leadInLine(
+      'How orders & payouts work:',
+      `Whenever a customer pays for one of your items, we notify you immediately for dispatch and settle your earnings directly to your verified bank account.`,
+    ),
+    leadInLine(
+      'Need onboarding help?',
+      `Reply to this email or ${inlineLink('message our vendor desk on WhatsApp', waUrl)} anytime.`,
+      0,
+    ),
+  ].join('')
+
+  const html = renderNomaEmailLayout({
+    preheader: `${data.storeName} is approved on Noma Marketplace — start uploading your products.`,
+    heading: `${data.storeName} is approved on Noma`,
+    bodyHtml,
+  })
+
+  const text = [
+    `Hi ${firstName},`,
+    '',
+    `Welcome aboard — ${data.storeName} has been approved to sell on Noma Marketplace.`,
+    `Vendor Portal: ${portalUrl}`,
+    `Need help? Chat with our vendor desk on WhatsApp: ${waUrl}`,
+    '',
+    'Warm regards,',
+    'The Noma Team',
+  ].join('\n')
+
+  return {
+    subject: `Approved: ${data.storeName} is live on Noma`,
     html,
     text,
   }
