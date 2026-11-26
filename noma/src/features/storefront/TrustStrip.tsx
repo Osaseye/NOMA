@@ -31,7 +31,7 @@ export function TrustStrip() {
         <div className="grid grid-cols-4 gap-1 text-center md:hidden">
           {mobileHighlights.map((item) => (
             <div key={item.shortLabel} className="flex flex-col items-center justify-center gap-1 py-0.5">
-              <item.icon size={18} weight="regular" className="text-slate-800" />
+              <item.icon size={18} weight="regular" className="text-[#1049EB]" />
               <span className="text-[10px] font-semibold leading-tight text-slate-700">
                 {item.shortLabel}
               </span>
@@ -44,11 +44,11 @@ export function TrustStrip() {
           {mobileHighlights.map((item, idx) => (
             <div key={item.shortLabel} className="contents">
               <div className="inline-flex items-center gap-2">
-                <item.icon size={16} weight="regular" className="text-slate-800" />
+                <item.icon size={16} weight="regular" className="text-[#1049EB]" />
                 <span>{item.desktopLabel}</span>
               </div>
               {idx < mobileHighlights.length - 1 ? (
-                <span className="text-slate-300">&bull;</span>
+                <span className="text-[#FEB719]">&bull;</span>
               ) : null}
             </div>
           ))}

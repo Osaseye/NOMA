@@ -91,15 +91,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 Out of Stock
               </span>
             ) : discountPercent > 0 ? (
-              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[11px] font-bold text-white">
+              <span className="rounded-full bg-[#1049EB] px-2.5 py-0.5 text-[11px] font-bold text-white">
                 -{discountPercent}%
               </span>
             ) : product.discountBadge ? (
-              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[11px] font-bold text-white">
+              <span className="rounded-full bg-[#1049EB] px-2.5 py-0.5 text-[11px] font-bold text-white">
                 {product.discountBadge}
               </span>
             ) : product.badge ? (
-              <span className="rounded-full bg-white/95 px-2.5 py-0.5 text-[10px] font-semibold text-slate-800 shadow-2xs">
+              <span className="rounded-full bg-white/95 px-2.5 py-0.5 text-[10px] font-semibold text-slate-800 shadow-2xs ring-1 ring-slate-200/60">
                 {product.badge}
               </span>
             ) : null}
@@ -160,7 +160,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             className={`inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-3.5 text-xs font-semibold transition-all ${
               added
                 ? 'bg-emerald-600 text-white'
-                : 'bg-slate-900 text-white hover:bg-slate-700'
+                : 'bg-slate-900 text-white hover:bg-[#1049EB]'
             }`}
           >
             {added ? (

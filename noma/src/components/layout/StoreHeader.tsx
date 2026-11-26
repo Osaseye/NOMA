@@ -351,7 +351,7 @@ export const StoreHeader: React.FC = () => {
                 initial={{ scale: 0.7, opacity: 0.5 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 520, damping: 24 }}
-                className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/15 px-1.5 text-[11px] font-bold tabular-nums text-white"
+                className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#FEB719] px-1.5 text-[11px] font-bold tabular-nums text-slate-950"
               >
                 {totalItems}
               </motion.span>
@@ -364,7 +364,7 @@ export const StoreHeader: React.FC = () => {
                     animate={{ opacity: 1, y: -22, scale: 1 }}
                     exit={{ opacity: 0, y: -32, scale: 0.85 }}
                     transition={{ duration: 0.45, ease: 'easeOut' }}
-                    className="pointer-events-none absolute -right-1 top-0 rounded-full bg-slate-950 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white shadow-md ring-1 ring-white/25"
+                    className="pointer-events-none absolute -right-1 top-0 rounded-full bg-[#1049EB] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white shadow-md"
                   >
                     +{bagBumpDelta.delta}
                   </motion.span>

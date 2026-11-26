@@ -147,7 +147,7 @@ export function HomeHero() {
               <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
                 <Link
                   to={currentSlide.ctaHref}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-bold text-slate-950 shadow-md transition-transform hover:scale-[1.02] hover:bg-slate-100 sm:px-7 sm:py-3.5 sm:text-sm"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1049EB] px-6 py-3 text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] hover:bg-[#0D3BC2] sm:px-7 sm:py-3.5 sm:text-sm"
                 >
                   <span>{currentSlide.ctaText}</span>
                   <ArrowRight size={16} weight="bold" />

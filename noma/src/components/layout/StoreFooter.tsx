@@ -16,7 +16,11 @@ export const StoreFooter: React.FC = () => {
   const supportEmail = settings.supportEmail || brand.email
 
   return (
-    <footer className="border-t border-slate-200/80 bg-white text-slate-800">
+    <footer className="relative border-t border-slate-200/80 bg-white text-slate-800">
+      <div
+        aria-hidden="true"
+        className="h-[2px] w-full bg-gradient-to-r from-[#1049EB] via-[#1049EB]/60 to-[#FEB719]"
+      />
       <div className="mx-auto w-full max-w-[1600px] px-3 py-10 sm:px-5 lg:px-6 lg:py-12">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-12">
           {/* Col 1: Brand Summary */}
@@ -34,12 +38,12 @@ export const StoreFooter: React.FC = () => {
 
             <div className="mt-4 space-y-1.5 text-xs text-slate-500">
               <div className="flex items-center gap-2">
-                <MapPin size={15} className="text-slate-700" />
+                <MapPin size={15} className="text-[#1049EB]" />
                 <span>Lagos • Abuja • Nationwide Delivery</span>
               </div>
               <div className="flex items-center gap-2">
-                <EnvelopeSimple size={15} className="text-slate-700" />
-                <a href={`mailto:${supportEmail}`} className="hover:text-slate-950">
+                <EnvelopeSimple size={15} className="text-[#1049EB]" />
+                <a href={`mailto:${supportEmail}`} className="hover:text-[#1049EB]">
                   {supportEmail}
                 </a>
               </div>
