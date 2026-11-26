@@ -20,7 +20,7 @@ export default function App() {
       useUserStore.getState().syncFromFirebaseUser(authUser, userDoc)
       if (!authUser) {
         useProductStore.getState().subscribeOrdersForUser(null)
-      } else if (!userDoc || userDoc.role !== 'admin') {
+      } else {
         useProductStore.getState().subscribeOrdersForUser(authUser.uid)
       }
     })

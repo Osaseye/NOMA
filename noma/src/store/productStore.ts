@@ -47,6 +47,7 @@ interface ProductStoreState {
 
   // Order actions
   updateOrderStatus: (orderId: string, status: OrderStatus) => void
+  deleteOrder: (orderId: string) => Promise<void>
   addOrder: (order: Order) => Promise<Order>
   setOrders: (orders: Order[]) => void
 
@@ -358,6 +359,20 @@ export const useProductStore = create<ProductStoreState>()(
           orderService.updateOrderStatus(orderId, status).catch((err) => {
             console.error('Failed to update order status in Firestore:', err)
           })
+        },
+
+        deleteOrder: async (orderId) => {
+          const prev = get().orders
+          set((state) => ({
+            orders: state.orders.filter((o) => o.id !== orderId),
+          }))
+          try {
+            await orderService.deleteOrder(orderId)
+          } catch (err) {
+            set({ orders: prev })
+            console.error('Failed to delete order from Firestore:', err)
+            throw err
+          }
         },
 
         addOrder: async (order) => {

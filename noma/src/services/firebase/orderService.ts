@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   setDoc,
   updateDoc,
@@ -183,6 +184,10 @@ export const orderService = {
       status,
       updatedAt: serverTimestamp(),
     })
+  },
+
+  deleteOrder: async (orderId: string) => {
+    await deleteDoc(doc(db, ORDERS_COLLECTION, orderId))
   },
 
   getOrderById: async (orderId: string): Promise<Order | null> => {

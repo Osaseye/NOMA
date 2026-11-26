@@ -16,6 +16,7 @@ export function CustomersPage() {
 
     if (customers.length === 0 && orders.length > 0) {
       for (const order of orders) {
+        if (order.status === 'cancelled') continue
         const key = order.userId || order.phone || order.email || order.customer
         const existing = map.get(key)
         if (existing) {

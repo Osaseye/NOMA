@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUpRight, MagnifyingGlass, ShoppingBag, WhatsappLogo } from '@phosphor-icons/react'
+import { ArrowUpRight, MagnifyingGlass, ShoppingBag, Trash, WhatsappLogo } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { brand } from '../../constants/brand'
@@ -20,7 +20,7 @@ const allStatuses: OrderStatus[] = [
 const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
-  const { updateOrderStatus } = useProductStore()
+  const { updateOrderStatus, deleteOrder } = useProductStore()
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -196,6 +196,22 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                           <span>View</span>
                           <ArrowUpRight size={12} />
                         </Link>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!window.confirm(`Permanently delete order #${order.id}?`)) return
+                            try {
+                              await deleteOrder(order.id)
+                              toast.success(`Deleted order #${order.id}`)
+                            } catch {
+                              toast.error('Failed to delete order.')
+                            }
+                          }}
+                          title="Delete Order"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                        >
+                          <Trash size={14} weight="regular" />
+                        </button>
                       </div>
                     </td>
                   </tr>
