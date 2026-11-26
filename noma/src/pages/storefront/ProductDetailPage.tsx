@@ -81,7 +81,7 @@ export function ProductDetailPage() {
     typeof window !== 'undefined'
       ? window.location.href
       : `https://noma-africa.vercel.app/product/${product.slug}`
-  const ogImage = product.image || '/icon.png'
+  const ogImage = product.image || 'https://noma-africa.vercel.app/images/og-noma-share.jpg'
 
   return (
     <>

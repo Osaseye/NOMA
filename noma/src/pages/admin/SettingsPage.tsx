@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowClockwise, Check, Plus, Trash, UploadSimple } from '@phosphor-icons/react'
+import { ArrowClockwise, Check, Plus, Trash, UploadSimple, Warning } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { AdminTitle } from '../../components/admin/AdminTitle'
+import { clearSelectedTestData } from '../../services/firebase/dataCleanupService'
 import { storageService } from '../../services/firebase/storageService'
 import {
   useAdminStore,
@@ -44,11 +45,55 @@ export function SettingsPage() {
     toggleDealProduct,
     toggleTrendingProduct,
   } = useAdminStore()
-  const { products } = useProductStore()
+  const { products, orders, reviews } = useProductStore()
 
   const [activeTab, setActiveTab] = useState<
-    'storage' | 'delivery' | 'curation' | 'banners' | 'contact'
+    'storage' | 'delivery' | 'curation' | 'banners' | 'contact' | 'cleanup'
   >('storage')
+
+  const [cleanupTargets, setCleanupTargets] = useState({
+    orders: true,
+    reviews: true,
+    feedback: true,
+    products: false,
+  })
+  const [cleanupConfirmText, setCleanupConfirmText] = useState('')
+  const [clearingData, setClearingData] = useState(false)
+
+  const handleRunCleanup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (clearingData) return
+    if (cleanupConfirmText.trim().toUpperCase() !== 'CLEAR') {
+      toast.error('Type CLEAR to confirm before deleting test data.')
+      return
+    }
+    if (
+      !cleanupTargets.orders &&
+      !cleanupTargets.reviews &&
+      !cleanupTargets.feedback &&
+      !cleanupTargets.products
+    ) {
+      toast.error('Select at least one data category to clear.')
+      return
+    }
+
+    setClearingData(true)
+    try {
+      const res = await clearSelectedTestData(cleanupTargets)
+      const parts: string[] = []
+      if (cleanupTargets.orders) parts.push(`${res.ordersDeleted} orders`)
+      if (cleanupTargets.reviews) parts.push(`${res.reviewsDeleted} reviews`)
+      if (cleanupTargets.feedback) parts.push(`${res.feedbackDeleted} feedback messages`)
+      if (cleanupTargets.products) parts.push(`${res.productsDeleted} products`)
+      toast.success(`Launch cleanup complete: removed ${parts.join(', ')}.`)
+      setCleanupConfirmText('')
+    } catch (err) {
+      console.error('Launch cleanup failed:', err)
+      toast.error('Failed to clear some records. Check your admin permissions and try again.')
+    } finally {
+      setClearingData(false)
+    }
+  }
 
   const [draft, setDraft] = useState<Partial<SiteSettings>>({})
 
@@ -342,6 +387,7 @@ export function SettingsPage() {
             { key: 'curation', label: 'Trending & Best Deals' },
             { key: 'banners', label: `Banners (${settings.heroBanners.length})` },
             { key: 'contact', label: 'Store Contact & Top Bar' },
+            { key: 'cleanup', label: 'Launch Cleanup' },
           ] as const
         ).map((tab) => {
           const isActive = activeTab === tab.key
@@ -1284,6 +1330,128 @@ export function SettingsPage() {
           >
             Save Contact Settings
           </button>
+        </form>
+      ) : null}
+
+      {/* TAB 5: LAUNCH CLEANUP / CLEAR TEST DATA */}
+      {activeTab === 'cleanup' ? (
+        <form onSubmit={handleRunCleanup} className="max-w-2xl space-y-6">
+          <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4">
+            <div className="flex items-start gap-3">
+              <Warning size={18} weight="bold" className="mt-0.5 shrink-0 text-rose-600" />
+              <div className="space-y-1">
+                <h2 className="text-sm font-bold text-slate-950">
+                  Pre-Launch Test Data Cleanup
+                </h2>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  Permanently remove test records from Firestore before opening Noma to the public.
+                  Your <strong>Admin accounts, Categories, Delivery States/Fees, Suppliers, and Kora/Gemini settings</strong> are always protected and will never be deleted.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+            <label className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3.5">
+              <div>
+                <span className="block text-xs font-bold text-slate-950">
+                  Clear All Orders ({orders.length})
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Removes all test checkout orders from Firestore and resets guest order history.
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={cleanupTargets.orders}
+                onChange={(e) =>
+                  setCleanupTargets((prev) => ({ ...prev, orders: e.target.checked }))
+                }
+                className="h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-950"
+              />
+            </label>
+
+            <label className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3.5">
+              <div>
+                <span className="block text-xs font-bold text-slate-950">
+                  Clear All Product Reviews ({reviews.length})
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Removes all test customer ratings and product reviews.
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={cleanupTargets.reviews}
+                onChange={(e) =>
+                  setCleanupTargets((prev) => ({ ...prev, reviews: e.target.checked }))
+                }
+                className="h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-950"
+              />
+            </label>
+
+            <label className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3.5">
+              <div>
+                <span className="block text-xs font-bold text-slate-950">
+                  Clear Customer Feedback &amp; Support Inbox
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Removes all test messages submitted through the storefront support form.
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={cleanupTargets.feedback}
+                onChange={(e) =>
+                  setCleanupTargets((prev) => ({ ...prev, feedback: e.target.checked }))
+                }
+                className="h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-950"
+              />
+            </label>
+
+            <label className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3.5">
+              <div>
+                <span className="block text-xs font-bold text-rose-700">
+                  Clear All Products ({products.length}) — Optional
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Leave unchecked if you already uploaded real products you want to keep.
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={cleanupTargets.products}
+                onChange={(e) =>
+                  setCleanupTargets((prev) => ({ ...prev, products: e.target.checked }))
+                }
+                className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-600"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-[#F4F4F5]/60 p-4">
+            <label htmlFor="cleanup-confirm" className="block text-xs font-semibold text-slate-700">
+              Type <span className="font-mono font-bold text-slate-950">CLEAR</span> to permanently delete the selected records:
+            </label>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                id="cleanup-confirm"
+                type="text"
+                value={cleanupConfirmText}
+                onChange={(e) => setCleanupConfirmText(e.target.value)}
+                placeholder="Type CLEAR"
+                className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold uppercase text-slate-950 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-rose-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={clearingData || cleanupConfirmText.trim().toUpperCase() !== 'CLEAR'}
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-rose-600 px-5 text-xs font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Trash size={14} weight="bold" />
+                <span>{clearingData ? 'Clearing...' : 'Clear Selected Test Data'}</span>
+              </button>
+            </div>
+          </div>
         </form>
       ) : null}
     </div>

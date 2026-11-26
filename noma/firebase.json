@@ -1,0 +1,8 @@
+{
+  "firestore": [
+    {
+      "database": "noma",
+      "rules": "firestore.rules"
+    }
+  ]
+}
