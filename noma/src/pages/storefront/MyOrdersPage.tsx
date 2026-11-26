@@ -67,9 +67,35 @@ export function MyOrdersPage() {
 
   const [guestOrderInput, setGuestOrderInput] = useState(initialQueryId)
   const [searchedGuestOrder, setSearchedGuestOrder] = useState<Order | null>(null)
+  const [recentDeviceOrders, setRecentDeviceOrders] = useState<Order[]>([])
   const [guestLookupError, setGuestLookupError] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const [isLookingUp, setIsLookingUp] = useState(false)
+
+  // Hydrate recent orders placed from this browser directly from Firestore (so guest tracking always works)
+  useEffect(() => {
+    let active = true
+    try {
+      const raw = localStorage.getItem('noma_recent_order_ids')
+      const ids: string[] = raw ? JSON.parse(raw) : []
+      if (ids.length === 0) return
+      Promise.all(ids.slice(0, 10).map((id) => orderService.getOrderById(id).catch(() => null)))
+        .then((results) => {
+          if (!active) return
+          const valid = results.filter((o): o is Order => o !== null)
+          setRecentDeviceOrders(valid)
+          if (!initialQueryId && valid.length > 0) {
+            setSearchedGuestOrder((prev) => prev || valid[0])
+          }
+        })
+        .catch(() => {})
+    } catch {
+      // Ignore storage errors
+    }
+    return () => {
+      active = false
+    }
+  }, [initialQueryId])
 
   const lookupOrderByRef = useCallback(
     async (rawRef: string): Promise<Order | null> => {
@@ -140,7 +166,16 @@ export function MyOrdersPage() {
     }
   }
 
-  const filteredOrders = storeOrders.filter((o) => {
+  const mergedOrders = (() => {
+    const map = new Map<string, Order>()
+    for (const o of storeOrders) map.set(o.id, o)
+    for (const o of recentDeviceOrders) {
+      if (!map.has(o.id)) map.set(o.id, o)
+    }
+    return Array.from(map.values())
+  })()
+
+  const filteredOrders = mergedOrders.filter((o) => {
     if (activeTab !== 'All Orders' && o.status.toLowerCase() !== activeTab.toLowerCase()) {
       return false
     }

@@ -54,6 +54,7 @@ export interface SiteSettings {
   deliveryRiders?: DeliveryRider[]
   freeDeliveryThreshold?: number
   bulkyItemSurcharge?: number
+  payOnDeliveryEnabled?: boolean
 }
 
 interface AdminState {

@@ -125,14 +125,7 @@ export function CheckoutPage() {
   const [saveAddress, setSaveAddress] = useState(true)
 
   const [deliveryMethod, setDeliveryMethod] = useState<'standard' | 'express'>('standard')
-  const [paymentMethod, setPaymentMethod] = useState<
-    'card' | 'transfer' | 'pod' | 'ussd' | 'other'
-  >('transfer')
-
-  const [cardNumber, setCardNumber] = useState('')
-  const [cardHolder, setCardHolder] = useState('')
-  const [expiry, setExpiry] = useState('')
-  const [cvv, setCvv] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<'transfer' | 'pod'>('transfer')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Live Kora Bank Transfer Payment State
@@ -320,6 +313,17 @@ export function CheckoutPage() {
 
       clearCart()
       setKoraTransfer(null)
+
+      // Persist order ID locally so guest "Track Your Order" always shows recent orders immediately
+      try {
+        const raw = localStorage.getItem('noma_recent_order_ids')
+        const existing: string[] = raw ? JSON.parse(raw) : []
+        const updated = Array.from(new Set([savedOrder.id, ...existing])).slice(0, 20)
+        localStorage.setItem('noma_recent_order_ids', JSON.stringify(updated))
+      } catch {
+        // Ignore storage errors
+      }
+
       toast.success(`Order ${savedOrder.id} confirmed!`)
       navigate(`/order-success?id=${encodeURIComponent(savedOrder.id)}`, {
         state: { order: savedOrder },
@@ -402,8 +406,10 @@ export function CheckoutPage() {
 
     setIsSubmitting(true)
     try {
+      const effectiveMethod = settings.payOnDeliveryEnabled ? paymentMethod : 'transfer'
+
       // Live Kora Bank Transfer flow (generates one-time bank & account number via Cloudflare Worker)
-      if (paymentMethod === 'transfer') {
+      if (effectiveMethod === 'transfer') {
         const ref = `NMA-KORA-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`
         const account = await koraService.initiateBankTransfer({
           amount: grandTotal,
@@ -413,11 +419,11 @@ export function CheckoutPage() {
           narration: `Noma Order for ${fullName.trim()}`,
         })
         setKoraTransfer(account)
-        toast.success('Transfer details ready. Send the exact amount to complete your order.')
+        toast.success('Transfer account ready! Send the exact amount to complete your order.')
         return
       }
 
-      const paymentRef = buildPaymentRef(paymentMethod)
+      const paymentRef = buildPaymentRef(effectiveMethod)
       await finalizeAndSaveOrder(paymentRef, 'placed')
     } catch (err) {
       const msg =
@@ -741,15 +747,20 @@ export function CheckoutPage() {
                     {
                       id: 'transfer',
                       title: 'Instant Bank Transfer (Kora)',
-                      subtitle: 'Get a one-time Naira account number & auto-verify',
+                      subtitle: 'Pay via one-time Naira account number with instant verification',
                     },
-                    {
-                      id: 'pod',
-                      title: 'Pay on Delivery',
-                      subtitle: 'Pay when your order arrives',
-                    },
+                    ...(settings.payOnDeliveryEnabled
+                      ? [
+                          {
+                            id: 'pod',
+                            title: 'Pay on Delivery',
+                            subtitle: 'Pay when your order arrives',
+                          },
+                        ]
+                      : []),
                   ].map((pm) => {
-                    const isSelected = paymentMethod === pm.id
+                    const effectiveMethod = settings.payOnDeliveryEnabled ? paymentMethod : 'transfer'
+                    const isSelected = effectiveMethod === pm.id
                     return (
                       <button
                         key={pm.id}
@@ -779,166 +790,11 @@ export function CheckoutPage() {
                   })}
                 </div>
 
-                {koraTransfer ? (
-                  <div className="mt-5 space-y-4 rounded-2xl border border-slate-900 bg-[#F4F4F5] p-5">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                      <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                          Kora Instant Bank Transfer
-                        </span>
-                        <h3 className="mt-0.5 text-sm font-bold text-slate-950">
-                          Transfer exact amount to this one-time account
-                        </h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setKoraTransfer(null)}
-                        className="text-xs font-semibold text-slate-500 hover:text-slate-950"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl bg-white p-3.5">
-                        <span className="block text-[11px] text-slate-400">Bank Name</span>
-                        <strong className="mt-0.5 block text-sm font-bold text-slate-950">
-                          {koraTransfer.bankName}
-                        </strong>
-                      </div>
-                      <div className="rounded-xl bg-white p-3.5">
-                        <span className="block text-[11px] text-slate-400">Account Name</span>
-                        <strong className="mt-0.5 block text-sm font-bold text-slate-950">
-                          {koraTransfer.accountName}
-                        </strong>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-white p-3.5">
-                        <div>
-                          <span className="block text-[11px] text-slate-400">Account Number</span>
-                          <strong className="mt-0.5 block font-mono text-base font-bold tracking-wider text-slate-950">
-                            {koraTransfer.accountNumber}
-                          </strong>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard?.writeText(koraTransfer.accountNumber)
-                            toast.success('Account number copied!')
-                          }}
-                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-900 hover:border-slate-950"
-                        >
-                          <Copy size={13} />
-                          <span>Copy</span>
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-white p-3.5">
-                        <div>
-                          <span className="block text-[11px] text-slate-400">Exact Amount</span>
-                          <strong className="mt-0.5 block text-base font-bold tabular-nums text-slate-950">
-                            {formatNaira(koraTransfer.amountExpected || koraTransfer.amount)}
-                          </strong>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard?.writeText(
-                              String(koraTransfer.amountExpected || koraTransfer.amount)
-                            )
-                            toast.success('Amount copied!')
-                          }}
-                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-900 hover:border-slate-950"
-                        >
-                          <Copy size={13} />
-                          <span>Copy</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-start justify-between gap-3 pt-1 sm:flex-row sm:items-center">
-                      <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                        <CircleNotch size={14} className="animate-spin text-slate-900" />
-                        <span>Listening automatically for your transfer...</span>
-                      </span>
-                      <button
-                        type="button"
-                        disabled={verifyingKora}
-                        onClick={() => handleVerifyKoraTransfer(false)}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-                      >
-                        {verifyingKora ? (
-                          <>
-                            <CircleNotch size={14} className="animate-spin" />
-                            <span>Checking...</span>
-                          </>
-                        ) : (
-                          <span>I&apos;ve Sent the Transfer — Verify Now</span>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-
-                {paymentMethod === 'card' ? (
-                  <div className="mt-4 space-y-4 rounded-xl bg-[#F4F4F5] p-4 sm:p-5">
-                    <span className="block text-xs font-bold text-slate-800">Card Details</span>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-xs font-medium text-slate-600">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
-                          placeholder="0000 0000 0000 0000"
-                          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm tabular-nums text-slate-900 focus:border-slate-900 focus:outline-none"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-xs font-medium text-slate-600">
-                          Name on Card
-                        </label>
-                        <input
-                          type="text"
-                          value={cardHolder}
-                          onChange={(e) => setCardHolder(e.target.value)}
-                          placeholder="Cardholder name"
-                          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-600">
-                          Expiry
-                        </label>
-                        <input
-                          type="text"
-                          value={expiry}
-                          onChange={(e) => setExpiry(e.target.value)}
-                          placeholder="MM / YY"
-                          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm tabular-nums text-slate-900 focus:border-slate-900 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-600">
-                          CVV
-                        </label>
-                        <input
-                          type="password"
-                          maxLength={4}
-                          value={cvv}
-                          onChange={(e) => setCvv(e.target.value)}
-                          placeholder="000"
-                          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm tabular-nums text-slate-900 focus:border-slate-900 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-xl bg-[#F4F4F5] p-4 text-xs leading-relaxed text-slate-600">
-                    Your Noma order reference and payment instructions will be generated immediately when you confirm your order.
-                  </div>
-                )}
+                <div className="mt-4 rounded-xl bg-[#F4F4F5] p-4 text-xs leading-relaxed text-slate-600">
+                  {(settings.payOnDeliveryEnabled ? paymentMethod : 'transfer') === 'transfer'
+                    ? 'Tap Pay Now to generate a one-time Kora bank account number. Once your transfer lands, your order is confirmed automatically.'
+                    : 'Your order will be queued for dispatch and you will pay the rider upon delivery.'}
+                </div>
               </section>
             </div>
 
@@ -1024,12 +880,20 @@ export function CheckoutPage() {
                     {isSubmitting ? (
                       <>
                         <CircleNotch size={17} className="animate-spin" />
-                        <span>Submitting Order...</span>
+                        <span>
+                          {(settings.payOnDeliveryEnabled ? paymentMethod : 'transfer') === 'transfer'
+                            ? 'Generating Transfer Account...'
+                            : 'Placing Order...'}
+                        </span>
                       </>
                     ) : (
                       <>
                         <Lock size={16} weight="bold" />
-                        <span>Complete Order • {formatNaira(grandTotal)}</span>
+                        <span>
+                          {(settings.payOnDeliveryEnabled ? paymentMethod : 'transfer') === 'transfer'
+                            ? `Pay Now • ${formatNaira(grandTotal)}`
+                            : `Place Order (POD) • ${formatNaira(grandTotal)}`}
+                        </span>
                       </>
                     )}
                   </button>
@@ -1070,6 +934,138 @@ export function CheckoutPage() {
             </aside>
           </div>
         </form>
+
+        {/* Focused Full-Screen Kora Bank Transfer Payment Modal */}
+        {koraTransfer ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-7">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Kora Instant Bank Transfer
+                  </span>
+                  <h2 className="mt-1 text-lg font-bold text-slate-950">
+                    Transfer {formatNaira(koraTransfer.amountExpected || koraTransfer.amount)}
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Send the exact amount to this one-time virtual account from any Nigerian bank app.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setKoraTransfer(null)}
+                  className="text-xs font-semibold text-slate-400 hover:text-slate-950"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {koraTransfer.checkoutUrl ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-[#F4F4F5] p-4 text-xs leading-relaxed text-slate-600">
+                      Click below to open Kora&apos;s secure Bank Transfer window, copy the one-time bank account number, and complete your transfer. This page will automatically confirm your order as soon as Kora receives your transfer.
+                    </div>
+                    <a
+                      href={koraTransfer.checkoutUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                    >
+                      <Lock size={14} weight="bold" />
+                      <span>Open Kora Bank Transfer Window ({formatNaira(koraTransfer.amountExpected || koraTransfer.amount)})</span>
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl bg-[#F4F4F5] p-3.5">
+                        <span className="block text-[11px] text-slate-500">Bank Name</span>
+                        <strong className="mt-0.5 block text-sm font-bold text-slate-950">
+                          {koraTransfer.bankName}
+                        </strong>
+                      </div>
+                      <div className="rounded-xl bg-[#F4F4F5] p-3.5">
+                        <span className="block text-[11px] text-slate-500">Account Name</span>
+                        <strong className="mt-0.5 block text-sm font-bold text-slate-950">
+                          {koraTransfer.accountName}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-slate-900 bg-white p-4">
+                      <div>
+                        <span className="block text-[11px] text-slate-500">Account Number</span>
+                        <strong className="mt-0.5 block font-mono text-xl font-bold tracking-wider text-slate-950">
+                          {koraTransfer.accountNumber}
+                        </strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(koraTransfer.accountNumber)
+                          toast.success('Account number copied!')
+                        }}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-slate-950 px-3.5 text-xs font-semibold text-white hover:bg-slate-800"
+                      >
+                        <Copy size={13} />
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center justify-between rounded-xl bg-[#F4F4F5] p-3.5">
+                  <div>
+                    <span className="block text-[11px] text-slate-500">Exact Amount to Send</span>
+                    <strong className="mt-0.5 block text-base font-bold tabular-nums text-slate-950">
+                      {formatNaira(koraTransfer.amountExpected || koraTransfer.amount)}
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(
+                        String(koraTransfer.amountExpected || koraTransfer.amount)
+                      )
+                      toast.success('Amount copied!')
+                    }}
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-900 hover:border-slate-950"
+                  >
+                    <Copy size={13} />
+                    <span>Copy</span>
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-slate-400">
+                  Reference: <span className="font-mono text-slate-600">{koraTransfer.reference}</span>
+                </p>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-4">
+                <button
+                  type="button"
+                  disabled={verifyingKora}
+                  onClick={() => handleVerifyKoraTransfer(false)}
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-950 bg-white px-5 text-xs font-semibold text-slate-950 transition-colors hover:bg-slate-950 hover:text-white disabled:opacity-50"
+                >
+                  {verifyingKora ? (
+                    <>
+                      <CircleNotch size={15} className="animate-spin" />
+                      <span>Verifying Transfer with Kora...</span>
+                    </>
+                  ) : (
+                    <span>I&apos;ve Sent the Transfer — Verify Payment</span>
+                  )}
+                </button>
+                <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
+                  <CircleNotch size={12} className="animate-spin text-slate-700" />
+                  <span>Automatically checking Kora webhook every 5 seconds...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

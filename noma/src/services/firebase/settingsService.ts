@@ -65,6 +65,7 @@ export const initialSiteSettings: SiteSettings = {
   deliveryRiders: [],
   freeDeliveryThreshold: 250000,
   bulkyItemSurcharge: 4000,
+  payOnDeliveryEnabled: false,
 }
 
 function sanitizeAnnouncementText(raw?: string): string {
@@ -120,6 +121,10 @@ export const settingsService = {
               typeof data.bulkyItemSurcharge === 'number'
                 ? data.bulkyItemSurcharge
                 : initialSiteSettings.bulkyItemSurcharge,
+            payOnDeliveryEnabled:
+              typeof data.payOnDeliveryEnabled === 'boolean'
+                ? data.payOnDeliveryEnabled
+                : false,
           })
         } else {
           setDoc(SETTINGS_DOC_REF, {

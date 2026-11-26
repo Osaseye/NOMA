@@ -86,6 +86,8 @@ export function SettingsPage() {
     draft.freeDeliveryThreshold ?? settings.freeDeliveryThreshold ?? 250000
   const bulkyItemSurcharge =
     draft.bulkyItemSurcharge ?? settings.bulkyItemSurcharge ?? 4000
+  const payOnDeliveryEnabled =
+    draft.payOnDeliveryEnabled ?? settings.payOnDeliveryEnabled ?? false
 
   const [stateFilterQuery, setStateFilterQuery] = useState('')
   const [riderName, setRiderName] = useState('')
@@ -112,6 +114,7 @@ export function SettingsPage() {
       deliveryRiders,
       freeDeliveryThreshold: Math.max(0, Number(freeDeliveryThreshold) || 0),
       bulkyItemSurcharge: Math.max(0, Number(bulkyItemSurcharge) || 0),
+      payOnDeliveryEnabled,
     })
     setDraft((prev) => ({
       ...prev,
@@ -119,6 +122,7 @@ export function SettingsPage() {
       deliveryRiders: undefined,
       freeDeliveryThreshold: undefined,
       bulkyItemSurcharge: undefined,
+      payOnDeliveryEnabled: undefined,
     }))
     toast.success('Delivery states, rider prices, and dispatch riders synced to Firestore.')
   }
@@ -625,6 +629,36 @@ export function SettingsPage() {
                   className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold tabular-nums text-slate-950 focus:border-slate-950 focus:outline-none"
                 />
               </div>
+            </div>
+
+            {/* Pay on Delivery Public Toggle */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-[#F4F4F5]/50 p-4">
+              <div>
+                <h3 className="text-xs font-bold text-slate-950">
+                  Pay on Delivery (POD) on Storefront Checkout
+                </h3>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  When OFF, shoppers must pay upfront via Kora Instant Bank Transfer before an order is created.
+                </p>
+              </div>
+              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-900">
+                <input
+                  type="checkbox"
+                  checked={payOnDeliveryEnabled}
+                  onChange={(e) => {
+                    const checked = e.target.checked
+                    setDraft((prev) => ({ ...prev, payOnDeliveryEnabled: checked }))
+                    updateSettings({ payOnDeliveryEnabled: checked })
+                    toast.success(
+                      checked
+                        ? 'Pay on Delivery enabled on Checkout.'
+                        : 'Pay on Delivery hidden — Kora Bank Transfer only.'
+                    )
+                  }}
+                  className="h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-950"
+                />
+                <span>{payOnDeliveryEnabled ? 'Visible to Public' : 'Hidden (Kora Only)'}</span>
+              </label>
             </div>
           </section>
 

@@ -70,17 +70,31 @@ export function OrderDetailPanels({ order }: { order: Order }) {
             </div>
           </div>
 
-          <a
-            href={`https://wa.me/${waTarget}?text=${encodeURIComponent(
-              `Hello ${order.customer}, we are contacting you from Noma regarding your order #${order.id}.`
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex w-fit items-center gap-2 rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-900 transition-colors hover:border-slate-950"
-          >
-            <WhatsappLogo size={15} weight="regular" />
-            <span>Message Customer on WhatsApp</span>
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`https://wa.me/${waTarget}?text=${encodeURIComponent(
+                `Hello ${order.customer}, update on your Noma Order #${order.id}: Your order status is now *${statusLabel(order.status)}*. Track live progress here: ${window.location.origin}/orders?id=${encodeURIComponent(order.id)}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-2 rounded-lg bg-slate-950 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              <WhatsappLogo size={15} weight="fill" className="text-emerald-400" />
+              <span>Send Status Update on WhatsApp</span>
+            </a>
+            {order.email ? (
+              <a
+                href={`mailto:${order.email}?subject=${encodeURIComponent(
+                  `Noma Order #${order.id} Update: ${statusLabel(order.status)}`
+                )}&body=${encodeURIComponent(
+                  `Hello ${order.customer},\n\nYour Noma Order #${order.id} is now ${statusLabel(order.status)}.\n\nTrack your order live: ${window.location.origin}/orders?id=${encodeURIComponent(order.id)}\n\nThank you for shopping with Noma.`
+                )}`}
+                className="inline-flex w-fit items-center gap-2 rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-900 transition-colors hover:border-slate-950"
+              >
+                <span>Email Update</span>
+              </a>
+            ) : null}
+          </div>
         </section>
 
         {/* Financial Split & Status Control */}

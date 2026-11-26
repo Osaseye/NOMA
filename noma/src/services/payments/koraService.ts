@@ -1,10 +1,12 @@
 const WORKER_API_BASE = 'https://noma-r2-api.inventra.workers.dev'
 
 export interface KoraBankTransferAccount {
+  mode?: 'checkout' | 'direct'
   reference: string
   amount: number
   amountExpected: number
   currency: string
+  checkoutUrl?: string
   bankName: string
   accountNumber: string
   accountName: string
@@ -28,6 +30,7 @@ export const koraService = {
     customerEmail?: string
     reference?: string
     narration?: string
+    redirectUrl?: string
   }): Promise<KoraBankTransferAccount> => {
     const res = await fetch(`${WORKER_API_BASE}/api/kora/bank-transfer`, {
       method: 'POST',
@@ -38,9 +41,9 @@ export const koraService = {
       | (KoraBankTransferAccount & { error?: string })
       | null
 
-    if (!res.ok || !data || !data.accountNumber) {
+    if (!res.ok || !data || (!data.checkoutUrl && !data.accountNumber)) {
       throw new Error(
-        data?.error || 'Could not generate Kora bank transfer details. Please try again.'
+        data?.error || 'Could not initiate Kora payment. Please try again.'
       )
     }
 
