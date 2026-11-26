@@ -79,7 +79,7 @@ function formatAuthError(err: unknown): string {
 }
 
 const inputClass =
-  'h-11 w-full rounded-xl border border-slate-200 bg-[#F4F4F5]/70 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-slate-900 focus:bg-white focus:outline-none'
+  'h-11 w-full rounded-xl border border-slate-200 bg-[#F4F4F5]/70 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-[#1049EB] focus:bg-white focus:outline-none'
 
 function SignedInProfileForm({
   profile,
@@ -116,7 +116,7 @@ function SignedInProfileForm({
       <div className="space-y-5 lg:col-span-5">
         <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 text-sm font-bold text-slate-900">
-            <User size={17} weight="regular" className="text-slate-700" />
+            <User size={17} weight="regular" className="text-[#1049EB]" />
             <span>Personal Information</span>
           </div>
 
@@ -176,7 +176,7 @@ function SignedInProfileForm({
         <div className="space-y-5 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3.5">
             <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <MapPin size={17} weight="regular" className="text-slate-700" />
+              <MapPin size={17} weight="regular" className="text-[#1049EB]" />
               <span>Default Delivery Address</span>
             </div>
             <span className="rounded-full bg-[#F4F4F5] px-3 py-0.5 text-[11px] font-medium text-slate-600">
@@ -262,7 +262,7 @@ function SignedInProfileForm({
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
           >
             {isSaved ? (
               <>
@@ -412,7 +412,7 @@ export function AccountPage() {
                     }}
                     className={`flex items-center justify-center gap-1.5 rounded-full py-2.5 transition-colors ${
                       authTab === 'signin'
-                        ? 'bg-slate-900 text-white'
+                        ? 'bg-[#1049EB] text-white'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -427,7 +427,7 @@ export function AccountPage() {
                     }}
                     className={`flex items-center justify-center gap-1.5 rounded-full py-2.5 transition-colors ${
                       authTab === 'register'
-                        ? 'bg-slate-900 text-white'
+                        ? 'bg-[#1049EB] text-white'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -475,7 +475,7 @@ export function AccountPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0D3EC7] disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
@@ -553,7 +553,7 @@ export function AccountPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0D3EC7] disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
@@ -613,7 +613,7 @@ export function AccountPage() {
                     },
                   ].map((b) => (
                     <div key={b.title} className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-900 shadow-2xs">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#1049EB] shadow-2xs">
                         <b.icon size={16} weight="regular" />
                       </div>
                       <div>
@@ -632,7 +632,7 @@ export function AccountPage() {
                 </div>
                 <Link
                   to="/orders"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#1049EB] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
                 >
                   <span>Track Order</span>
                   <ArrowRight size={13} weight="bold" />
@@ -645,7 +645,7 @@ export function AccountPage() {
             {/* Signed-In Header Card (Zero Colored Containers) */}
             <div className="flex flex-col items-start justify-between gap-5 rounded-2xl border border-slate-200/80 bg-white p-6 sm:flex-row sm:items-center">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-xl font-bold text-white">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#1049EB] text-xl font-bold text-white ring-2 ring-[#FEB719]/40">
                   {profileInitial}
                 </div>
                 <div>

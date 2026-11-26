@@ -12,7 +12,7 @@ export function CategoryStrip({ categories }: { categories: Category[] }) {
         <Link
           key={category.id}
           to={`/category/${category.id}`}
-          className="inline-flex items-center gap-2 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-3 py-2 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-[#EEF3FE] hover:text-[#1049EB]"
+          className="inline-flex items-center gap-2 rounded-[6px] border border-[#E5E7EB] bg-[#F6F7F9] px-3 py-2 text-xs font-semibold text-[#0B1220] transition-colors hover:border-[#1049EB] hover:bg-white hover:text-[#1049EB]"
         >
           {category.id === 'bicycles' ? (
             <Bicycle size={16} weight="regular" className="text-[#1049EB]" />

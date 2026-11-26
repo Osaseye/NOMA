@@ -62,7 +62,7 @@ export function WhatsAppOrderPage() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2 rounded-2xl bg-[#F4F4F5] p-5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-900 shadow-2xs">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#1049EB] shadow-2xs">
                 <ShieldCheck size={19} weight="regular" />
               </div>
               <h2 className="text-sm font-bold text-slate-900">Verified Order Clarity</h2>
@@ -72,7 +72,7 @@ export function WhatsAppOrderPage() {
             </div>
 
             <div className="space-y-2 rounded-2xl bg-[#F4F4F5] p-5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-900 shadow-2xs">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#1049EB] shadow-2xs">
                 <Phone size={19} weight="regular" />
               </div>
               <h2 className="text-sm font-bold text-slate-900">Direct Desk Support</h2>
@@ -83,7 +83,7 @@ export function WhatsAppOrderPage() {
             </div>
 
             <div className="space-y-2 rounded-2xl bg-[#F4F4F5] p-5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-900 shadow-2xs">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#1049EB] shadow-2xs">
                 <ChatCircleDots size={19} weight="regular" />
               </div>
               <h2 className="text-sm font-bold text-slate-900">Wholesale &amp; Bulk Quotes</h2>

@@ -61,11 +61,12 @@ export function TodaysBestDeals() {
             Today&apos;s Best Deals
           </h2>
 
-          {/* Clean Borderless Monochrome Countdown (Zero Colored Container) */}
+          {/* Clean Borderless Brand Countdown (Zero Colored Container) */}
           <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
-            <Clock size={15} weight="regular" className="text-slate-700" />
+            <span className="h-2 w-2 rounded-full bg-[#FEB719]" />
+            <Clock size={15} weight="regular" className="text-[#1049EB]" />
             <span>Ends in</span>
-            <span className="font-bold tabular-nums text-slate-900">
+            <span className="font-bold tabular-nums text-[#1049EB]">
               {String(h).padStart(2, '0')}h : {String(m).padStart(2, '0')}m :{' '}
               {String(s).padStart(2, '0')}s
             </span>

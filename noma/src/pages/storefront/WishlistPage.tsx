@@ -126,7 +126,7 @@ export function WishlistPage() {
         {isSharedMode ? (
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-900 p-5 text-white">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#FEB719]">
                 <User size={19} weight="bold" />
               </div>
               <div>
@@ -174,7 +174,7 @@ export function WishlistPage() {
               <button
                 type="button"
                 onClick={handleMoveAllToCart}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                className="inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
               >
                 <ShoppingBag size={15} weight="regular" />
                 <span>Add All to Bag</span>
@@ -196,7 +196,7 @@ export function WishlistPage() {
 
         {displayedProducts.length === 0 ? (
           <EmptyState
-            icon={<Heart size={24} weight="regular" />}
+            icon={<Heart size={24} weight="regular" className="text-[#1049EB]" />}
             title={isSharedMode ? 'No items in this shared wishlist' : 'Your wishlist is empty'}
             detail={
               isSharedMode
@@ -206,7 +206,7 @@ export function WishlistPage() {
             action={
               <Link
                 to="/catalog"
-                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                className="inline-flex items-center justify-center rounded-full bg-[#1049EB] px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
               >
                 Start Shopping
               </Link>

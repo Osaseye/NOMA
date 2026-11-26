@@ -221,7 +221,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
 
             <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-12 lg:p-16">
               <div className="max-w-3xl">
-                <span className="text-xs font-semibold uppercase tracking-widest text-white/75">
+                <span className="text-xs font-semibold uppercase tracking-widest text-[#FEB719]">
                   Our Story &bull; {brand.legalEntity}
                 </span>
                 <h1 className="mt-3 text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
@@ -293,7 +293,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
               </h2>
               <Link
                 to="/catalog"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900 hover:underline sm:text-sm"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB] hover:text-[#0D3EC7] hover:underline sm:text-sm"
               >
                 <span>Browse all products</span>
                 <ArrowUpRight size={15} weight="bold" />
@@ -363,7 +363,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 to="/catalog"
-                className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-xs font-bold text-slate-950 transition-transform hover:scale-[1.01] sm:text-sm"
+                className="inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-7 py-3.5 text-xs font-bold text-white transition-colors hover:bg-[#0D3EC7] sm:text-sm"
               >
                 <span>Start Shopping</span>
                 <ArrowRight size={15} weight="bold" />
@@ -435,7 +435,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                           onClick={() => setActiveLegalSection(sec.id)}
                           className={`py-1.5 text-xs transition-colors sm:text-sm ${
                             isActive
-                              ? 'font-bold text-slate-900'
+                              ? 'font-bold text-[#1049EB]'
                               : 'font-medium text-slate-500 hover:text-slate-900'
                           }`}
                         >
@@ -472,7 +472,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                   className="scroll-mt-28 py-8 first:pt-0 last:pb-0"
                 >
                   <div className="flex items-baseline gap-3">
-                    <span className="text-xs font-bold text-slate-400">{sec.number}</span>
+                    <span className="text-xs font-bold text-[#1049EB]">{sec.number}</span>
                     <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                       {sec.title}
                     </h2>
@@ -530,7 +530,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                   value={faqQuery}
                   onChange={(e) => setFaqQuery(e.target.value)}
                   placeholder="Search help topics (e.g. bulk shoes, Lagos delivery, returns)..."
-                  className="h-12 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none"
+                  className="h-12 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1049EB] focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
@@ -559,7 +559,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                       onClick={() => setFaqCategory(tab.id as typeof faqCategory)}
                       className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                         isActive
-                          ? 'bg-slate-900 text-white'
+                          ? 'bg-[#1049EB] text-white'
                           : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                       }`}
                     >
@@ -587,7 +587,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                         >
                           <span>{faq.q}</span>
                           {isOpen ? (
-                            <Minus size={16} weight="bold" className="shrink-0 text-slate-900" />
+                            <Minus size={16} weight="bold" className="shrink-0 text-[#1049EB]" />
                           ) : (
                             <Plus size={16} weight="bold" className="shrink-0 text-slate-400" />
                           )}
@@ -636,7 +636,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
           <div className="space-y-8 lg:col-span-5">
             {/* Instant Order Tracker */}
             <div className="rounded-2xl bg-[#F4F4F5] p-6 sm:p-8">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1049EB]">
                 Live Dispatch Lookup
               </span>
               <h2 className="mt-1.5 text-xl font-bold text-slate-900">
@@ -652,11 +652,11 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                   value={trackingInput}
                   onChange={(e) => setTrackingInput(e.target.value)}
                   placeholder="Enter Order ID..."
-                  className="h-11 flex-1 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+                  className="h-11 flex-1 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-[#1049EB] focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-900 px-5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#1049EB] px-5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
                 >
                   <span>Track</span>
                   <ArrowRight size={13} weight="bold" />
@@ -777,7 +777,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
 
                 <div className="flex items-center justify-between gap-3">
                   {fbSent ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1049EB]">
                       <Check size={14} weight="bold" />
                       <span>Sent to Noma Support</span>
                     </span>
@@ -790,7 +790,7 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
                   <button
                     type="submit"
                     disabled={fbSubmitting}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1049EB] px-6 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7] disabled:opacity-50"
                   >
                     <span>{fbSubmitting ? 'Sending...' : 'Send Message'}</span>
                     <ArrowRight size={13} weight="bold" />

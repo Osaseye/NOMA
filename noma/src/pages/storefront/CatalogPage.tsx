@@ -240,7 +240,7 @@ export function CatalogPage() {
                     }}
                     className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                       activeSubCategory === 'all'
-                        ? 'bg-slate-900 text-white'
+                        ? 'bg-[#1049EB] text-white'
                         : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
@@ -259,7 +259,7 @@ export function CatalogPage() {
                         }}
                         className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                           isSubActive
-                            ? 'bg-slate-900 text-white'
+                            ? 'bg-[#1049EB] text-white'
                             : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                         }`}
                       >
@@ -278,14 +278,14 @@ export function CatalogPage() {
                 onClick={() => setFiltersPanelOpen((prev) => !prev)}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                   filtersPanelOpen || activeFilterCount > 0
-                    ? 'bg-slate-900 text-white'
+                    ? 'bg-[#1049EB] text-white'
                     : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 <Funnel size={14} weight="regular" />
                 <span>Filter</span>
                 {activeFilterCount > 0 ? (
-                  <span className="rounded-full bg-white/20 px-1.5 text-[10px] font-bold">
+                  <span className="rounded-full bg-[#FEB719] px-1.5 text-[10px] font-bold text-slate-950">
                     {activeFilterCount}
                   </span>
                 ) : null}

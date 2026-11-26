@@ -11,8 +11,9 @@ import {
   MapPin,
   ShoppingBag,
   Truck,
+  X,
 } from '@phosphor-icons/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../design-system/components/EmptyState'
@@ -128,9 +129,10 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'transfer' | 'pod'>('transfer')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Live Kora Bank Transfer Payment State
+  // Live Payment Modal & Verification State
   const [koraTransfer, setKoraTransfer] = useState<KoraBankTransferAccount | null>(null)
   const [verifyingKora, setVerifyingKora] = useState(false)
+  const paymentFinalizedRef = useRef(false)
 
   const cartEntries = useMemo(() => toCartLineEntries(items), [items])
 
@@ -353,15 +355,17 @@ export function CheckoutPage() {
 
   const handleVerifyKoraTransfer = useCallback(
     async (silent = false) => {
-      if (!koraTransfer || verifyingKora) return
+      if (!koraTransfer || verifyingKora || paymentFinalizedRef.current) return
       setVerifyingKora(true)
       try {
         const res = await koraService.verifyCharge(koraTransfer.reference)
-        if (res.paid) {
-          toast.success('Bank transfer confirmed via Kora!')
+        if (res.paid && !paymentFinalizedRef.current) {
+          paymentFinalizedRef.current = true
+          koraService.closeInlineCheckout()
+          toast.success('Payment confirmed! Processing your order...')
           await finalizeAndSaveOrder(koraTransfer.reference, 'processing')
         } else if (!silent) {
-          toast.info('Transfer not detected yet. Please wait a few seconds after sending and tap Verify again.')
+          toast.info('Payment not detected yet. Please wait a few seconds after sending and tap Verify again.')
         }
       } catch {
         if (!silent) {
@@ -374,7 +378,67 @@ export function CheckoutPage() {
     [finalizeAndSaveOrder, koraTransfer, verifyingKora]
   )
 
-  // Auto-poll Kora every 5 seconds while the virtual bank account screen is open
+  const launchInlinePayment = useCallback(
+    async (ref: string, amount: number) => {
+      await koraService.openInlineCheckout({
+        amount,
+        customerName: fullName.trim(),
+        customerEmail: emailAddress.trim() || undefined,
+        customerPhone: phoneNumber.trim(),
+        reference: ref,
+        narration: `Noma Order for ${fullName.trim()}`,
+        onSuccess: async () => {
+          if (paymentFinalizedRef.current) return
+          paymentFinalizedRef.current = true
+          koraService.closeInlineCheckout()
+          toast.success('Payment confirmed! Processing your order...')
+          await finalizeAndSaveOrder(ref, 'processing')
+        },
+        onFailed: () => {
+          if (paymentFinalizedRef.current) return
+          toast.error('Payment was not completed. You can retry or verify below.')
+          setKoraTransfer({
+            mode: 'inline',
+            reference: ref,
+            amount,
+            amountExpected: amount,
+            currency: 'NGN',
+            bankName: '',
+            accountNumber: '',
+            accountName: '',
+            expiryDateInUtc: null,
+            rawStatus: 'failed',
+          })
+        },
+        onError: () => {
+          if (paymentFinalizedRef.current) return
+          toast.error('Could not complete payment. Please try again.')
+        },
+        onClose: () => {
+          if (paymentFinalizedRef.current) return
+          setKoraTransfer((prev) =>
+            prev
+              ? prev
+              : {
+                  mode: 'inline',
+                  reference: ref,
+                  amount,
+                  amountExpected: amount,
+                  currency: 'NGN',
+                  bankName: '',
+                  accountNumber: '',
+                  accountName: '',
+                  expiryDateInUtc: null,
+                  rawStatus: 'pending',
+                }
+          )
+        },
+      })
+    },
+    [emailAddress, finalizeAndSaveOrder, fullName, phoneNumber]
+  )
+
+  // Auto-poll every 5 seconds while the payment confirmation modal is open
   useEffect(() => {
     if (!koraTransfer) return
     const timer = window.setInterval(() => {
@@ -382,6 +446,25 @@ export function CheckoutPage() {
     }, 5000)
     return () => window.clearInterval(timer)
   }, [koraTransfer, handleVerifyKoraTransfer])
+
+  // Close payment modal on Escape key
+  useEffect(() => {
+    if (!koraTransfer) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setKoraTransfer(null)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [koraTransfer])
+
+  // Cleanup inline overlay on unmount
+  useEffect(() => {
+    return () => {
+      koraService.closeInlineCheckout()
+    }
+  }, [])
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -408,19 +491,26 @@ export function CheckoutPage() {
     try {
       const effectiveMethod = settings.payOnDeliveryEnabled ? paymentMethod : 'transfer'
 
-      // Live Kora Bank Transfer flow (generates one-time bank & account number via Cloudflare Worker)
+      // In-page Bank Transfer & Card checkout (stays inside Noma without opening external tabs)
       if (effectiveMethod === 'transfer') {
-        const ref = `NMA-KORA-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`
-        const account = await koraService.initiateBankTransfer({
-          amount: grandTotal,
-          customerName: fullName.trim(),
-          customerEmail: emailAddress.trim() || undefined,
-          reference: ref,
-          narration: `Noma Order for ${fullName.trim()}`,
-        })
-        setKoraTransfer(account)
-        toast.success('Transfer account ready! Send the exact amount to complete your order.')
-        return
+        paymentFinalizedRef.current = false
+        const ref = `NMA-PAY-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`
+        try {
+          await launchInlinePayment(ref, grandTotal)
+          return
+        } catch {
+          // Graceful fallback if inline checkout script is blocked by the browser
+          const account = await koraService.initiateBankTransfer({
+            amount: grandTotal,
+            customerName: fullName.trim(),
+            customerEmail: emailAddress.trim() || undefined,
+            reference: ref,
+            narration: `Noma Order for ${fullName.trim()}`,
+          })
+          setKoraTransfer(account)
+          toast.success('Payment details ready! Complete your transfer to confirm your order.')
+          return
+        }
       }
 
       const paymentRef = buildPaymentRef(effectiveMethod)
@@ -746,8 +836,8 @@ export function CheckoutPage() {
                   {[
                     {
                       id: 'transfer',
-                      title: 'Instant Bank Transfer (Kora)',
-                      subtitle: 'Pay via one-time Naira account number with instant verification',
+                      title: 'Bank Transfer & Card',
+                      subtitle: 'Pay via instant bank transfer or debit card with automatic verification',
                     },
                     ...(settings.payOnDeliveryEnabled
                       ? [
@@ -792,7 +882,7 @@ export function CheckoutPage() {
 
                 <div className="mt-4 rounded-xl bg-[#F4F4F5] p-4 text-xs leading-relaxed text-slate-600">
                   {(settings.payOnDeliveryEnabled ? paymentMethod : 'transfer') === 'transfer'
-                    ? 'Tap Pay Now to generate a one-time Kora bank account number. Once your transfer lands, your order is confirmed automatically.'
+                    ? 'Tap Pay Now to complete your payment via instant bank transfer or card right on this page. Your order is confirmed automatically.'
                     : 'Your order will be queued for dispatch and you will pay the rider upon delivery.'}
                 </div>
               </section>
@@ -882,7 +972,7 @@ export function CheckoutPage() {
                         <CircleNotch size={17} className="animate-spin" />
                         <span>
                           {(settings.payOnDeliveryEnabled ? paymentMethod : 'transfer') === 'transfer'
-                            ? 'Generating Transfer Account...'
+                            ? 'Opening Payment...'
                             : 'Placing Order...'}
                         </span>
                       </>
@@ -935,48 +1025,45 @@ export function CheckoutPage() {
           </div>
         </form>
 
-        {/* Focused Full-Screen Kora Bank Transfer Payment Modal */}
+        {/* Focused In-Page Payment Confirmation & Bank Transfer Modal */}
         {koraTransfer ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs">
-            <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-7">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Complete Payment"
+          >
+            <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-7">
               <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Kora Instant Bank Transfer
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <span className="h-2 w-2 rounded-full bg-[#FEB719]" />
+                    <span>Protected Checkout</span>
                   </span>
                   <h2 className="mt-1 text-lg font-bold text-slate-950">
-                    Transfer {formatNaira(koraTransfer.amountExpected || koraTransfer.amount)}
+                    Complete Payment • {formatNaira(koraTransfer.amountExpected || koraTransfer.amount)}
                   </h2>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Send the exact amount to this one-time virtual account from any Nigerian bank app.
+                    {koraTransfer.accountNumber
+                      ? 'Send the exact amount to this one-time bank account from any Nigerian bank app.'
+                      : 'Complete your bank transfer or card payment right here, or verify if you already paid.'}
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setKoraTransfer(null)}
-                  className="text-xs font-semibold text-slate-400 hover:text-slate-950"
+                  onClick={() => {
+                    koraService.closeInlineCheckout()
+                    setKoraTransfer(null)
+                  }}
+                  aria-label="Close payment popup"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F4F4F5] text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-950"
                 >
-                  Cancel
+                  <X size={18} weight="bold" />
                 </button>
               </div>
 
               <div className="mt-5 space-y-3">
-                {koraTransfer.checkoutUrl ? (
-                  <div className="space-y-3">
-                    <div className="rounded-xl bg-[#F4F4F5] p-4 text-xs leading-relaxed text-slate-600">
-                      Click below to open Kora&apos;s secure Bank Transfer window, copy the one-time bank account number, and complete your transfer. This page will automatically confirm your order as soon as Kora receives your transfer.
-                    </div>
-                    <a
-                      href={koraTransfer.checkoutUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
-                    >
-                      <Lock size={14} weight="bold" />
-                      <span>Open Kora Bank Transfer Window ({formatNaira(koraTransfer.amountExpected || koraTransfer.amount)})</span>
-                    </a>
-                  </div>
-                ) : (
+                {koraTransfer.accountNumber ? (
                   <>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="rounded-xl bg-[#F4F4F5] p-3.5">
@@ -1006,14 +1093,54 @@ export function CheckoutPage() {
                           navigator.clipboard?.writeText(koraTransfer.accountNumber)
                           toast.success('Account number copied!')
                         }}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-slate-950 px-3.5 text-xs font-semibold text-white hover:bg-slate-800"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#1049EB] px-3.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
                       >
                         <Copy size={13} />
                         <span>Copy</span>
                       </button>
                     </div>
                   </>
-                )}
+                ) : koraTransfer.mode === 'inline' ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-[#F4F4F5] p-4 text-xs leading-relaxed text-slate-600">
+                      Haven&apos;t completed your transfer yet? Reopen the in-page payment window below. If you already transferred, tap Verify Payment and we&apos;ll confirm your order automatically.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const freshRef = `NMA-PAY-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`
+                        const amt = koraTransfer.amountExpected || koraTransfer.amount
+                        setKoraTransfer(null)
+                        launchInlinePayment(freshRef, amt).catch(() => {
+                          toast.error('Could not reopen payment window. Please tap Pay Now again.')
+                        })
+                      }}
+                      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] px-5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
+                    >
+                      <Lock size={14} weight="bold" />
+                      <span>
+                        Reopen Payment Window ({formatNaira(koraTransfer.amountExpected || koraTransfer.amount)})
+                      </span>
+                    </button>
+                  </div>
+                ) : koraTransfer.checkoutUrl ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-[#F4F4F5] p-4 text-xs leading-relaxed text-slate-600">
+                      Your browser blocked the in-page payment popup. Tap below to complete your instant bank transfer, and this page will automatically confirm your order once payment arrives.
+                    </div>
+                    <a
+                      href={koraTransfer.checkoutUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] px-5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3BC2]"
+                    >
+                      <Lock size={14} weight="bold" />
+                      <span>
+                        Continue to Instant Transfer ({formatNaira(koraTransfer.amountExpected || koraTransfer.amount)})
+                      </span>
+                    </a>
+                  </div>
+                ) : null}
 
                 <div className="flex items-center justify-between rounded-xl bg-[#F4F4F5] p-3.5">
                   <div>
@@ -1052,15 +1179,15 @@ export function CheckoutPage() {
                   {verifyingKora ? (
                     <>
                       <CircleNotch size={15} className="animate-spin" />
-                      <span>Verifying Transfer with Kora...</span>
+                      <span>Verifying Payment...</span>
                     </>
                   ) : (
-                    <span>I&apos;ve Sent the Transfer — Verify Payment</span>
+                    <span>I&apos;ve Completed Payment — Verify Now</span>
                   )}
                 </button>
                 <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
-                  <CircleNotch size={12} className="animate-spin text-slate-700" />
-                  <span>Automatically checking Kora webhook every 5 seconds...</span>
+                  <CircleNotch size={12} className="animate-spin text-[#1049EB]" />
+                  <span>Automatically checking payment confirmation every 5 seconds...</span>
                 </div>
               </div>
             </div>

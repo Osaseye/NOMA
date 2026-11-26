@@ -237,7 +237,7 @@ export function MyOrdersPage() {
                   <button
                     type="submit"
                     disabled={isLookingUp}
-                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60 sm:text-sm"
+                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-[#1049EB] px-6 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7] disabled:opacity-60 sm:text-sm"
                   >
                     {isLookingUp ? (
                       <>
@@ -258,8 +258,9 @@ export function MyOrdersPage() {
                 <div className="space-y-6 rounded-2xl bg-[#F4F4F5] p-5 sm:p-6">
                   <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
                     <div>
-                      <span className="inline-block rounded-full bg-slate-900 px-3 py-0.5 text-[11px] font-semibold capitalize text-white">
-                        {searchedGuestOrder.status}
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1049EB] px-3 py-0.5 text-[11px] font-semibold capitalize text-white">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#FEB719]" />
+                        <span>{searchedGuestOrder.status}</span>
                       </span>
                       <h2 className="mt-2 text-lg font-bold text-slate-900">
                         Order {searchedGuestOrder.id}
@@ -299,7 +300,7 @@ export function MyOrdersPage() {
                             <div
                               className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
                                 isDone
-                                  ? 'bg-slate-900 text-white'
+                                  ? 'bg-[#1049EB] text-white'
                                   : 'border border-slate-200 bg-white text-slate-400'
                               }`}
                             >
@@ -410,7 +411,7 @@ export function MyOrdersPage() {
                     onClick={() => setActiveTab(tab)}
                     className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                       activeTab === tab
-                        ? 'bg-slate-900 text-white'
+                        ? 'bg-[#1049EB] text-white'
                         : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
@@ -504,13 +505,22 @@ export function MyOrdersPage() {
 
       {/* Order Details Modal */}
       {selectedOrder ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
-          <div className="relative max-h-[90vh] w-full max-w-xl space-y-5 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Order ${selectedOrder.id} details`}
+          onClick={() => setSelectedOrder(null)}
+        >
+          <div
+            className="relative max-h-[90vh] w-full max-w-xl space-y-5 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               onClick={() => setSelectedOrder(null)}
               aria-label="Close order details"
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 hover:text-slate-950"
             >
               <X size={16} weight="bold" />
             </button>

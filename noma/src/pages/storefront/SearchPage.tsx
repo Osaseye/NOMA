@@ -167,7 +167,7 @@ export function SearchPage() {
                     }
                     className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                       selectedCategory === cat.id
-                        ? 'bg-slate-900 text-white'
+                        ? 'bg-[#1049EB] text-white'
                         : 'bg-[#F4F4F5] text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
@@ -183,14 +183,14 @@ export function SearchPage() {
                 onClick={() => setFiltersOpen((prev) => !prev)}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                   filtersOpen || activeFilterCount > 0
-                    ? 'bg-slate-900 text-white'
+                    ? 'bg-[#1049EB] text-white'
                     : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 <Funnel size={14} weight="regular" />
                 <span>Filter</span>
                 {activeFilterCount > 0 ? (
-                  <span className="rounded-full bg-white/20 px-1.5 text-[10px] font-bold">
+                  <span className="rounded-full bg-[#FEB719] px-1.5 text-[10px] font-bold text-slate-950">
                     {activeFilterCount}
                   </span>
                 ) : null}
@@ -202,7 +202,7 @@ export function SearchPage() {
                   aria-label="Sort search results"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 focus:border-slate-900 focus:outline-none"
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 focus:border-[#1049EB] focus:outline-none"
                 >
                   <option value="relevance">Sort: Relevance</option>
                   <option value="price-low">Price: Low to High</option>
@@ -227,7 +227,7 @@ export function SearchPage() {
                         onClick={() => toggleBrand(b)}
                         className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                           active
-                            ? 'border-slate-900 bg-slate-900 font-semibold text-white'
+                            ? 'border-[#1049EB] bg-[#1049EB] font-semibold text-white'
                             : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                         }`}
                       >
@@ -249,7 +249,7 @@ export function SearchPage() {
                     value={minPrice}
                     onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : '')}
                     placeholder="Min ₦"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-slate-900 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs tabular-nums text-slate-900 focus:border-[#1049EB] focus:outline-none"
                   />
                   <span className="text-slate-400">-</span>
                   <input
@@ -258,7 +258,7 @@ export function SearchPage() {
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : '')}
                     placeholder="Max ₦"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-slate-900 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs tabular-nums text-slate-900 focus:border-[#1049EB] focus:outline-none"
                   />
                 </div>
               </div>
@@ -271,7 +271,7 @@ export function SearchPage() {
                       type="checkbox"
                       checked={inStockOnly}
                       onChange={(e) => setInStockOnly(e.target.checked)}
-                      className="h-4 w-4 rounded accent-slate-900"
+                      className="h-4 w-4 rounded accent-[#1049EB]"
                     />
                     <span>Show in-stock items only</span>
                   </label>
@@ -302,14 +302,14 @@ export function SearchPage() {
         {/* Wide 4-Column Results Grid */}
         {searchResults.length === 0 ? (
           <EmptyState
-            icon={<MagnifyingGlass size={24} weight="regular" />}
+            icon={<MagnifyingGlass size={24} weight="regular" className="text-[#1049EB]" />}
             title={`No results found${query ? ` for "${query}"` : ''}`}
             detail="Try checking spelling or resetting active filters to explore the full catalog."
             action={
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                className="rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
               >
                 Reset Filters
               </button>

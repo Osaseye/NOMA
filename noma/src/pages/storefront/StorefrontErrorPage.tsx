@@ -60,7 +60,7 @@ export function StorefrontErrorPage() {
           {/* Open Editorial 404 Hero Split */}
           <div className="grid grid-cols-1 items-end justify-between gap-8 border-b border-slate-200 pb-12 lg:grid-cols-12">
             <div className="lg:col-span-7">
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#1049EB]">
                 {is404 ? 'Error 404 — Page Not Found' : 'Unexpected Error'}
               </span>
               <h1 className="mt-3 text-4xl font-bold leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
@@ -87,12 +87,12 @@ export function StorefrontErrorPage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search shoes, clothing, air fryers, TVs..."
-                    className="h-12 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none"
+                    className="h-12 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1049EB] focus:bg-white focus:outline-none"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-slate-900 px-6 text-xs font-semibold text-white transition-colors hover:bg-slate-800 sm:text-sm"
+                  className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-[#1049EB] px-6 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7] sm:text-sm"
                 >
                   Search
                 </button>
@@ -102,7 +102,7 @@ export function StorefrontErrorPage() {
             <div className="flex flex-wrap items-center gap-3 lg:col-span-5 lg:justify-end">
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 sm:text-sm"
+                className="inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-6 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7] sm:text-sm"
               >
                 <span>Back to Homepage</span>
                 <ArrowRight size={15} weight="bold" />

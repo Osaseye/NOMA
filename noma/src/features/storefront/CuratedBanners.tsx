@@ -57,7 +57,7 @@ export function CuratedBanners() {
 
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-950 hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1049EB] transition-colors hover:text-[#0D3EC7] hover:underline"
           >
             <span>Explore all</span>
             <ArrowUpRight size={14} weight="bold" />
@@ -88,7 +88,7 @@ export function CuratedBanners() {
                   </p>
                 </div>
 
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-transform duration-300 group-hover:scale-105">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all duration-300 group-hover:scale-105 group-hover:bg-[#FEB719]">
                   <ArrowUpRight size={17} weight="bold" />
                 </span>
               </div>

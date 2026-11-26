@@ -58,7 +58,7 @@ export function ShopByCategory() {
 
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 transition-colors hover:text-slate-950 hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1049EB] transition-colors hover:text-[#0D3EC7] hover:underline"
           >
             <span>View all</span>
             <ArrowUpRight size={14} weight="bold" />
@@ -103,7 +103,7 @@ export function ShopByCategory() {
                     </span>
                   </div>
 
-                  <span className="flex h-8 w-8 shrink-0 translate-y-1 items-center justify-center rounded-full bg-white text-slate-950 opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                  <span className="flex h-8 w-8 shrink-0 translate-y-1 items-center justify-center rounded-full bg-[#FEB719] text-slate-950 opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
                     <ArrowUpRight size={15} weight="bold" />
                   </span>
                 </div>

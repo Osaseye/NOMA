@@ -51,7 +51,7 @@ export function OrderSummary({
           type="button"
           onClick={onAction}
           disabled={disabled}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] px-5 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
         >
           <Lock size={15} weight="bold" />
           <span>{action}</span>

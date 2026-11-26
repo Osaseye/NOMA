@@ -34,7 +34,7 @@ export function NewsletterCTA() {
               className="absolute inset-0 h-full w-full object-cover opacity-30"
             />
             <div className="relative z-10 max-w-md">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/70">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#FEB719]">
                 Wholesale &amp; Reseller Desk
               </span>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
@@ -61,7 +61,7 @@ export function NewsletterCTA() {
           {/* Right 6 Cols: Sleek Minimalist New Arrivals & Deals Club Signup */}
           <div className="flex flex-col justify-between rounded-2xl bg-[#F4F4F5] p-6 sm:p-10 lg:col-span-6">
             <div className="max-w-md">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#1049EB]">
                 Noma Insider
               </span>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -90,7 +90,7 @@ export function NewsletterCTA() {
               />
               <button
                 type="submit"
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-900 px-6 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#1049EB] px-6 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
               >
                 <span>Join Now</span>
                 <ArrowRight size={14} weight="bold" />

@@ -160,9 +160,9 @@ export function MiniCartDrawer() {
             {/* Header Bar */}
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div className="flex items-center gap-2.5">
-                <ShoppingBag size={20} weight="regular" className="text-slate-900" />
+                <ShoppingBag size={20} weight="regular" className="text-[#1049EB]" />
                 <h2 className="text-base font-bold text-slate-900">Your Bag</h2>
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                <span className="rounded-full bg-[#FEB719] px-2.5 py-0.5 text-xs font-bold tabular-nums text-slate-950">
                   {totalCount}
                 </span>
               </div>
@@ -196,7 +196,7 @@ export function MiniCartDrawer() {
             <div className="border-b border-slate-100 bg-[#F4F4F5] px-5 py-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-1.5">
-                  <MapPin size={14} weight="fill" className="text-slate-800" />
+                  <MapPin size={14} weight="fill" className="text-[#1049EB]" />
                   <span className="text-slate-500">Deliver to:</span>
                   <select
                     value={deliveryState}
@@ -239,7 +239,7 @@ export function MiniCartDrawer() {
                   </div>
                   <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
-                      className="h-full rounded-full bg-slate-900 transition-all duration-300"
+                      className="h-full rounded-full bg-gradient-to-r from-[#1049EB] to-[#FEB719] transition-all duration-300"
                       style={{ width: `${freeShippingProgress}%` }}
                     />
                   </div>
@@ -392,7 +392,7 @@ export function MiniCartDrawer() {
                     closeDrawer()
                     navigate('/checkout')
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1049EB] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
                 >
                   <Lock size={16} weight="bold" />
                   <span>Proceed to Checkout</span>

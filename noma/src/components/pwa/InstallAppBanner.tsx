@@ -100,9 +100,27 @@ export function InstallAppBanner() {
       </div>
 
       {showIOSTipModal ? (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B1220]/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-[10px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_8px_24px_rgba(11,18,32,0.12)]">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[8px] border border-[#E5E7EB] bg-[#EEF3FE] text-[#1049EB]">
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B1220]/50 p-4 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Install Noma on iPhone"
+          onClick={() => setShowIOSTipModal(false)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-[10px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_8px_24px_rgba(11,18,32,0.12)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowIOSTipModal(false)}
+              aria-label="Close install guide"
+              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-950"
+            >
+              <X size={15} weight="bold" />
+            </button>
+
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[8px] border border-[#E5E7EB] bg-[#F4F4F5] text-[#1049EB]">
               <ShareNetwork size={22} weight="regular" />
             </div>
 
@@ -138,7 +156,7 @@ export function InstallAppBanner() {
             <button
               type="button"
               onClick={() => setShowIOSTipModal(false)}
-              className="mt-5 w-full rounded-[6px] bg-[#0B1220] py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#1049EB]"
+              className="mt-5 w-full rounded-[6px] bg-[#1049EB] py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
             >
               Got it
             </button>

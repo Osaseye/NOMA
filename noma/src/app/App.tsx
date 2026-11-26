@@ -40,6 +40,7 @@ export default function App() {
         <Toaster
           position="bottom-right"
           richColors
+          closeButton
           expand={false}
           toastOptions={{
             style: {
@@ -55,6 +56,8 @@ export default function App() {
             classNames: {
               title: 'text-[13px] font-semibold tracking-tight text-[#0B1220]',
               description: 'text-[12px] font-normal text-[#5E6675]',
+              closeButton:
+                '!bg-white !border !border-slate-200 !text-slate-600 hover:!bg-slate-100 hover:!text-slate-950 transition-colors',
             },
           }}
         />

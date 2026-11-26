@@ -175,7 +175,7 @@ export function CartPage() {
               action={
                 <Link
                   to="/catalog"
-                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                  className="inline-flex items-center justify-center rounded-full bg-[#1049EB] px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
                 >
                   Start Shopping
                 </Link>
@@ -190,7 +190,7 @@ export function CartPage() {
               <div className="rounded-2xl bg-[#F4F4F5] p-4 sm:px-5">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2">
-                    <MapPin size={14} weight="fill" className="text-slate-800" />
+                    <MapPin size={14} weight="fill" className="text-[#1049EB]" />
                     <span className="text-slate-600">Delivering to:</span>
                     <select
                       value={deliveryState}
@@ -219,7 +219,7 @@ export function CartPage() {
                       ) : (
                         <span className="text-slate-600">
                           Add{' '}
-                          <strong className="font-bold text-slate-900">
+                          <strong className="font-bold tabular-nums text-slate-900">
                             {formatNaira(remainingForFreeShipping)}
                           </strong>{' '}
                           more for free standard delivery
@@ -231,7 +231,7 @@ export function CartPage() {
                     </div>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-slate-900 transition-all duration-300"
+                        className="h-full rounded-full bg-gradient-to-r from-[#1049EB] to-[#FEB719] transition-all duration-300"
                         style={{ width: `${freeShippingProgress}%` }}
                       />
                     </div>
@@ -284,7 +284,7 @@ export function CartPage() {
                             ) : null}
                           </div>
 
-                          <div className="text-xs font-medium text-slate-500">
+                          <div className="text-xs font-medium tabular-nums text-slate-500">
                             {formatNaira(product.finalPrice)} each
                           </div>
                         </div>
@@ -384,27 +384,27 @@ export function CartPage() {
                 )}
               </div>
 
-              {/* Clean Monochrome Reassurance */}
+              {/* Clean Brand Reassurance */}
               <div className="space-y-2.5 rounded-2xl bg-[#F4F4F5] p-4 text-xs font-medium text-slate-600">
                 <div className="flex items-center gap-2.5">
-                  <Truck size={15} weight="regular" className="shrink-0 text-slate-800" />
+                  <Truck size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
                   <span>Delivery fee confirmed before you pay</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Clock size={15} weight="regular" className="shrink-0 text-slate-800" />
+                  <Clock size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
                   <span>2–5 business days tracked nationwide dispatch</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <ArrowsCounterClockwise
                     size={15}
                     weight="regular"
-                    className="shrink-0 text-slate-800"
+                    className="shrink-0 text-[#1049EB]"
                   />
                   <span>Easy return &amp; exchange eligibility</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <ShieldCheck size={15} weight="regular" className="shrink-0 text-slate-800" />
-                  <span>Card, Transfer, USSD &amp; Pay on Delivery supported</span>
+                  <ShieldCheck size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
+                  <span>Instant Bank Transfer &amp; Card checkout</span>
                 </div>
               </div>
             </div>

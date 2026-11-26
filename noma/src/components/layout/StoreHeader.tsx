@@ -39,17 +39,17 @@ export const StoreHeader: React.FC = () => {
   )
 
   const prevTotalRef = useRef(totalItems)
-  const [bagBumpDelta, setBagBumpDelta] = useState<{ id: number; delta: number } | null>(null)
+  const [bagPulseId, setBagPulseId] = useState<number | null>(null)
 
   useEffect(() => {
     const diff = totalItems - prevTotalRef.current
     prevTotalRef.current = totalItems
     if (diff > 0) {
       const id = Date.now()
-      const showTimer = window.setTimeout(() => setBagBumpDelta({ id, delta: diff }), 0)
+      const showTimer = window.setTimeout(() => setBagPulseId(id), 0)
       const hideTimer = window.setTimeout(() => {
-        setBagBumpDelta((curr) => (curr?.id === id ? null : curr))
-      }, 950)
+        setBagPulseId((curr) => (curr === id ? null : curr))
+      }, 650)
       return () => {
         window.clearTimeout(showTimer)
         window.clearTimeout(hideTimer)
@@ -191,12 +191,12 @@ export const StoreHeader: React.FC = () => {
                   setSearchQuery(e.target.value)
                   setSearchOpen(true)
                 }}
-                className="h-10 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-4 pr-12 text-sm text-slate-900 placeholder:text-slate-500 transition-all focus:border-slate-900 focus:bg-white focus:outline-none"
+                className="h-10 w-full rounded-full border border-slate-200 bg-[#F4F4F5] pl-4 pr-12 text-sm text-slate-900 placeholder:text-slate-500 transition-all focus:border-[#1049EB] focus:bg-white focus:outline-none"
               />
               <button
                 type="submit"
                 aria-label="Search"
-                className="absolute right-1 inline-flex h-8 w-9 items-center justify-center rounded-full bg-slate-900 text-white transition-colors hover:bg-slate-700"
+                className="absolute right-1 inline-flex h-8 w-9 items-center justify-center rounded-full bg-[#1049EB] text-white transition-colors hover:bg-[#0D3EC7]"
               >
                 <MagnifyingGlass size={15} weight="bold" />
               </button>
@@ -335,41 +335,53 @@ export const StoreHeader: React.FC = () => {
               <span className="hidden lg:inline">Account</span>
             </Link>
 
-            {/* Sleek Charcoal Bag Button (Opens Slide-Out Drawer on click; animates count on add) */}
+            {/* Sleek Charcoal Bag Button (Odometer count roll + icon nudge + gold ring pulse) */}
             <motion.button
               type="button"
               onClick={openDrawer}
-              animate={bagBumpDelta ? { scale: [1, 1.09, 0.97, 1] } : { scale: 1 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
+              animate={bagPulseId ? { scale: [1, 1.05, 0.98, 1] } : { scale: 1 }}
+              transition={{ duration: 0.38, ease: 'easeOut' }}
               className="relative inline-flex h-10 items-center gap-2 rounded-full bg-slate-900 px-4 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
               aria-label="Open Shopping Bag"
             >
-              <ShoppingBag size={17} weight="regular" />
-              <span className="hidden sm:inline">Bag</span>
               <motion.span
-                key={totalItems}
-                initial={{ scale: 0.7, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 520, damping: 24 }}
-                className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#FEB719] px-1.5 text-[11px] font-bold tabular-nums text-slate-950"
+                key={bagPulseId ?? 'idle'}
+                animate={
+                  bagPulseId
+                    ? { rotate: [0, -14, 10, -5, 0], scale: [1, 1.18, 1] }
+                    : { rotate: 0, scale: 1 }
+                }
+                transition={{ duration: 0.48, ease: 'easeOut' }}
+                className="inline-flex items-center justify-center"
               >
-                {totalItems}
+                <ShoppingBag size={17} weight="regular" />
               </motion.span>
-
-              <AnimatePresence>
-                {bagBumpDelta ? (
+              <span className="hidden sm:inline">Bag</span>
+              <span className="relative inline-flex h-5 min-w-5 items-center justify-center">
+                {bagPulseId ? (
                   <motion.span
-                    key={bagBumpDelta.id}
-                    initial={{ opacity: 0, y: 6, scale: 0.75 }}
-                    animate={{ opacity: 1, y: -22, scale: 1 }}
-                    exit={{ opacity: 0, y: -32, scale: 0.85 }}
-                    transition={{ duration: 0.45, ease: 'easeOut' }}
-                    className="pointer-events-none absolute -right-1 top-0 rounded-full bg-[#1049EB] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white shadow-md"
-                  >
-                    +{bagBumpDelta.delta}
-                  </motion.span>
+                    key={`ring-${bagPulseId}`}
+                    initial={{ scale: 1, opacity: 0.85 }}
+                    animate={{ scale: 1.95, opacity: 0 }}
+                    transition={{ duration: 0.55, ease: 'easeOut' }}
+                    className="pointer-events-none absolute inset-0 rounded-full border-2 border-[#FEB719]"
+                  />
                 ) : null}
-              </AnimatePresence>
+                <span className="relative inline-flex h-5 min-w-5 items-center justify-center overflow-hidden rounded-full bg-[#FEB719] px-1.5 text-[11px] font-bold tabular-nums text-slate-950">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={totalItems}
+                      initial={{ y: 12, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -12, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 28 }}
+                      className="inline-block leading-none"
+                    >
+                      {totalItems}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+              </span>
             </motion.button>
           </div>
         </div>
@@ -410,7 +422,7 @@ export const StoreHeader: React.FC = () => {
                     to={cat.href}
                     className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                       isActive
-                        ? 'bg-slate-900 font-semibold text-white'
+                        ? 'bg-[#1049EB] font-semibold text-white'
                         : 'bg-[#F4F4F5] text-slate-700 hover:bg-slate-200 hover:text-slate-950'
                     }`}
                   >

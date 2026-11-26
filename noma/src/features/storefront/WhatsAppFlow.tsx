@@ -54,10 +54,10 @@ export function WhatsAppFlow({
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F4F4F5] text-slate-900">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F4F4F5] text-[#1049EB]">
                     <Icon size={20} weight="regular" />
                   </div>
-                  <span className="text-xs font-bold text-slate-400">Step {s.step}</span>
+                  <span className="text-xs font-bold text-[#1049EB]">Step {s.step}</span>
                 </div>
                 <h3 className="text-base font-bold text-slate-900">{s.title}</h3>
                 <p className="text-xs leading-relaxed text-slate-500">{s.desc}</p>
@@ -111,7 +111,7 @@ export function WhatsAppFlow({
           href={targetUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1049EB] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
         >
           <PaperPlaneTilt size={17} weight="regular" />
           <span>Start WhatsApp Chat Now</span>

@@ -41,7 +41,7 @@ export function TrustBand() {
         <div className="grid grid-cols-2 divide-y divide-[#E5E7EB] sm:grid-cols-3 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
           {trustItems.map((item) => (
             <div key={item.title} className="flex items-center gap-3 px-3 py-3.5 sm:px-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] bg-[#EEF3FE] text-[#1049EB]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] bg-[#F4F4F5] text-[#1049EB]">
                 <item.icon size={18} weight="regular" />
               </span>
               <div className="min-w-0">
