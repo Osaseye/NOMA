@@ -8,6 +8,11 @@ import { useCartStore } from '../../store/cartStore'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
 
+function toAbsoluteUrl(url: string): string {
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `https://shopnoma.com.ng${url.startsWith('/') ? '' : '/'}${url}`
+}
+
 export function ProductDetailPage() {
   const { slug } = useParams()
   const addItem = useCartStore((state) => state.addItem)
@@ -46,7 +51,7 @@ export function ProductDetailPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-[#F6F7F9] px-4 py-16">
         <Helmet>
-          <title>Product Not Found | NOMA Marketplace</title>
+          <title>Product Not Found | Shop Noma</title>
           <meta name="robots" content="noindex" />
         </Helmet>
         <div className="w-full max-w-md">
@@ -73,17 +78,46 @@ export function ProductDetailPage() {
     addItem(product.id, selectedSize, quantity)
   }
 
-  const pageTitle = `${product.name} - ${formatNaira(product.finalPrice)} | NOMA Nigeria`
+  const pageTitle = `${product.name} — ${formatNaira(product.finalPrice)} | Shop Noma`
   const metaDescription = product.description
-    ? product.description.replace(/<[^>]*>/g, '').slice(0, 160)
-    : `Buy ${product.name} at ${formatNaira(product.finalPrice)} on NOMA with transparent nationwide delivery.`
-  const currentUrl =
-    typeof window !== 'undefined'
-      ? window.location.href
-      : `https://shopnoma.com.ng/product/${product.slug}`
-  const ogImage =
-    product.image ||
-    'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/og-noma-share.jpg'
+    ? product.description.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 160)
+    : `Buy ${product.name} at ${formatNaira(product.finalPrice)} on Shop Noma with fast nationwide delivery across Nigeria.`
+  const canonicalUrl = `https://shopnoma.com.ng/product/${encodeURIComponent(product.slug || product.id)}`
+  const ogImage = toAbsoluteUrl(product.image || 'https://shopnoma.com.ng/images/og-noma-share.jpg')
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image:
+      Array.isArray(product.images) && product.images.length > 0
+        ? product.images.map(toAbsoluteUrl)
+        : [ogImage],
+    description: metaDescription,
+    sku: product.id,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand || 'Shop Noma',
+    },
+    offers: {
+      '@type': 'Offer',
+      url: canonicalUrl,
+      priceCurrency: 'NGN',
+      price: String(product.finalPrice),
+      availability:
+        product.stockQty > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+    ...(product.rating > 0 && (product.reviewsCount ?? 0) > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: String(product.rating),
+            reviewCount: String(product.reviewsCount ?? 0),
+          },
+        }
+      : {}),
+  }
 
   return (
     <>
@@ -91,13 +125,16 @@ export function ProductDetailPage() {
         <title>{pageTitle}</title>
         <meta name="title" content={pageTitle} />
         <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={canonicalUrl} />
 
         <meta property="og:type" content="product" />
-        <meta property="og:site_name" content="NOMA Marketplace" />
+        <meta property="og:site_name" content="Shop Noma" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:image" content={ogImage} />
-        <meta property="og:url" content={currentUrl} />
+        <meta property="og:image:secure_url" content={ogImage} />
+        <meta property="og:image:alt" content={product.name} />
+        <meta property="og:url" content={canonicalUrl} />
         <meta property="product:price:amount" content={String(product.finalPrice)} />
         <meta property="product:price:currency" content="NGN" />
 
@@ -105,6 +142,8 @@ export function ProductDetailPage() {
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={ogImage} />
+
+        <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
       </Helmet>
 
       <ProductDetail key={product.id} product={product} onAddToCart={handleAddToCart} />
