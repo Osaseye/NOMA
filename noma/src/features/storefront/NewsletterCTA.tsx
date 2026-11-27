@@ -76,7 +76,7 @@ export function NewsletterCTA() {
 
             <form
               onSubmit={handleSubscribe}
-              className="mt-6 flex w-full max-w-lg flex-col gap-2.5 sm:flex-row"
+              className="mt-6 flex w-full max-w-lg flex-col gap-3 sm:flex-row"
             >
               <label htmlFor="newsletter-email" className="sr-only">
                 Email address
@@ -88,11 +88,11 @@ export function NewsletterCTA() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
                 required
-                className="h-11 flex-1 rounded-full border border-slate-300 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+                className="h-12 w-full rounded-full border border-slate-300 bg-white px-5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1049EB] focus:outline-none sm:flex-1"
               />
               <button
                 type="submit"
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#1049EB] px-6 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
+                className="inline-flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#1049EB] px-7 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7] sm:text-sm"
               >
                 <span>Join Now</span>
                 <ArrowRight size={14} weight="bold" />
