@@ -16,8 +16,16 @@
 export const NOMA_EMAIL_HEADER_BANNER_URL =
   'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/noma-email-header-banner.jpg'
 
+export const NOMA_EMAIL_SOCIAL_ICONS = {
+  instagram: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-instagram.png',
+  whatsapp: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-whatsapp.png',
+  x: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-x.png',
+}
+
 export const DEFAULT_STOREFRONT_URL = 'https://shopnoma.com.ng'
 export const DEFAULT_WHATSAPP_URL = 'https://wa.me/2348104189461'
+export const DEFAULT_INSTAGRAM_URL = 'https://instagram.com/shopnoma'
+export const DEFAULT_X_URL = 'https://x.com/shopnoma'
 
 export interface RenderedEmail {
   subject: string
@@ -100,7 +108,7 @@ export interface AdminSupportAlertEmailData {
 }
 
 const FONT_STACK =
-  "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+  "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif"
 
 function escapeHtml(value: string): string {
   return value
@@ -123,15 +131,15 @@ function firstNameOf(fullName: string): string {
 }
 
 function inlineLink(label: string, href: string): string {
-  return `<a href="${escapeHtml(href)}" style="color:#1049EB;font-weight:600;text-decoration:underline;text-underline-offset:2px;">${escapeHtml(label)}</a>`
+  return `<a href="${escapeHtml(href)}" style="color:#1049EB;font-weight:600;text-decoration:none;border-bottom:1px solid #B7C9FB;padding-bottom:1px;">${escapeHtml(label)}</a>`
 }
 
-function paragraph(htmlContent: string, marginBottom = 16): string {
-  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.65;color:#1F2937;">${htmlContent}</p>`
+function paragraph(htmlContent: string, marginBottom = 18): string {
+  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.72;font-weight:400;color:#374151;">${htmlContent}</p>`
 }
 
-function leadInLine(leadIn: string, bodyHtml: string, marginBottom = 12): string {
-  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.65;color:#1F2937;"><strong style="color:#0F172A;font-weight:700;">${escapeHtml(leadIn)}</strong> ${bodyHtml}</p>`
+function leadInLine(leadIn: string, bodyHtml: string, marginBottom = 14): string {
+  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${FONT_STACK};font-size:14.5px;line-height:1.7;font-weight:400;color:#374151;"><strong style="color:#0B1220;font-weight:600;">${escapeHtml(leadIn)}</strong> ${bodyHtml}</p>`
 }
 
 function renderReceiptRows(
@@ -144,10 +152,10 @@ function renderReceiptRows(
       const lineTotal = formatNairaEmail(item.unitPrice * item.quantity)
       return `
         <tr>
-          <td style="padding:11px 0;border-bottom:1px solid #E5E7EB;font-family:${FONT_STACK};font-size:14px;line-height:1.5;color:#1F2937;">
-            ${escapeHtml(item.name)}<span style="color:#6B7280;"> &times; ${item.quantity}${sizeText}</span>
+          <td style="padding:13px 0;border-bottom:1px solid #EEF0F3;font-family:${FONT_STACK};font-size:14px;line-height:1.5;color:#111827;font-weight:500;">
+            ${escapeHtml(item.name)}<span style="color:#6B7280;font-weight:400;"> &times; ${item.quantity}${sizeText}</span>
           </td>
-          <td align="right" style="padding:11px 0 11px 16px;border-bottom:1px solid #E5E7EB;font-family:${FONT_STACK};font-size:14px;line-height:1.5;font-weight:600;color:#0F172A;white-space:nowrap;font-variant-numeric:tabular-nums;">
+          <td align="right" style="padding:13px 0 13px 16px;border-bottom:1px solid #EEF0F3;font-family:${FONT_STACK};font-size:14px;line-height:1.5;font-weight:600;color:#0B1220;white-space:nowrap;font-variant-numeric:tabular-nums;">
             ${escapeHtml(lineTotal)}
           </td>
         </tr>`
@@ -157,16 +165,16 @@ function renderReceiptRows(
   const totalsHtml = summaryRows
     .map((row, idx) => {
       const isLast = idx === summaryRows.length - 1
-      const borderStyle = isLast ? 'border-bottom:none;' : 'border-bottom:1px solid #E5E7EB;'
-      const labelColor = row.bold ? '#0F172A' : '#6B7280'
-      const weight = row.bold ? '700' : '500'
-      const valueSize = row.bold ? '15px' : '14px'
+      const borderStyle = isLast ? 'border-bottom:none;' : 'border-bottom:1px solid #EEF0F3;'
+      const labelColor = row.bold ? '#0B1220' : '#6B7280'
+      const weight = row.bold ? '700' : '400'
+      const valueSize = row.bold ? '16px' : '14px'
       return `
         <tr>
-          <td style="padding:10px 0;${borderStyle}font-family:${FONT_STACK};font-size:14px;font-weight:${weight};color:${labelColor};">
+          <td style="padding:11px 0;${borderStyle}font-family:${FONT_STACK};font-size:13.5px;font-weight:${weight};color:${labelColor};">
             ${escapeHtml(row.label)}
           </td>
-          <td align="right" style="padding:10px 0 10px 16px;${borderStyle}font-family:${FONT_STACK};font-size:${valueSize};font-weight:${row.bold ? '700' : '600'};color:#0F172A;white-space:nowrap;font-variant-numeric:tabular-nums;">
+          <td align="right" style="padding:11px 0 11px 16px;${borderStyle}font-family:${FONT_STACK};font-size:${valueSize};font-weight:${row.bold ? '700' : '600'};color:#0B1220;white-space:nowrap;font-variant-numeric:tabular-nums;">
             ${escapeHtml(row.value)}
           </td>
         </tr>`
@@ -174,7 +182,7 @@ function renderReceiptRows(
     .join('')
 
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0;border-top:1px solid #E5E7EB;border-collapse:collapse;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;border-top:1px solid #EEF0F3;border-collapse:collapse;">
       ${itemRowsHtml}
       ${totalsHtml}
     </table>`
@@ -187,19 +195,26 @@ export interface NomaEmailLayoutOptions {
   signOff?: string
   footerLine1?: string
   footerLine2?: string
+  instagramUrl?: string
+  whatsappUrl?: string
+  xUrl?: string
 }
 
 /**
  * Shared Noma Marketplace letter-style HTML email shell.
- * Single clean white 600px card on a soft #F5F5F7 canvas with the custom Noma header banner.
+ * Single clean white 600px card on a soft #F6F7F9 canvas with the custom Noma header banner
+ * and social media icons (Instagram, WhatsApp, X) in the quiet footer.
  */
 export function renderNomaEmailLayout({
   preheader,
   heading,
   bodyHtml,
-  signOff = 'Warm regards,<br /><strong style="color:#0F172A;font-weight:700;">The Noma Team</strong>',
+  signOff = 'Warm regards,<br /><strong style="color:#0B1220;font-weight:700;">The Noma Team</strong>',
   footerLine1 = 'Noma Marketplace · Retail & Wholesale across Nigeria',
-  footerLine2 = 'Need help? Reply to this email or message us anytime on WhatsApp.',
+  footerLine2 = 'Questions? Reply directly to this email anytime.',
+  instagramUrl = DEFAULT_INSTAGRAM_URL,
+  whatsappUrl = DEFAULT_WHATSAPP_URL,
+  xUrl = DEFAULT_X_URL,
 }: NomaEmailLayoutOptions): string {
   return `<!doctype html>
 <html lang="en">
@@ -208,21 +223,27 @@ export function renderNomaEmailLayout({
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="x-apple-disable-message-reformatting" />
   <title>${escapeHtml(heading)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#F5F5F7;font-family:${FONT_STACK};-webkit-font-smoothing:antialiased;color:#1F2937;">
+<body style="margin:0;padding:0;background-color:#F6F7F9;font-family:${FONT_STACK};-webkit-font-smoothing:antialiased;color:#374151;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
     ${escapeHtml(preheader)}
   </div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F5F7;padding:32px 16px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F7F9;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;border-collapse:separate;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#FFFFFF;border:1px solid #EAECEF;border-radius:14px;overflow:hidden;border-collapse:separate;">
           <!-- Full-Width Noma Header Banner -->
           <tr>
-            <td style="padding:0;line-height:0;font-size:0;">
+            <td style="padding:0;line-height:0;font-size:0;border-bottom:1px solid #F1F3F5;">
               <img
                 src="${NOMA_EMAIL_HEADER_BANNER_URL}"
-                alt="Noma Marketplace"
+                alt="Noma — Everything You Need"
                 width="600"
                 style="display:block;width:100%;max-width:600px;height:auto;border:0;"
               />
@@ -232,27 +253,44 @@ export function renderNomaEmailLayout({
           <!-- Letter Body -->
           <tr>
             <td style="padding:36px 40px 32px 40px;">
-              <h1 style="margin:0 0 20px 0;font-family:${FONT_STACK};font-size:22px;line-height:1.3;font-weight:700;letter-spacing:-0.02em;color:#0F172A;">
+              <h1 style="margin:0 0 22px 0;font-family:${FONT_STACK};font-size:23px;line-height:1.28;font-weight:700;letter-spacing:-0.025em;color:#0B1220;">
                 ${escapeHtml(heading)}
               </h1>
 
               ${bodyHtml}
 
-              <p style="margin:26px 0 0 0;font-family:${FONT_STACK};font-size:15px;line-height:1.65;color:#1F2937;">
+              <p style="margin:28px 0 0 0;font-family:${FONT_STACK};font-size:14.5px;line-height:1.7;color:#374151;">
                 ${signOff}
               </p>
             </td>
           </tr>
 
-          <!-- Quiet 2-Line Muted Footer -->
+          <!-- Quiet Footer with Social Media Icons -->
           <tr>
-            <td style="padding:20px 40px 26px 40px;border-top:1px solid #E5E7EB;">
-              <p style="margin:0 0 4px 0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;color:#6B7280;">
-                ${escapeHtml(footerLine1)}
-              </p>
-              <p style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;color:#6B7280;">
-                ${escapeHtml(footerLine2)}
-              </p>
+            <td style="padding:22px 40px 28px 40px;border-top:1px solid #EEF0F3;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td valign="middle">
+                    <p style="margin:0 0 4px 0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;font-weight:500;color:#6B7280;">
+                      ${escapeHtml(footerLine1)}
+                    </p>
+                    <p style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;color:#9CA3AF;">
+                      ${escapeHtml(footerLine2)}
+                    </p>
+                  </td>
+                  <td align="right" valign="middle" style="white-space:nowrap;padding-left:16px;">
+                    <a href="${escapeHtml(instagramUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on Instagram" style="display:inline-block;text-decoration:none;margin-right:8px;">
+                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.instagram}" alt="Instagram" width="28" height="28" style="display:block;width:28px;height:28px;border:0;" />
+                    </a>
+                    <a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on WhatsApp" style="display:inline-block;text-decoration:none;margin-right:8px;">
+                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.whatsapp}" alt="WhatsApp" width="28" height="28" style="display:block;width:28px;height:28px;border:0;" />
+                    </a>
+                    <a href="${escapeHtml(xUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on X" style="display:inline-block;text-decoration:none;">
+                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.x}" alt="X" width="28" height="28" style="display:block;width:28px;height:28px;border:0;" />
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
@@ -315,7 +353,7 @@ export function orderConfirmedEmail(data: OrderConfirmedEmailData): RenderedEmai
     preheader: `Order ${data.orderId} confirmed — ${formatNairaEmail(data.total)} received.`,
     heading: `Your Noma order ${data.orderId} is confirmed`,
     bodyHtml,
-    footerLine2: `Questions about your order? Reply here or reach us on WhatsApp (${waUrl.replace('https://', '')}).`,
+    whatsappUrl: waUrl,
   })
 
   const textItems = data.items
