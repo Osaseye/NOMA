@@ -1,5 +1,5 @@
 /**
- * Noma Marketplace — Editorial HTML Email Layout & Complete Transactional/Campaign Templates
+ * Shop Noma — Editorial HTML Email Layout & Complete Transactional/Campaign Templates
  *
  * Visual Direction:
  * - Single clean white 600px card on a soft #F4F5F7 canvas with the custom Noma header banner
@@ -263,16 +263,16 @@ export interface NomaEmailLayoutOptions {
 }
 
 /**
- * Shared Noma Marketplace editorial HTML email shell.
+ * Shared Shop Noma editorial HTML email shell.
  * Pairs Georgia display serif headings with crisp sans-serif body & structured hairline tables.
  */
 export function renderNomaEmailLayout({
   preheader,
-  eyebrow = 'Noma Marketplace',
+  eyebrow = 'Shop Noma',
   heading,
   bodyHtml,
   signOff = 'Warm regards,<br /><span style="font-family:Georgia, \'Times New Roman\', serif;font-size:16px;color:#0B1220;font-weight:700;">The Noma Team</span>',
-  footerLine1 = 'Noma Marketplace · Retail & Wholesale across Nigeria',
+  footerLine1 = 'Shop Noma · Retail & Wholesale across Nigeria',
   footerLine2 = 'Questions? Reply directly to this email anytime.',
   instagramUrl = DEFAULT_INSTAGRAM_URL,
   whatsappUrl = DEFAULT_WHATSAPP_URL,
@@ -459,7 +459,7 @@ export function orderConfirmedEmail(data: OrderConfirmedEmailData): RenderedEmai
   ].join('\n')
 
   return {
-    subject: `Order ${data.orderId} confirmed — Noma Marketplace`,
+    subject: `Order ${data.orderId} confirmed — Shop Noma`,
     html,
     text,
   }
@@ -620,7 +620,7 @@ export function orderCancelledEmail(data: OrderCancelledEmailData): RenderedEmai
   ].join('\n')
 
   return {
-    subject: `Order ${data.orderId} cancelled — Noma Marketplace`,
+    subject: `Order ${data.orderId} cancelled — Shop Noma`,
     html,
     text,
   }
@@ -675,7 +675,7 @@ export function adminNewOrderEmail(data: AdminNewOrderEmailData): RenderedEmail 
     heading: `New paid order received`,
     bodyHtml,
     signOff: '— Noma Operations',
-    footerLine2: 'Internal admin notification from Noma Marketplace.',
+    footerLine2: 'Internal admin notification from Shop Noma.',
   })
 
   const text = [
@@ -729,7 +729,7 @@ export function adminSupportAlertEmail(data: AdminSupportAlertEmailData): Render
     heading: `New customer message`,
     bodyHtml,
     signOff: '— Noma Operations',
-    footerLine2: 'Internal admin notification from Noma Marketplace.',
+    footerLine2: 'Internal admin notification from Shop Noma.',
   })
 
   const text = [
@@ -784,7 +784,7 @@ export function customerWelcomeEmail(data: CustomerWelcomeEmailData): RenderedEm
   ].join('')
 
   const html = renderNomaEmailLayout({
-    preheader: `Welcome to Noma Marketplace, ${firstName}. Your account is ready.`,
+    preheader: `Welcome to Shop Noma, ${firstName}. Your account is ready.`,
     eyebrow: 'Welcome to Noma',
     heading: `Glad to have you with us, ${firstName}.`,
     bodyHtml,
@@ -803,7 +803,7 @@ export function customerWelcomeEmail(data: CustomerWelcomeEmailData): RenderedEm
   ].join('\n')
 
   return {
-    subject: `Welcome to Noma Marketplace, ${firstName}`,
+    subject: `Welcome to Shop Noma, ${firstName}`,
     html,
     text,
   }
@@ -911,7 +911,7 @@ export function storeUpdateEmail(data: StoreUpdateEmailData): RenderedEmail {
   ].join('\n')
 
   return {
-    subject: `${data.title} — Noma Marketplace`,
+    subject: `${data.title} — Shop Noma`,
     html,
     text,
   }
@@ -1103,7 +1103,7 @@ export function vendorWelcomeEmail(data: VendorWelcomeEmailData): RenderedEmail 
   const bodyHtml = [
     paragraph(`Hi ${escapeHtml(firstName)},`),
     paragraph(
-      `Welcome aboard — <strong style="color:#0B1220;">${escapeHtml(data.storeName)}</strong> has been approved to sell on Noma Marketplace.`,
+      `Welcome aboard — <strong style="color:#0B1220;">${escapeHtml(data.storeName)}</strong> has been approved to sell on Shop Noma.`,
     ),
     leadInLine(
       'Upload your products:',
@@ -1118,7 +1118,7 @@ export function vendorWelcomeEmail(data: VendorWelcomeEmailData): RenderedEmail 
   ].join('')
 
   const html = renderNomaEmailLayout({
-    preheader: `${data.storeName} is approved on Noma Marketplace — start uploading your products.`,
+    preheader: `${data.storeName} is approved on Shop Noma — start uploading your products.`,
     eyebrow: 'Noma Vendor Portal',
     heading: `${data.storeName} is approved on Noma.`,
     bodyHtml,
@@ -1128,7 +1128,7 @@ export function vendorWelcomeEmail(data: VendorWelcomeEmailData): RenderedEmail 
   const text = [
     `Hi ${firstName},`,
     '',
-    `Welcome aboard — ${data.storeName} has been approved to sell on Noma Marketplace.`,
+    `Welcome aboard — ${data.storeName} has been approved to sell on Shop Noma.`,
     `Vendor Portal: ${portalUrl}`,
     `Need help? Chat on WhatsApp: ${waUrl}`,
     '',
