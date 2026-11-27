@@ -45,7 +45,57 @@ export function SettingsPage() {
     toggleDealProduct,
     toggleTrendingProduct,
   } = useAdminStore()
-  const { products, orders, reviews } = useProductStore()
+  const { products, orders, reviews, updateProduct } = useProductStore()
+  const [discountFilter, setDiscountFilter] = useState<'all' | 'discounted'>('all')
+  const [discountSearch, setDiscountSearch] = useState('')
+  const [updatingDiscountId, setUpdatingDiscountId] = useState<string | null>(null)
+
+  const handleApplyProductDiscount = async (
+    productId: string,
+    currentFinal: number,
+    currentCompareAt: number | undefined,
+    percent: number
+  ) => {
+    const originalRetail =
+      currentCompareAt && currentCompareAt > currentFinal ? currentCompareAt : currentFinal
+    if (originalRetail <= 0) return
+    const nextFinal = Math.max(100, Math.round((originalRetail * (100 - percent)) / 100))
+    setUpdatingDiscountId(productId)
+    try {
+      await updateProduct(productId, {
+        compareAtPrice: originalRetail,
+        finalPrice: nextFinal,
+        discountBadge: `-${percent}%`,
+      })
+      toast.success(`Applied -${percent}% discount live.`)
+    } catch {
+      toast.error('Failed to update product discount.')
+    } finally {
+      setUpdatingDiscountId(null)
+    }
+  }
+
+  const handleClearProductDiscount = async (
+    productId: string,
+    currentFinal: number,
+    currentCompareAt: number | undefined
+  ) => {
+    const restoredPrice =
+      currentCompareAt && currentCompareAt > currentFinal ? currentCompareAt : currentFinal
+    setUpdatingDiscountId(productId)
+    try {
+      await updateProduct(productId, {
+        finalPrice: restoredPrice,
+        compareAtPrice: 0,
+        discountBadge: '',
+      })
+      toast.success('Discount removed and original price restored.')
+    } catch {
+      toast.error('Failed to clear product discount.')
+    } finally {
+      setUpdatingDiscountId(null)
+    }
+  }
 
   const [activeTab, setActiveTab] = useState<
     'storage' | 'delivery' | 'curation' | 'banners' | 'contact' | 'cleanup'
@@ -384,7 +434,7 @@ export function SettingsPage() {
           [
             { key: 'storage', label: 'Cloudflare R2 & Gemini AI' },
             { key: 'delivery', label: `Delivery & Riders (${enabledStatesCount} States)` },
-            { key: 'curation', label: 'Trending & Best Deals' },
+            { key: 'curation', label: 'Discounts & Curation' },
             { key: 'banners', label: `Banners (${settings.heroBanners.length})` },
             { key: 'contact', label: 'Store Contact & Top Bar' },
             { key: 'cleanup', label: 'Launch Cleanup' },
@@ -918,11 +968,162 @@ export function SettingsPage() {
         </form>
       ) : null}
 
-      {/* TAB 3: CURATION (TRENDING & TODAY'S DEALS COMBINED CLEANLY) */}
+      {/* TAB 3: DISCOUNTS, DEALS & TRENDING CURATION */}
       {activeTab === 'curation' ? (
         <div className="space-y-10">
-          {/* Today's Best Deals */}
+          {/* Product Discounts & Sale Tags Manager */}
           <section className="space-y-4">
+            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-3 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-sm font-bold text-slate-950">
+                  Product Discounts &amp; Sale Tags (
+                  {
+                    products.filter(
+                      (p) =>
+                        (p.compareAtPrice && p.compareAtPrice > p.finalPrice) ||
+                        Boolean(p.discountBadge)
+                    ).length
+                  }{' '}
+                  Active)
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Choose which items are discounted on the storefront. Applying a percentage automatically sets the strike-through price and Noma Blue -% badge.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-full border border-slate-200 bg-white p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setDiscountFilter('all')}
+                    className={`rounded-full px-3 py-1 transition-colors ${
+                      discountFilter === 'all'
+                        ? 'bg-slate-950 text-white'
+                        : 'text-slate-600 hover:text-slate-950'
+                    }`}
+                  >
+                    All ({products.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiscountFilter('discounted')}
+                    className={`rounded-full px-3 py-1 transition-colors ${
+                      discountFilter === 'discounted'
+                        ? 'bg-[#1049EB] text-white'
+                        : 'text-slate-600 hover:text-slate-950'
+                    }`}
+                  >
+                    Discounted
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={discountSearch}
+                  onChange={(e) => setDiscountSearch(e.target.value)}
+                  placeholder="Search product..."
+                  className="h-8 w-44 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 placeholder:text-slate-400 focus:border-slate-950 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-200 border-y border-slate-200">
+              {products
+                .filter((p) => {
+                  const hasDiscount =
+                    Boolean(p.compareAtPrice && p.compareAtPrice > p.finalPrice) ||
+                    Boolean(p.discountBadge)
+                  if (discountFilter === 'discounted' && !hasDiscount) return false
+                  if (
+                    discountSearch.trim() &&
+                    !p.name.toLowerCase().includes(discountSearch.trim().toLowerCase())
+                  ) {
+                    return false
+                  }
+                  return true
+                })
+                .map((p) => {
+                  const pct =
+                    p.compareAtPrice && p.compareAtPrice > p.finalPrice
+                      ? Math.round(((p.compareAtPrice - p.finalPrice) / p.compareAtPrice) * 100)
+                      : 0
+                  const isBusy = updatingDiscountId === p.id
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex flex-col justify-between gap-3 py-3 sm:flex-row sm:items-center"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <img
+                          src={p.image || '/images/catalog-banner-all.png'}
+                          alt={p.name}
+                          className="h-10 w-10 shrink-0 rounded-lg bg-[#F4F4F5] object-contain p-1"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="truncate text-xs font-bold text-slate-950">
+                              {p.name}
+                            </h4>
+                            {pct > 0 ? (
+                              <span className="shrink-0 rounded-full bg-[#1049EB] px-2 py-0.5 text-[10px] font-bold text-white">
+                                -{pct}%
+                              </span>
+                            ) : p.discountBadge ? (
+                              <span className="shrink-0 rounded-full bg-[#1049EB] px-2 py-0.5 text-[10px] font-bold text-white">
+                                {p.discountBadge}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-0.5 flex items-baseline gap-2 text-xs tabular-nums">
+                            <span className="font-bold text-slate-900">
+                              {formatNaira(p.finalPrice)}
+                            </span>
+                            {p.compareAtPrice && p.compareAtPrice > p.finalPrice ? (
+                              <span className="text-[11px] text-slate-400 line-through">
+                                {formatNaira(p.compareAtPrice)}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {[10, 15, 20, 25, 30].map((val) => (
+                          <button
+                            key={val}
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() =>
+                              handleApplyProductDiscount(p.id, p.finalPrice, p.compareAtPrice, val)
+                            }
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-40 ${
+                              pct === val
+                                ? 'bg-[#1049EB] text-white'
+                                : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-950 hover:text-slate-950'
+                            }`}
+                          >
+                            -{val}%
+                          </button>
+                        ))}
+                        {pct > 0 || p.discountBadge ? (
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() =>
+                              handleClearProductDiscount(p.id, p.finalPrice, p.compareAtPrice)
+                            }
+                            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-50 disabled:opacity-40"
+                          >
+                            Clear
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          </section>
+
+          {/* Today's Best Deals */}
+          <section className="space-y-4 border-t border-slate-200 pt-8">
             <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-3 sm:flex-row sm:items-center">
               <div>
                 <h2 className="text-sm font-bold text-slate-950">

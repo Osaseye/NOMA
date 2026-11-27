@@ -179,6 +179,31 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   const markupAmount = getMarkupAmount(finalPrice, basePrice)
   const markupPercent =
     basePrice > 0 ? Math.round(((finalPrice - basePrice) / basePrice) * 100) : 0
+  const activeDiscountPercent =
+    compareAtPrice > finalPrice && compareAtPrice > 0
+      ? Math.round(((compareAtPrice - finalPrice) / compareAtPrice) * 100)
+      : 0
+
+  const applyQuickDiscount = (percent: number) => {
+    const originalRetail =
+      compareAtPrice > finalPrice && compareAtPrice > 0 ? compareAtPrice : finalPrice
+    if (originalRetail <= 0) {
+      toast.error('Enter a retail price before applying a discount.')
+      return
+    }
+    const discounted = Math.max(100, Math.round((originalRetail * (100 - percent)) / 100))
+    setCompareAtPrice(originalRetail)
+    setFinalPrice(discounted)
+    setDiscountBadge(`-${percent}%`)
+  }
+
+  const clearQuickDiscount = () => {
+    if (compareAtPrice > finalPrice && compareAtPrice > 0) {
+      setFinalPrice(compareAtPrice)
+    }
+    setCompareAtPrice(0)
+    setDiscountBadge('')
+  }
 
   const handleBasePriceChange = (newBaseCost: number) => {
     setBasePrice(newBaseCost)
@@ -615,13 +640,13 @@ export function ProductEditorForm({ product }: { product?: Product }) {
             </div>
           </section>
 
-          {/* Pricing & Markup */}
+          {/* Pricing, Discounts & Markup */}
           <section className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-white p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] pb-3">
               <h3 className="text-xs font-bold uppercase tracking-[0.06em] text-[#0B1220]">
-                Pricing &amp; Automatic Category Markup
+                Pricing, Discounts &amp; Markup
               </h3>
-              <span className="rounded-[4px] bg-[#EEF3FE] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#1049EB]">
+              <span className="font-mono text-[11px] font-semibold text-slate-500">
                 Category Rule: +{categoryMarkupPercent}%
               </span>
             </div>
@@ -652,13 +677,13 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                   placeholder="e.g. 60000"
                   className={`${inputBaseClass} font-mono tabular-nums font-bold text-[#0B1220]`}
                 />
-                <span className="text-[11px] text-[#1049EB]">
+                <span className="text-[11px] text-[#5E6675]">
                   Suggested: +{categoryMarkupPercent}% over base
                 </span>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className={labelBaseClass}>Compare-At Retail Price (₦)</label>
+                <label className={labelBaseClass}>Original / Compare-At Price (₦)</label>
                 <input
                   type="number"
                   min={0}
@@ -668,22 +693,83 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                   className={`${inputBaseClass} font-mono tabular-nums`}
                 />
                 <span className="text-[11px] text-[#5E6675]">
-                  Optional strike-through on storefront
+                  Higher than retail shows strike-through &amp; -% tag
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[6px] border border-[#BBF7D0] bg-[#F0FDF4] p-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-xs font-semibold text-[#15803D]">
-                  Calculated Markup Profit:
+            {/* 1-Click Discount Controls */}
+            <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Quick Discount
                 </span>
-                <span className="font-mono tabular-nums text-sm font-bold text-[#15803D]">
+                {activeDiscountPercent > 0 ? (
+                  <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                    <span className="rounded-full bg-[#1049EB] px-2 py-0.5 text-[11px] font-bold text-white">
+                      -{activeDiscountPercent}%
+                    </span>
+                    <span className="tabular-nums text-slate-400 line-through">
+                      {formatNaira(compareAtPrice)}
+                    </span>
+                    <span className="font-bold tabular-nums text-slate-950">
+                      {formatNaira(finalPrice)}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-slate-400">No active discount</span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[10, 15, 20, 25, 30].map((pct) => {
+                  const isActive = activeDiscountPercent === pct
+                  return (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => applyQuickDiscount(pct)}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                        isActive
+                          ? 'bg-[#1049EB] text-white'
+                          : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-950 hover:text-slate-950'
+                      }`}
+                    >
+                      -{pct}% Off
+                    </button>
+                  )
+                })}
+                {activeDiscountPercent > 0 || discountBadge ? (
+                  <button
+                    type="button"
+                    onClick={clearQuickDiscount}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-50"
+                  >
+                    Remove Discount
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3.5 text-xs">
+              <div className="flex items-baseline gap-2">
+                <span className="font-semibold text-slate-600">
+                  Calculated Profit Margin:
+                </span>
+                <span
+                  className={`font-mono tabular-nums text-sm font-bold ${
+                    markupAmount < 0 ? 'text-rose-600' : 'text-emerald-700'
+                  }`}
+                >
                   {formatNaira(markupAmount)}
                 </span>
               </div>
-              <span className="rounded-[4px] border border-[#BBF7D0] bg-white px-2.5 py-0.5 font-mono tabular-nums text-xs font-bold text-[#15803D]">
-                +{markupPercent}% Margin
+              <span
+                className={`font-mono tabular-nums font-bold ${
+                  markupAmount < 0 ? 'text-rose-600' : 'text-slate-900'
+                }`}
+              >
+                {markupPercent >= 0 ? `+${markupPercent}%` : `${markupPercent}%`} Margin
               </span>
             </div>
           </section>
@@ -1129,10 +1215,29 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                   type="text"
                   value={discountBadge}
                   onChange={(e) => setDiscountBadge(e.target.value)}
-                  placeholder="e.g. -20%"
+                  placeholder="e.g. -20%, Flash Sale"
                   className={`${inputBaseClass} font-mono`}
                 />
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {['New Arrival', 'Best Seller', 'Flash Deal', 'Limited Stock', 'Retail & Bulk'].map(
+                (preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setBadge(badge === preset ? '' : preset)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                      badge === preset
+                        ? 'bg-slate-950 text-white'
+                        : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-950 hover:text-slate-950'
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                )
+              )}
             </div>
 
             <label className="flex cursor-pointer items-center gap-2.5 border-t border-[#E5E7EB] pt-3 text-xs font-semibold text-[#374151]">
