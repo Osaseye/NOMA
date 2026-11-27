@@ -81,7 +81,9 @@ export function ProductDetailPage() {
     typeof window !== 'undefined'
       ? window.location.href
       : `https://shopnoma.com.ng/product/${product.slug}`
-  const ogImage = product.image || 'https://shopnoma.com.ng/images/og-noma-share.jpg'
+  const ogImage =
+    product.image ||
+    'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/og-noma-share.jpg'
 
   return (
     <>
