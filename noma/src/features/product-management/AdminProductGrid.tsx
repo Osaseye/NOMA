@@ -11,6 +11,7 @@ export function AdminProductGrid({ products }: { products: Product[] }) {
   const { deleteProduct, categories } = useProductStore()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const filtered = products.filter((p) => {
     const matchesCat = categoryFilter === 'all' || p.category === categoryFilter
@@ -148,16 +149,26 @@ export function AdminProductGrid({ products }: { products: Product[] }) {
                       </Link>
                       <button
                         type="button"
+                        disabled={deletingId === p.id}
                         onClick={async () => {
+                          if (deletingId === p.id) return
+                          setDeletingId(p.id)
                           try {
                             await deleteProduct(p.id)
                             toast.success(`"${p.name}" removed`)
-                          } catch {
-                            toast.error('Failed to remove product.')
+                          } catch (err: unknown) {
+                            console.error('Failed to remove product:', err)
+                            const message =
+                              err instanceof Error && err.message
+                                ? err.message
+                                : 'Failed to remove product.'
+                            toast.error(message)
+                          } finally {
+                            setDeletingId(null)
                           }
                         }}
                         aria-label={`Delete ${p.name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:border-slate-950 hover:text-slate-950"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:border-slate-950 hover:text-slate-950 disabled:opacity-40"
                       >
                         <Trash size={14} />
                       </button>

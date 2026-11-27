@@ -6,13 +6,24 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|Instagram|TelegramBot|LinkedInBot|Discordbot|Slackbot|Pinterest|Googlebot|bingbot|Applebot|iMessageLinkPreview|MetaInspector).*"
+          "value": ".*(WhatsApp|whatsapp|facebookexternalhit|Facebot|Meta-ExternalAgent|Meta-ExternalFetcher|Twitterbot|Instagram|TelegramBot|LinkedInBot|Discordbot|Slackbot|Pinterest|Googlebot|bingbot|Applebot|iMessageLinkPreview|MetaInspector|Snapchat|Viber|SkypeUriPreview).*"
         }
       ],
       "destination": "/api/og-product?slug=:slug"
     },
     {
-      "source": "/(.*)",
+      "source": "/product/:slug/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|whatsapp|facebookexternalhit|Facebot|Meta-ExternalAgent|Meta-ExternalFetcher|Twitterbot|Instagram|TelegramBot|LinkedInBot|Discordbot|Slackbot|Pinterest|Googlebot|bingbot|Applebot|iMessageLinkPreview|MetaInspector|Snapchat|Viber|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/og-product?slug=:slug"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],

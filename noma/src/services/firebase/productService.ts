@@ -24,22 +24,22 @@ function sanitizeForFirestore(obj: unknown): unknown {
   if (obj === undefined || obj === null) {
     return null
   }
+  if (typeof obj === 'number') {
+    return Number.isFinite(obj) ? obj : 0
+  }
   if (Array.isArray(obj)) {
     return obj
       .filter((item) => item !== undefined)
-      .map((item) => (typeof item === 'object' && item !== null ? sanitizeForFirestore(item) : item))
+      .map((item) => sanitizeForFirestore(item))
   }
   if (isPlainObject(obj)) {
     const cleaned: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(obj)) {
       if (value !== undefined) {
-        cleaned[key] = typeof value === 'object' && value !== null ? sanitizeForFirestore(value) : value
+        cleaned[key] = sanitizeForFirestore(value)
       }
     }
     return cleaned
-  }
-  if (typeof obj === 'number' && Number.isNaN(obj)) {
-    return 0
   }
   return obj
 }

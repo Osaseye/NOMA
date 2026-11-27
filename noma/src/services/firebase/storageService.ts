@@ -44,9 +44,23 @@ export const storageService = {
   },
 
   deleteImage: async (url: string): Promise<void> => {
-    const { useAdminStore } = await import('../../store/adminStore')
-    const storeSettings = useAdminStore.getState().settings
-    const provider = resolveR2Provider(storeSettings)
-    await provider.deleteImage(url)
+    const trimmed = url.trim()
+    if (
+      !trimmed ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('/images/') ||
+      trimmed.includes('firebasestorage.googleapis.com')
+    ) {
+      return
+    }
+    try {
+      const { useAdminStore } = await import('../../store/adminStore')
+      const storeSettings = useAdminStore.getState().settings
+      const provider = resolveR2Provider(storeSettings)
+      await provider.deleteImage(trimmed)
+    } catch (err) {
+      // Non-critical media cleanup should never fail product/record deletion
+      console.warn('Non-critical R2 media cleanup skipped:', err)
+    }
   },
 }

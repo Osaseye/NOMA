@@ -8,9 +8,16 @@ import { useCartStore } from '../../store/cartStore'
 import { useProductStore } from '../../store/productStore'
 import { formatNaira } from '../../utils/pricing'
 
-function toAbsoluteUrl(url: string): string {
+const SITE_URL = 'https://shopnoma.com.ng'
+const DEFAULT_OG_IMAGE = `${SITE_URL}/images/og-noma-share.jpg`
+
+function toShareImageUrl(url: string | undefined, productSlugOrId: string): string {
+  if (!url) return DEFAULT_OG_IMAGE
+  if (url.startsWith('data:image/')) {
+    return `${SITE_URL}/api/og-product?slug=${encodeURIComponent(productSlugOrId)}&image=1`
+  }
   if (url.startsWith('http://') || url.startsWith('https://')) return url
-  return `https://shopnoma.com.ng${url.startsWith('/') ? '' : '/'}${url}`
+  return `${SITE_URL}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 export function ProductDetailPage() {
@@ -24,7 +31,25 @@ export function ProductDetailPage() {
 
   const product = useMemo(() => {
     if (!slug) return undefined
-    return products.find((p) => p.slug === slug || p.id === slug)
+    let decoded = slug
+    try {
+      decoded = decodeURIComponent(slug)
+    } catch {
+      // Keep raw slug
+    }
+    const clean = decoded.trim()
+    const lower = clean.toLowerCase()
+    const trimmedHyphen = lower.replace(/-+$/, '')
+
+    return (
+      products.find((p) => p.slug === clean || p.id === clean) ||
+      products.find(
+        (p) =>
+          p.slug?.toLowerCase() === lower ||
+          p.id.toLowerCase() === lower ||
+          (trimmedHyphen.length > 0 && p.slug?.toLowerCase().replace(/-+$/, '') === trimmedHyphen),
+      )
+    )
   }, [products, slug])
 
   if (!product && products.length === 0) {
@@ -82,17 +107,19 @@ export function ProductDetailPage() {
   const metaDescription = product.description
     ? product.description.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 160)
     : `Buy ${product.name} at ${formatNaira(product.finalPrice)} on Shop Noma with fast nationwide delivery across Nigeria.`
-  const canonicalUrl = `https://shopnoma.com.ng/product/${encodeURIComponent(product.slug || product.id)}`
-  const ogImage = toAbsoluteUrl(product.image || 'https://shopnoma.com.ng/images/og-noma-share.jpg')
+  const productSlugOrId = product.slug || product.id
+  const canonicalUrl = `${SITE_URL}/product/${encodeURIComponent(productSlugOrId)}`
+  const ogImage = toShareImageUrl(product.image, productSlugOrId)
+  const jsonLdImages =
+    Array.isArray(product.images) && product.images.length > 0
+      ? Array.from(new Set(product.images.map((img) => toShareImageUrl(img, productSlugOrId))))
+      : [ogImage]
 
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    image:
-      Array.isArray(product.images) && product.images.length > 0
-        ? product.images.map(toAbsoluteUrl)
-        : [ogImage],
+    image: jsonLdImages,
     description: metaDescription,
     sku: product.id,
     brand: {

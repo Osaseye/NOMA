@@ -1,6 +1,30 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { settingsService, initialSiteSettings } from '../services/firebase/settingsService'
+
+const safeAdminStorage: StateStorage = {
+  getItem: (name) => {
+    try {
+      return window.localStorage.getItem(name)
+    } catch {
+      return null
+    }
+  },
+  setItem: (name, value) => {
+    try {
+      window.localStorage.setItem(name, value)
+    } catch (err) {
+      console.warn(`[adminStore] Failed to persist "${name}" to localStorage:`, err)
+    }
+  },
+  removeItem: (name) => {
+    try {
+      window.localStorage.removeItem(name)
+    } catch {
+      // Ignore storage errors
+    }
+  },
+}
 
 let settingsUnsubscribe: (() => void) | null = null
 
@@ -203,6 +227,7 @@ export const useAdminStore = create<AdminState>()(
     }),
     {
       name: 'noma_admin_store_v3',
+      storage: createJSONStorage(() => safeAdminStorage),
     }
   )
 )

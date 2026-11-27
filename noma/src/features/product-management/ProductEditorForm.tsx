@@ -360,7 +360,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
       brand: brand.trim() || 'Noma',
       basePrice: Number(basePrice) || 0,
       finalPrice: Number(finalPrice) || 0,
-      compareAtPrice: compareAtPrice > 0 ? Number(compareAtPrice) : undefined,
+      compareAtPrice: compareAtPrice > 0 ? Number(compareAtPrice) : 0,
       stockQty: Number(stockQty) || 0,
       badge: badge.trim() || '',
       discountBadge: discountBadge.trim() || '',
@@ -467,7 +467,6 @@ export function ProductEditorForm({ product }: { product?: Product }) {
             ref={studioInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleSelectStudioPhoto}
             className="hidden"
           />

@@ -68,8 +68,13 @@ export function SettingsPage() {
         discountBadge: `-${percent}%`,
       })
       toast.success(`Applied -${percent}% discount live.`)
-    } catch {
-      toast.error('Failed to update product discount.')
+    } catch (err: unknown) {
+      console.error('Failed to update product discount:', err)
+      const message =
+        err instanceof Error && err.message
+          ? `Failed to update product discount: ${err.message}`
+          : 'Failed to update product discount.'
+      toast.error(message)
     } finally {
       setUpdatingDiscountId(null)
     }
@@ -90,8 +95,13 @@ export function SettingsPage() {
         discountBadge: '',
       })
       toast.success('Discount removed and original price restored.')
-    } catch {
-      toast.error('Failed to clear product discount.')
+    } catch (err: unknown) {
+      console.error('Failed to clear product discount:', err)
+      const message =
+        err instanceof Error && err.message
+          ? `Failed to clear product discount: ${err.message}`
+          : 'Failed to clear product discount.'
+      toast.error(message)
     } finally {
       setUpdatingDiscountId(null)
     }

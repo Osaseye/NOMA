@@ -1,10 +1,41 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import type { Category, Customer, Order, OrderStatus, Product, ProductReview, SubCategory } from '../types/commerce'
 import { productService } from '../services/firebase/productService'
 import { categoryService } from '../services/firebase/categoryService'
 import { orderService } from '../services/firebase/orderService'
 import { reviewService } from '../services/firebase/reviewService'
+
+// Safe localStorage wrapper: prevents QuotaExceededError (e.g. large catalog/base64 cache)
+// or restricted browser storage from throwing inside Zustand set() and falsely failing writes.
+const safeLocalStorage: StateStorage = {
+  getItem: (name) => {
+    try {
+      return window.localStorage.getItem(name)
+    } catch {
+      return null
+    }
+  },
+  setItem: (name, value) => {
+    try {
+      window.localStorage.setItem(name, value)
+    } catch (err) {
+      console.warn(`[productStore] Failed to persist "${name}" to localStorage:`, err)
+      try {
+        window.localStorage.removeItem(name)
+      } catch {
+        // Ignore storage cleanup errors
+      }
+    }
+  },
+  removeItem: (name) => {
+    try {
+      window.localStorage.removeItem(name)
+    } catch {
+      // Ignore storage errors
+    }
+  },
+}
 
 let publicCoreUnsubscribe: (() => void) | null = null
 let reviewsUnsubscribe: (() => void) | null = null
@@ -459,6 +490,11 @@ export const useProductStore = create<ProductStoreState>()(
     },
     {
       name: 'noma_product_store_v3',
+      storage: createJSONStorage(() => safeLocalStorage),
+      partialize: (state) => ({
+        products: state.products,
+        categories: state.categories,
+      }),
     }
   )
 )
