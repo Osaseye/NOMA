@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../design-system/components/EmptyState'
+import { emailService } from '../../services/email/emailService'
 import {
   koraService,
   type KoraBankTransferAccount,
@@ -316,6 +317,12 @@ export function CheckoutPage() {
       clearCart()
       setKoraTransfer(null)
 
+      // Fire-and-forget customer receipt & admin alert emails via Resend Worker
+      void emailService.sendOrderConfirmedEmails(savedOrder, {
+        adminEmail: settings.supportEmail || undefined,
+        etaText: deliveryEstimate.etaDays,
+      })
+
       // Persist order ID locally so guest "Track Your Order" always shows recent orders immediately
       try {
         const raw = localStorage.getItem('noma_recent_order_ids')
@@ -337,6 +344,7 @@ export function CheckoutPage() {
       city,
       clearCart,
       deliveryMethod,
+      deliveryEstimate.etaDays,
       emailAddress,
       fullName,
       grandTotal,
@@ -346,6 +354,7 @@ export function CheckoutPage() {
       phoneNumber,
       profile.uid,
       saveAddress,
+      settings.supportEmail,
       shippingFee,
       state,
       additionalInfo,

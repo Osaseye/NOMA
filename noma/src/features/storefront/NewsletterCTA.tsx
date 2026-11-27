@@ -2,6 +2,7 @@ import { ArrowRight, WhatsappLogo } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { brand } from '../../constants/brand'
+import { emailService } from '../../services/email/emailService'
 import { useAdminStore } from '../../store/adminStore'
 
 export function NewsletterCTA() {
@@ -17,6 +18,7 @@ export function NewsletterCTA() {
       toast.error('Please enter a valid email address.')
       return
     }
+    void emailService.sendNewsletterWelcomeEmail(clean)
     toast.success('Welcome! You are now subscribed to Noma updates.')
     setEmail('')
   }

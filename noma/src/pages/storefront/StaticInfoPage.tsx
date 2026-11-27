@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { brand } from '../../constants/brand'
+import { emailService } from '../../services/email/emailService'
 import { useAdminStore } from '../../store/adminStore'
 import { useFeedbackStore } from '../../store/feedbackStore'
 
@@ -155,6 +156,16 @@ export function StaticInfoPage({ type }: { type: StaticPageType }) {
         topic: fbTopic,
         message: fbMessage.trim(),
       })
+      void emailService.sendSupportAlertEmail(
+        {
+          senderName: fbName.trim(),
+          senderEmail: fbEmail.trim() || undefined,
+          senderPhone: fbPhone.trim() || undefined,
+          subject: fbTopic,
+          message: fbMessage.trim(),
+        },
+        settings.supportEmail || brand.supportEmail || brand.email,
+      )
       setFbName('')
       setFbPhone('')
       setFbEmail('')

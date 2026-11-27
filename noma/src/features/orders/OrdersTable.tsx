@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { brand } from '../../constants/brand'
 import { EmptyState } from '../../design-system/components/EmptyState'
+import { emailService } from '../../services/email/emailService'
+import { useAdminStore } from '../../store/adminStore'
 import { useProductStore } from '../../store/productStore'
 import type { Order, OrderStatus } from '../../types/commerce'
 import { formatNaira } from '../../utils/pricing'
@@ -21,6 +23,7 @@ const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
   const { updateOrderStatus, deleteOrder } = useProductStore()
+  const { settings } = useAdminStore()
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -164,6 +167,9 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                         onChange={(e) => {
                           const next = e.target.value as OrderStatus
                           updateOrderStatus(order.id, next)
+                          void emailService.sendOrderStatusEmail(order, next, {
+                            adminEmail: settings.supportEmail || undefined,
+                          })
                           toast.success(`Order #${order.id} marked as ${statusLabel(next)}`)
                         }}
                         className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-900 focus:border-slate-950 focus:outline-none"

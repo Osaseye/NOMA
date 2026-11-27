@@ -18,6 +18,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { authService } from '../../services/firebase/authService'
+import { emailService } from '../../services/email/emailService'
 import { useUserStore, type DeliveryAddress, type UserProfile } from '../../store/userStore'
 
 const NIGERIAN_STATES = [
@@ -340,6 +341,7 @@ export function AccountPage() {
         regPhone.trim(),
       )
       syncFromFirebaseUser(user, createdDoc)
+      void emailService.sendCustomerWelcomeEmail(regEmail.trim(), regName.trim())
       toast.success('Account created successfully. Welcome to Noma.')
     } catch (err) {
       const msg = formatAuthError(err)
