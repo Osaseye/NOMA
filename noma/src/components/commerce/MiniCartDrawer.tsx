@@ -118,7 +118,7 @@ export function MiniCartDrawer() {
             initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.36, ease: 'easeOut' }}
             className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]"
             onClick={closeDrawer}
           />
@@ -127,7 +127,7 @@ export function MiniCartDrawer() {
             initial={reduceMotion ? { x: 0 } : { x: '100%' }}
             animate={{ x: 0 }}
             exit={reduceMotion ? { x: 0 } : { x: '100%' }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 flex h-[100dvh] w-full max-w-[400px] flex-col bg-white text-slate-900 shadow-2xl"
           >
             {/* Minimal Airy Header */}

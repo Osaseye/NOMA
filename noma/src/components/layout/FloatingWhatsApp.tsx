@@ -7,7 +7,7 @@ export function FloatingWhatsApp() {
   const location = useLocation()
   const { settings } = useAdminStore()
 
-  if (location.pathname === '/whatsapp-order' || location.pathname.startsWith('/admin')) {
+  if (location.pathname !== '/') {
     return null
   }
 

@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ComponentType } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
+import { AnimatedPageShell } from '../components/ui/MotionPrimitives'
 import { StorefrontLayout } from '../layouts/StorefrontLayout'
 import { HomePage } from '../pages/storefront/HomePage'
 import { RouteErrorPage } from '../pages/RouteErrorPage'
@@ -10,8 +11,10 @@ function lazyView<P extends object = Record<string, never>>(
 ) {
   const Component = lazy(async () => ({ default: await loader() }))
   return (
-    <Suspense fallback={null}>
-      <Component {...((props ?? {}) as P)} />
+    <Suspense fallback={<div className="min-h-[60vh]" />}>
+      <AnimatedPageShell>
+        <Component {...((props ?? {}) as P)} />
+      </AnimatedPageShell>
     </Suspense>
   )
 }
@@ -21,7 +24,14 @@ export const router = createBrowserRouter([
     element: <StorefrontLayout />,
     errorElement: <RouteErrorPage />,
     children: [
-      { path: '/', element: <HomePage /> },
+      {
+        path: '/',
+        element: (
+          <AnimatedPageShell>
+            <HomePage />
+          </AnimatedPageShell>
+        ),
+      },
       {
         path: '/catalog',
         element: lazyView(() => import('../pages/storefront/CatalogPage').then((m) => m.CatalogPage)),

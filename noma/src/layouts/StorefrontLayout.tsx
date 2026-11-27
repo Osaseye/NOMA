@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   CaretDown,
@@ -13,7 +13,6 @@ import { MiniCartDrawer } from '../components/commerce/MiniCartDrawer'
 import { FloatingWhatsApp } from '../components/layout/FloatingWhatsApp'
 import { StoreFooter } from '../components/layout/StoreFooter'
 import { StoreHeader } from '../components/layout/StoreHeader'
-import { PageTransition } from '../components/ui/MotionPrimitives'
 import { ScrollToTop } from '../components/ui/ScrollToTop'
 import { brand } from '../constants/brand'
 import { useAdminStore } from '../store/adminStore'
@@ -74,7 +73,6 @@ function NigeriaFlagIcon({ className = 'h-3.5 w-5' }: { className?: string }) {
 }
 
 export function StorefrontLayout() {
-  const location = useLocation()
   const prefersReducedMotion = useReducedMotion()
   const { settings } = useAdminStore()
   const deliveryState = useCartStore((state) => state.deliveryState)
@@ -279,9 +277,7 @@ export function StorefrontLayout() {
       <MiniCartDrawer />
 
       <main className="flex-1">
-        <PageTransition key={location.pathname}>
-          <Outlet />
-        </PageTransition>
+        <Outlet />
       </main>
 
       <StoreFooter />

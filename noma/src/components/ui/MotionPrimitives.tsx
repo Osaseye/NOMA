@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, useReducedMotion, type HTMLMotionProps, type Variants } from 'motion/react'
 
 const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1]
@@ -21,14 +22,19 @@ export function PageTransition({ children, className }: PageTransitionProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: EASE_OUT_EXPO }}
+      transition={{ duration: 0.44, ease: EASE_OUT_EXPO }}
       className={className}
     >
       {children}
     </motion.div>
   )
+}
+
+export function AnimatedPageShell({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation()
+  return <PageTransition key={pathname}>{children}</PageTransition>
 }
 
 interface ScrollRevealProps {
