@@ -1,25 +1,24 @@
 /**
- * Noma Marketplace — Reusable HTML Email Layout & Phase 1A Transactional Templates
+ * Noma Marketplace — Editorial HTML Email Layout & Complete Transactional/Campaign Templates
  *
- * Visual Spec:
- * - Single clean white 600px card on a soft #F5F5F7 canvas
- * - Full-width custom Noma header banner flush at the top
- * - Warm, human letter-style typography — zero UI icons, zero icon badges, zero heavy colored boxes
- * - Clean dark ink (#1F2937) paragraphs, bold lead-ins (#0F172A) for next steps
- * - Inline Noma Blue (#1049EB) links
- * - Lightweight #E5E7EB hairline receipt rows (tabular-nums Naira) only when needed
- * - Warm sign-off and a quiet 2-line muted footer (#6B7280)
- *
- * Pure zero-dependency TypeScript — runs identically in Cloudflare Workers (`noma-r2-api`) and browser/Node.
+ * Visual Direction:
+ * - Single clean white 600px card on a soft #F4F5F7 canvas with the custom Noma header banner
+ * - Editorial font pairing engineered for 100% native rendering in Gmail, Apple Mail & Outlook:
+ *   • Display Headlines: Georgia, 'Times New Roman', Times, serif (28px, refined regular weight)
+ *   • Eyebrows & Table Headers: Crisp uppercase tracked sans-serif (11px, 0.14em tracking)
+ *   • Body & Tabular Naira: Clean humanist sans-serif (#334155 body, #0B1220 ink values)
+ * - Thin Noma Blue (#1049EB) + Noma Gold (#FEB719) signature rule under every headline
+ * - Structured 3-column magazine-style receipt table + 2-column detail grid
+ * - Official-color Instagram, WhatsApp, and X social icons in the footer
  */
 
 export const NOMA_EMAIL_HEADER_BANNER_URL =
   'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/noma-email-header-banner.jpg'
 
 export const NOMA_EMAIL_SOCIAL_ICONS = {
-  instagram: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-instagram.png',
-  whatsapp: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-whatsapp.png',
-  x: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-x.png',
+  instagram: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-instagram-v2.png',
+  whatsapp: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-whatsapp-v2.png',
+  x: 'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/icon-x-v2.png',
 }
 
 export const DEFAULT_STOREFRONT_URL = 'https://shopnoma.com.ng'
@@ -107,8 +106,9 @@ export interface AdminSupportAlertEmailData {
   storefrontUrl?: string
 }
 
-const FONT_STACK =
-  "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif"
+const SERIF_FONT = "Georgia, 'Times New Roman', Times, serif"
+const SANS_FONT =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
 
 function escapeHtml(value: string): string {
   return value
@@ -131,31 +131,82 @@ function firstNameOf(fullName: string): string {
 }
 
 function inlineLink(label: string, href: string): string {
-  return `<a href="${escapeHtml(href)}" style="color:#1049EB;font-weight:600;text-decoration:none;border-bottom:1px solid #B7C9FB;padding-bottom:1px;">${escapeHtml(label)}</a>`
+  return `<a href="${escapeHtml(href)}" style="color:#1049EB;font-weight:600;text-decoration:none;border-bottom:1px solid #93B4FA;padding-bottom:1px;">${escapeHtml(label)}</a>`
 }
 
-function paragraph(htmlContent: string, marginBottom = 18): string {
-  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.72;font-weight:400;color:#374151;">${htmlContent}</p>`
+function primaryCta(label: string, href: string): string {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 6px 0;">
+      <tr>
+        <td align="center" bgcolor="#1049EB" style="border-radius:999px;">
+          <a href="${escapeHtml(href)}" style="display:inline-block;padding:13px 28px;font-family:${SANS_FONT};font-size:13.5px;font-weight:600;letter-spacing:0.01em;color:#FFFFFF;text-decoration:none;border-radius:999px;">
+            ${escapeHtml(label)} &nbsp;&rarr;
+          </a>
+        </td>
+      </tr>
+    </table>`
 }
 
-function leadInLine(leadIn: string, bodyHtml: string, marginBottom = 14): string {
-  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${FONT_STACK};font-size:14.5px;line-height:1.7;font-weight:400;color:#374151;"><strong style="color:#0B1220;font-weight:600;">${escapeHtml(leadIn)}</strong> ${bodyHtml}</p>`
+function paragraph(htmlContent: string, marginBottom = 16): string {
+  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${SANS_FONT};font-size:15px;line-height:1.75;font-weight:400;color:#334155;">${htmlContent}</p>`
 }
 
-function renderReceiptRows(
+function leadInLine(leadIn: string, bodyHtml: string, marginBottom = 13): string {
+  return `<p style="margin:0 0 ${marginBottom}px 0;font-family:${SANS_FONT};font-size:14.5px;line-height:1.7;font-weight:400;color:#334155;"><strong style="color:#0B1220;font-weight:700;">${escapeHtml(leadIn)}</strong> ${bodyHtml}</p>`
+}
+
+function renderTwoColDetails(
+  left: { label: string; value: string; sub?: string },
+  right: { label: string; value: string; sub?: string },
+): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;border-collapse:collapse;">
+      <tr>
+        <td width="50%" valign="top" style="padding:16px 14px 16px 0;border-right:1px solid #E2E8F0;">
+          <div style="font-family:${SANS_FONT};font-size:10.5px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:#64748B;margin-bottom:6px;">
+            ${escapeHtml(left.label)}
+          </div>
+          <div style="font-family:${SANS_FONT};font-size:14px;font-weight:600;line-height:1.45;color:#0B1220;">
+            ${escapeHtml(left.value)}
+          </div>
+          ${left.sub ? `<div style="font-family:${SANS_FONT};font-size:12.5px;line-height:1.5;color:#64748B;margin-top:3px;">${escapeHtml(left.sub)}</div>` : ''}
+        </td>
+        <td width="50%" valign="top" style="padding:16px 0 16px 18px;">
+          <div style="font-family:${SANS_FONT};font-size:10.5px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:#64748B;margin-bottom:6px;">
+            ${escapeHtml(right.label)}
+          </div>
+          <div style="font-family:${SANS_FONT};font-size:14px;font-weight:600;line-height:1.45;color:#0B1220;font-variant-numeric:tabular-nums;">
+            ${escapeHtml(right.value)}
+          </div>
+          ${right.sub ? `<div style="font-family:${SANS_FONT};font-size:12.5px;line-height:1.5;color:#64748B;margin-top:3px;">${escapeHtml(right.sub)}</div>` : ''}
+        </td>
+      </tr>
+    </table>`
+}
+
+function renderReceiptTable(
   items: EmailOrderItem[],
   summaryRows: Array<{ label: string; value: string; bold?: boolean }>,
 ): string {
   const itemRowsHtml = items
     .map((item) => {
-      const sizeText = item.size ? ` · Size ${escapeHtml(item.size)}` : ''
       const lineTotal = formatNairaEmail(item.unitPrice * item.quantity)
       return `
         <tr>
-          <td style="padding:13px 0;border-bottom:1px solid #EEF0F3;font-family:${FONT_STACK};font-size:14px;line-height:1.5;color:#111827;font-weight:500;">
-            ${escapeHtml(item.name)}<span style="color:#6B7280;font-weight:400;"> &times; ${item.quantity}${sizeText}</span>
+          <td valign="top" style="padding:14px 12px 14px 0;border-bottom:1px solid #E2E8F0;font-family:${SANS_FONT};">
+            <div style="font-size:14.5px;font-weight:600;line-height:1.4;color:#0B1220;">
+              ${escapeHtml(item.name)}
+            </div>
+            ${
+              item.size
+                ? `<div style="font-size:12.5px;color:#64748B;margin-top:2px;">Size ${escapeHtml(item.size)}</div>`
+                : ''
+            }
           </td>
-          <td align="right" style="padding:13px 0 13px 16px;border-bottom:1px solid #EEF0F3;font-family:${FONT_STACK};font-size:14px;line-height:1.5;font-weight:600;color:#0B1220;white-space:nowrap;font-variant-numeric:tabular-nums;">
+          <td align="center" valign="top" style="padding:14px 10px;border-bottom:1px solid #E2E8F0;font-family:${SANS_FONT};font-size:13.5px;font-weight:500;color:#475569;white-space:nowrap;font-variant-numeric:tabular-nums;">
+            &times;${item.quantity}
+          </td>
+          <td align="right" valign="top" style="padding:14px 0 14px 12px;border-bottom:1px solid #E2E8F0;font-family:${SANS_FONT};font-size:14.5px;font-weight:600;color:#0B1220;white-space:nowrap;font-variant-numeric:tabular-nums;">
             ${escapeHtml(lineTotal)}
           </td>
         </tr>`
@@ -165,16 +216,15 @@ function renderReceiptRows(
   const totalsHtml = summaryRows
     .map((row, idx) => {
       const isLast = idx === summaryRows.length - 1
-      const borderStyle = isLast ? 'border-bottom:none;' : 'border-bottom:1px solid #EEF0F3;'
-      const labelColor = row.bold ? '#0B1220' : '#6B7280'
-      const weight = row.bold ? '700' : '400'
-      const valueSize = row.bold ? '16px' : '14px'
+      const topBorder = row.bold ? 'border-top:1.5px solid #0B1220;' : ''
+      const padTop = row.bold ? '14px' : '9px'
+      const padBottom = isLast ? '4px' : '9px'
       return `
         <tr>
-          <td style="padding:11px 0;${borderStyle}font-family:${FONT_STACK};font-size:13.5px;font-weight:${weight};color:${labelColor};">
+          <td colspan="2" style="padding:${padTop} 12px ${padBottom} 0;${topBorder}font-family:${SANS_FONT};font-size:${row.bold ? '14px' : '13.5px'};font-weight:${row.bold ? '700' : '400'};color:${row.bold ? '#0B1220' : '#64748B'};letter-spacing:${row.bold ? '0.02em' : '0'};">
             ${escapeHtml(row.label)}
           </td>
-          <td align="right" style="padding:11px 0 11px 16px;${borderStyle}font-family:${FONT_STACK};font-size:${valueSize};font-weight:${row.bold ? '700' : '600'};color:#0B1220;white-space:nowrap;font-variant-numeric:tabular-nums;">
+          <td align="right" style="padding:${padTop} 0 ${padBottom} 12px;${topBorder}font-family:${SANS_FONT};font-size:${row.bold ? '18px' : '14px'};font-weight:${row.bold ? '700' : '600'};color:#0B1220;white-space:nowrap;font-variant-numeric:tabular-nums;">
             ${escapeHtml(row.value)}
           </td>
         </tr>`
@@ -182,7 +232,18 @@ function renderReceiptRows(
     .join('')
 
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;border-top:1px solid #EEF0F3;border-collapse:collapse;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 22px 0;border-collapse:collapse;">
+      <tr>
+        <th align="left" style="padding:0 12px 10px 0;border-bottom:2px solid #0B1220;font-family:${SANS_FONT};font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748B;">
+          Item
+        </th>
+        <th align="center" style="padding:0 10px 10px 10px;border-bottom:2px solid #0B1220;font-family:${SANS_FONT};font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748B;">
+          Qty
+        </th>
+        <th align="right" style="padding:0 0 10px 12px;border-bottom:2px solid #0B1220;font-family:${SANS_FONT};font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748B;">
+          Amount
+        </th>
+      </tr>
       ${itemRowsHtml}
       ${totalsHtml}
     </table>`
@@ -190,6 +251,7 @@ function renderReceiptRows(
 
 export interface NomaEmailLayoutOptions {
   preheader: string
+  eyebrow?: string
   heading: string
   bodyHtml: string
   signOff?: string
@@ -201,15 +263,15 @@ export interface NomaEmailLayoutOptions {
 }
 
 /**
- * Shared Noma Marketplace letter-style HTML email shell.
- * Single clean white 600px card on a soft #F6F7F9 canvas with the custom Noma header banner
- * and social media icons (Instagram, WhatsApp, X) in the quiet footer.
+ * Shared Noma Marketplace editorial HTML email shell.
+ * Pairs Georgia display serif headings with crisp sans-serif body & structured hairline tables.
  */
 export function renderNomaEmailLayout({
   preheader,
+  eyebrow = 'Noma Marketplace',
   heading,
   bodyHtml,
-  signOff = 'Warm regards,<br /><strong style="color:#0B1220;font-weight:700;">The Noma Team</strong>',
+  signOff = 'Warm regards,<br /><span style="font-family:Georgia, \'Times New Roman\', serif;font-size:16px;color:#0B1220;font-weight:700;">The Noma Team</span>',
   footerLine1 = 'Noma Marketplace · Retail & Wholesale across Nigeria',
   footerLine2 = 'Questions? Reply directly to this email anytime.',
   instagramUrl = DEFAULT_INSTAGRAM_URL,
@@ -223,24 +285,18 @@ export function renderNomaEmailLayout({
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="x-apple-disable-message-reformatting" />
   <title>${escapeHtml(heading)}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#F6F7F9;font-family:${FONT_STACK};-webkit-font-smoothing:antialiased;color:#374151;">
+<body style="margin:0;padding:0;background-color:#F4F5F7;font-family:${SANS_FONT};-webkit-font-smoothing:antialiased;color:#334155;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
     ${escapeHtml(preheader)}
   </div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F7F9;padding:32px 16px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4F5F7;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#FFFFFF;border:1px solid #EAECEF;border-radius:14px;overflow:hidden;border-collapse:separate;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;border-collapse:separate;">
           <!-- Full-Width Noma Header Banner -->
           <tr>
-            <td style="padding:0;line-height:0;font-size:0;border-bottom:1px solid #F1F3F5;">
+            <td style="padding:0;line-height:0;font-size:0;border-bottom:1px solid #EEF0F3;">
               <img
                 src="${NOMA_EMAIL_HEADER_BANNER_URL}"
                 alt="Noma — Everything You Need"
@@ -250,47 +306,64 @@ export function renderNomaEmailLayout({
             </td>
           </tr>
 
-          <!-- Letter Body -->
+          <!-- Editorial Letter Body -->
           <tr>
-            <td style="padding:36px 40px 32px 40px;">
-              <h1 style="margin:0 0 22px 0;font-family:${FONT_STACK};font-size:23px;line-height:1.28;font-weight:700;letter-spacing:-0.025em;color:#0B1220;">
+            <td style="padding:38px 42px 34px 42px;">
+              <!-- Tracked Uppercase Eyebrow -->
+              <div style="margin:0 0 10px 0;font-family:${SANS_FONT};font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#1049EB;">
+                ${escapeHtml(eyebrow)}
+              </div>
+
+              <!-- Editorial Serif Display Headline -->
+              <h1 style="margin:0 0 18px 0;font-family:${SERIF_FONT};font-size:28px;line-height:1.24;font-weight:400;letter-spacing:-0.015em;color:#0B1220;">
                 ${escapeHtml(heading)}
               </h1>
 
+              <!-- Thin Brand Signature Accent Rule (Noma Blue + Noma Gold) -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
+                <tr>
+                  <td width="38" height="2" bgcolor="#1049EB" style="font-size:0;line-height:0;">&nbsp;</td>
+                  <td width="6" height="2" style="font-size:0;line-height:0;">&nbsp;</td>
+                  <td width="14" height="2" bgcolor="#FEB719" style="font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+
               ${bodyHtml}
 
-              <p style="margin:28px 0 0 0;font-family:${FONT_STACK};font-size:14.5px;line-height:1.7;color:#374151;">
+              <p style="margin:30px 0 0 0;font-family:${SANS_FONT};font-size:14.5px;line-height:1.75;color:#475569;">
                 ${signOff}
               </p>
             </td>
           </tr>
 
-          <!-- Quiet Footer with Social Media Icons -->
+          <!-- Clean Centered Footer with Full-Color Social Icons -->
           <tr>
-            <td style="padding:22px 40px 28px 40px;border-top:1px solid #EEF0F3;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <td align="center" style="padding:26px 40px 30px 40px;border-top:1px solid #EEF0F3;background-color:#FAFAFB;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 14px auto;">
                 <tr>
-                  <td valign="middle">
-                    <p style="margin:0 0 4px 0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;font-weight:500;color:#6B7280;">
-                      ${escapeHtml(footerLine1)}
-                    </p>
-                    <p style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;color:#9CA3AF;">
-                      ${escapeHtml(footerLine2)}
-                    </p>
+                  <td style="padding:0 7px;">
+                    <a href="${escapeHtml(instagramUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on Instagram" style="display:inline-block;text-decoration:none;">
+                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.instagram}" alt="Instagram" width="30" height="30" style="display:block;width:30px;height:30px;border:0;border-radius:8px;" />
+                    </a>
                   </td>
-                  <td align="right" valign="middle" style="white-space:nowrap;padding-left:16px;">
-                    <a href="${escapeHtml(instagramUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on Instagram" style="display:inline-block;text-decoration:none;margin-right:8px;">
-                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.instagram}" alt="Instagram" width="28" height="28" style="display:block;width:28px;height:28px;border:0;" />
+                  <td style="padding:0 7px;">
+                    <a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on WhatsApp" style="display:inline-block;text-decoration:none;">
+                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.whatsapp}" alt="WhatsApp" width="30" height="30" style="display:block;width:30px;height:30px;border:0;border-radius:8px;" />
                     </a>
-                    <a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on WhatsApp" style="display:inline-block;text-decoration:none;margin-right:8px;">
-                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.whatsapp}" alt="WhatsApp" width="28" height="28" style="display:block;width:28px;height:28px;border:0;" />
-                    </a>
+                  </td>
+                  <td style="padding:0 7px;">
                     <a href="${escapeHtml(xUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Noma on X" style="display:inline-block;text-decoration:none;">
-                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.x}" alt="X" width="28" height="28" style="display:block;width:28px;height:28px;border:0;" />
+                      <img src="${NOMA_EMAIL_SOCIAL_ICONS.x}" alt="X" width="30" height="30" style="display:block;width:30px;height:30px;border:0;border-radius:8px;" />
                     </a>
                   </td>
                 </tr>
               </table>
+              <p style="margin:0 0 4px 0;font-family:${SANS_FONT};font-size:12px;line-height:1.5;font-weight:600;color:#475569;">
+                ${escapeHtml(footerLine1)}
+              </p>
+              <p style="margin:0;font-family:${SANS_FONT};font-size:12px;line-height:1.5;color:#94A3B8;">
+                ${escapeHtml(footerLine2)}
+              </p>
             </td>
           </tr>
         </table>
@@ -316,7 +389,7 @@ export function orderConfirmedEmail(data: OrderConfirmedEmailData): RenderedEmai
   const destination = [data.address, data.deliveryArea].filter(Boolean).join(', ')
   const eta = data.etaText || '2–5 business days'
 
-  const receiptHtml = renderReceiptRows(data.items, [
+  const receiptHtml = renderReceiptTable(data.items, [
     { label: 'Subtotal', value: formatNairaEmail(data.subtotal) },
     {
       label: 'Delivery',
@@ -325,33 +398,37 @@ export function orderConfirmedEmail(data: OrderConfirmedEmailData): RenderedEmai
     { label: 'Total Paid', value: formatNairaEmail(data.total), bold: true },
   ])
 
+  const detailsHtml = renderTwoColDetails(
+    {
+      label: 'Delivery Destination',
+      value: destination || 'Nigeria',
+    },
+    {
+      label: 'Estimated Arrival',
+      value: eta,
+      sub: data.paymentRef ? `Ref: ${data.paymentRef}` : undefined,
+    },
+  )
+
   const bodyHtml = [
     paragraph(`Hi ${escapeHtml(firstName)},`),
     paragraph(
-      `Thank you for your order. We have received your payment and your order <strong style="color:#0F172A;">${escapeHtml(data.orderId)}</strong> is now confirmed.`,
+      `Thank you for shopping with Noma. Your payment has been confirmed and our fulfillment team is now preparing and quality-checking your order.`,
     ),
     receiptHtml,
-    leadInLine('Delivery destination:', escapeHtml(destination || 'Nigeria')),
+    detailsHtml,
     leadInLine(
       'What happens next:',
-      `Our fulfillment team is preparing and quality-checking your items. Estimated delivery is ${escapeHtml(eta)}, and we will email you as soon as your package is dispatched.`,
-    ),
-    leadInLine(
-      'Track your order:',
-      `You can follow every stage of your delivery anytime on your ${inlineLink('live order tracking page', trackUrl)}.`,
+      `As soon as your package is handed to our dispatch partner, we will email you with live delivery details.`,
       0,
     ),
-    data.paymentRef
-      ? paragraph(
-          `<span style="font-size:13px;color:#6B7280;">Payment reference: ${escapeHtml(data.paymentRef)}</span>`,
-          0,
-        )
-      : '',
+    primaryCta('Track Your Order', trackUrl),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `Order ${data.orderId} confirmed — ${formatNairaEmail(data.total)} received.`,
-    heading: `Your Noma order ${data.orderId} is confirmed`,
+    eyebrow: `Order Confirmation · ${data.orderId}`,
+    heading: `Thank you, ${firstName}. Your order is confirmed.`,
     bodyHtml,
     whatsappUrl: waUrl,
   })
@@ -374,7 +451,7 @@ export function orderConfirmedEmail(data: OrderConfirmedEmailData): RenderedEmai
     `Total Paid: ${formatNairaEmail(data.total)}`,
     '',
     `Delivery destination: ${destination || 'Nigeria'}`,
-    `What happens next: Our team is preparing your items (ETA ${eta}). We will email you once dispatched.`,
+    `Estimated arrival: ${eta}`,
     `Track your order: ${trackUrl}`,
     '',
     'Warm regards,',
@@ -395,29 +472,28 @@ export function orderDispatchedEmail(data: OrderDispatchedEmailData): RenderedEm
   const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
   const trackUrl = `${baseUrl}/orders/${encodeURIComponent(data.orderId)}`
   const firstName = firstNameOf(data.customerName)
-  const eta = data.etaText || 'soon'
+  const eta = data.etaText || 'Shortly'
+
+  const detailsHtml = renderTwoColDetails(
+    { label: 'Destination', value: data.deliveryArea || 'Nigeria' },
+    { label: 'Arrival Window', value: eta, sub: data.riderNote || 'Rider will call before arrival' },
+  )
 
   const bodyHtml = [
     paragraph(`Hi ${escapeHtml(firstName)},`),
     paragraph(
-      `Good news — your Noma order <strong style="color:#0F172A;">${escapeHtml(data.orderId)}</strong> has left our fulfillment desk and is now on its way to <strong style="color:#0F172A;">${escapeHtml(data.deliveryArea)}</strong>.`,
+      `Your Noma order has left our fulfillment desk and is now on its way to you. Please keep your phone line reachable so handover is smooth.`,
     ),
-    data.riderNote ? leadInLine('Dispatch note:', escapeHtml(data.riderNote)) : '',
-    leadInLine(
-      'What happens next:',
-      `Our delivery partner will call your phone number before arriving (${escapeHtml(eta)}). Please keep your line reachable so handover is smooth.`,
-    ),
-    leadInLine(
-      'Follow live progress:',
-      `View your updated delivery timeline on ${inlineLink(`order ${data.orderId}`, trackUrl)}.`,
-      0,
-    ),
+    detailsHtml,
+    primaryCta('Follow Live Progress', trackUrl),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `Order ${data.orderId} is on its way to ${data.deliveryArea}.`,
-    heading: `Your order ${data.orderId} is on the way`,
+    eyebrow: `Out for Delivery · ${data.orderId}`,
+    heading: `Your order is on its way`,
     bodyHtml,
+    whatsappUrl: data.whatsappUrl,
   })
 
   const text = [
@@ -425,7 +501,6 @@ export function orderDispatchedEmail(data: OrderDispatchedEmailData): RenderedEm
     '',
     `Your Noma order ${data.orderId} has been dispatched and is heading to ${data.deliveryArea}.`,
     data.riderNote ? `Dispatch note: ${data.riderNote}` : '',
-    `What happens next: Our delivery partner will reach out by phone before arriving (${eta}).`,
     `Track live progress: ${trackUrl}`,
     '',
     'Warm regards,',
@@ -461,32 +536,30 @@ export function orderDeliveredEmail(data: OrderDeliveredEmailData): RenderedEmai
   const bodyHtml = [
     paragraph(`Hi ${escapeHtml(firstName)},`),
     paragraph(
-      `Your Noma order <strong style="color:#0F172A;">${escapeHtml(data.orderId)}</strong> (${itemSummary}) has been delivered. We hope everything arrived in great condition.`,
-    ),
-    leadInLine(
-      'Share a quick review:',
-      `If you have a minute, ${inlineLink('leave a short rating on Noma', reviewUrl)} — your honest feedback helps other shoppers across Nigeria.`,
+      `Your Noma order (${itemSummary}) has been delivered. We hope everything arrived in great condition and fits right in.`,
     ),
     leadInLine(
       'Need anything else?',
       `If anything isn't right with your package, simply reply to this email or ${inlineLink('message us on WhatsApp', waUrl)} and our team will sort it out quickly.`,
       0,
     ),
+    primaryCta('Leave a Quick Review', reviewUrl),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `Order ${data.orderId} has been delivered — thank you for shopping with Noma.`,
-    heading: `Order ${data.orderId} has been delivered`,
+    eyebrow: `Delivered · ${data.orderId}`,
+    heading: `Your Noma package has arrived`,
     bodyHtml,
+    whatsappUrl: waUrl,
   })
 
   const text = [
     `Hi ${firstName},`,
     '',
     `Your Noma order ${data.orderId} has been delivered. We hope everything arrived in great condition.`,
-    '',
     `Share a quick review: ${reviewUrl}`,
-    `Need help? Reply to this email or chat with us on WhatsApp: ${waUrl}`,
+    `Need help? Chat on WhatsApp: ${waUrl}`,
     '',
     'Warm regards,',
     'The Noma Team',
@@ -509,26 +582,28 @@ export function orderCancelledEmail(data: OrderCancelledEmailData): RenderedEmai
   const catalogUrl = `${baseUrl}/catalog`
 
   const refundText = data.wasPaid
-    ? `Your payment of <strong style="color:#0F172A;font-variant-numeric:tabular-nums;">${escapeHtml(formatNairaEmail(data.total))}</strong> is being refunded to your original payment method. Bank refunds typically reflect within 1–3 business days.`
+    ? `Your payment of <strong style="color:#0B1220;font-variant-numeric:tabular-nums;">${escapeHtml(formatNairaEmail(data.total))}</strong> is being refunded to your original payment method (typically 1–3 business days).`
     : `No charge was completed for this order, so no further action is needed on your side.`
 
   const bodyHtml = [
     paragraph(`Hi ${escapeHtml(firstName)},`),
     paragraph(
-      `This is a quick note to let you know that your Noma order <strong style="color:#0F172A;">${escapeHtml(data.orderId)}</strong> has been cancelled.${data.reason ? ` Reason: ${escapeHtml(data.reason)}.` : ''}`,
+      `This is a quick note to confirm that your Noma order <strong style="color:#0B1220;">${escapeHtml(data.orderId)}</strong> has been cancelled.${data.reason ? ` Reason: ${escapeHtml(data.reason)}.` : ''}`,
     ),
     leadInLine('Payment & refund:', refundText),
     leadInLine(
       'Need assistance?',
-      `If this was unexpected or you would like help placing a replacement order, ${inlineLink('message our team on WhatsApp', waUrl)} or ${inlineLink('browse the catalog', catalogUrl)}.`,
+      `If this was unexpected or you would like help placing a replacement order, ${inlineLink('chat with our team on WhatsApp', waUrl)} or ${inlineLink('browse the catalog', catalogUrl)}.`,
       0,
     ),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `Update regarding your Noma order ${data.orderId}.`,
+    eyebrow: `Order Update · ${data.orderId}`,
     heading: `Order ${data.orderId} was cancelled`,
     bodyHtml,
+    whatsappUrl: waUrl,
   })
 
   const text = [
@@ -572,34 +647,32 @@ export function adminNewOrderEmail(data: AdminNewOrderEmailData): RenderedEmail 
     })
   }
 
-  const receiptHtml = renderReceiptRows(data.items, summaryRows)
+  const detailsHtml = renderTwoColDetails(
+    {
+      label: 'Customer',
+      value: data.customerName,
+      sub: [data.customerPhone, data.customerEmail].filter(Boolean).join(' · '),
+    },
+    {
+      label: 'Destination',
+      value: data.deliveryArea || 'Nigeria',
+      sub: data.paymentRef ? `${data.paymentMethod || 'Transfer'} · ${data.paymentRef}` : undefined,
+    },
+  )
 
   const bodyHtml = [
     paragraph(
-      `A new paid order <strong style="color:#0F172A;">${escapeHtml(data.orderId)}</strong> for <strong style="color:#0F172A;font-variant-numeric:tabular-nums;">${escapeHtml(formatNairaEmail(data.total))}</strong> just came in.`,
+      `A new paid order for <strong style="color:#0B1220;font-variant-numeric:tabular-nums;">${escapeHtml(formatNairaEmail(data.total))}</strong> just arrived and is ready for fulfillment.`,
     ),
-    leadInLine(
-      'Customer:',
-      `${escapeHtml(data.customerName)} · ${escapeHtml(data.customerPhone)}${data.customerEmail ? ` · ${escapeHtml(data.customerEmail)}` : ''}`,
-    ),
-    leadInLine('Destination:', escapeHtml(data.deliveryArea || 'Nigeria')),
-    data.paymentRef
-      ? leadInLine(
-          'Payment:',
-          `${escapeHtml(data.paymentMethod || 'Bank Transfer')} (${escapeHtml(data.paymentRef)})`,
-        )
-      : '',
-    receiptHtml,
-    leadInLine(
-      'Next step:',
-      `Review items, assign a rider, and update fulfillment status on ${inlineLink(`Admin Order ${data.orderId}`, adminOrderUrl)}.`,
-      0,
-    ),
+    detailsHtml,
+    renderReceiptTable(data.items, summaryRows),
+    primaryCta(`Open Order ${data.orderId} in Admin`, adminOrderUrl),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `New paid order ${data.orderId} — ${formatNairaEmail(data.total)} from ${data.customerName}.`,
-    heading: `New paid order: ${data.orderId}`,
+    eyebrow: `Admin Alert · ${data.orderId}`,
+    heading: `New paid order received`,
     bodyHtml,
     signOff: '— Noma Operations',
     footerLine2: 'Internal admin notification from Noma Marketplace.',
@@ -631,24 +704,28 @@ export function adminSupportAlertEmail(data: AdminSupportAlertEmailData): Render
   const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
   const inboxUrl = `${baseUrl}/admin/feedback`
 
-  const contactLine = [data.senderEmail, data.senderPhone].filter(Boolean).join(' · ')
+  const detailsHtml = renderTwoColDetails(
+    {
+      label: 'From',
+      value: data.senderName,
+      sub: [data.senderEmail, data.senderPhone].filter(Boolean).join(' · ') || undefined,
+    },
+    {
+      label: 'Topic',
+      value: data.subject || 'General Inquiry',
+    },
+  )
 
   const bodyHtml = [
-    paragraph(
-      `<strong style="color:#0F172A;">${escapeHtml(data.senderName)}</strong> just submitted a new message through the Noma support page.`,
-    ),
-    leadInLine('Subject:', escapeHtml(data.subject || 'General Inquiry')),
-    contactLine ? leadInLine('Contact:', escapeHtml(contactLine)) : '',
-    `<div style="margin:18px 0;padding:14px 0;border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;font-family:${FONT_STACK};font-size:15px;line-height:1.65;color:#1F2937;white-space:pre-line;">${escapeHtml(data.message)}</div>`,
-    leadInLine(
-      'Respond:',
-      `Open the ${inlineLink('Admin Feedback Inbox', inboxUrl)} or reply directly to the customer.`,
-      0,
-    ),
+    paragraph(`A shopper just sent a new message through the Noma support page.`),
+    detailsHtml,
+    `<div style="margin:20px 0;font-family:${SANS_FONT};font-size:15px;line-height:1.75;color:#1E293B;white-space:pre-line;">${escapeHtml(data.message)}</div>`,
+    primaryCta('Open Feedback Inbox', inboxUrl),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `New support message from ${data.senderName}: ${data.subject}`,
+    eyebrow: 'Customer Support Inbox',
     heading: `New customer message`,
     bodyHtml,
     signOff: '— Noma Operations',
@@ -658,14 +735,11 @@ export function adminSupportAlertEmail(data: AdminSupportAlertEmailData): Render
   const text = [
     `New support message from ${data.senderName}`,
     `Subject: ${data.subject || 'General Inquiry'}`,
-    contactLine ? `Contact: ${contactLine}` : '',
     '',
     data.message,
     '',
     `Open Feedback Inbox: ${inboxUrl}`,
-  ]
-    .filter(Boolean)
-    .join('\n')
+  ].join('\n')
 
   return {
     subject: `Support Message: ${data.subject || data.senderName}`,
@@ -695,7 +769,7 @@ export function customerWelcomeEmail(data: CustomerWelcomeEmailData): RenderedEm
   const bodyHtml = [
     paragraph(`Hi ${escapeHtml(firstName)},`),
     paragraph(
-      `Welcome to Noma. Your account is ready, and we're glad to have you with us.`,
+      `Welcome to Noma. Your account is now active — designed to make everyday retail and wholesale shopping across Nigeria effortless.`,
     ),
     leadInLine(
       'Faster checkout:',
@@ -703,28 +777,25 @@ export function customerWelcomeEmail(data: CustomerWelcomeEmailData): RenderedEm
     ),
     leadInLine(
       'Live order tracking:',
-      `Every order you place is tracked step-by-step from confirmation to doorstep delivery on your ${inlineLink('orders page', `${baseUrl}/orders`)}.`,
-    ),
-    leadInLine(
-      'Start exploring:',
-      `Browse fashion, footwear, home appliances, cookware, and everyday essentials in ${inlineLink('the Noma catalog', `${baseUrl}/catalog`)}.`,
+      `Follow every order step-by-step from confirmation to doorstep delivery on your ${inlineLink('orders page', `${baseUrl}/orders`)}.`,
       0,
     ),
+    primaryCta('Explore the Catalog', `${baseUrl}/catalog`),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `Welcome to Noma Marketplace, ${firstName}. Your account is ready.`,
-    heading: `Welcome to Noma, ${firstName}`,
+    eyebrow: 'Welcome to Noma',
+    heading: `Glad to have you with us, ${firstName}.`,
     bodyHtml,
-    footerLine2: `Need help with anything? Reply to this email or chat with us on WhatsApp (${waUrl.replace('https://', '')}).`,
+    whatsappUrl: waUrl,
   })
 
   const text = [
     `Hi ${firstName},`,
     '',
     'Welcome to Noma. Your account is ready.',
-    `Account & saved address: ${baseUrl}/account`,
-    `Track orders: ${baseUrl}/orders`,
+    `Account: ${baseUrl}/account`,
     `Browse catalog: ${baseUrl}/catalog`,
     '',
     'Warm regards,',
@@ -749,27 +820,22 @@ export interface NewsletterWelcomeEmailData {
  */
 export function newsletterWelcomeEmail(data: NewsletterWelcomeEmailData): RenderedEmail {
   const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
-  const greeting = data.subscriberName ? `Hi ${escapeHtml(firstNameOf(data.subscriberName))},` : 'Hello,'
+  const greeting = data.subscriberName
+    ? `Hi ${escapeHtml(firstNameOf(data.subscriberName))},`
+    : 'Hello,'
 
   const bodyHtml = [
     paragraph(greeting),
     paragraph(
-      `Thanks for joining Noma Insider. We keep our emails short, thoughtful, and worth opening — only writing when there is something genuinely useful to share.`,
+      `Thank you for joining Noma Insider. We keep our notes brief, curated, and worth opening — writing only when fresh arrivals, restocks, or seasonal offers drop.`,
     ),
-    leadInLine(
-      'What you can expect:',
-      `Early notice on fresh arrivals, restocks on bestsellers, seasonal offers, and occasional wholesale drops.`,
-    ),
-    leadInLine(
-      'While you are here:',
-      `Take a look at ${inlineLink('what is trending on Noma right now', `${baseUrl}/catalog`)}.`,
-      0,
-    ),
+    primaryCta('See What Is Trending', `${baseUrl}/catalog`),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `You're on the Noma Insider list for new drops and seasonal offers.`,
-    heading: `You're on the Noma Insider list`,
+    eyebrow: 'Noma Insider',
+    heading: `You're on the list.`,
     bodyHtml,
     footerLine2: data.unsubscribeUrl
       ? `You can unsubscribe anytime at ${data.unsubscribeUrl}.`
@@ -779,7 +845,7 @@ export function newsletterWelcomeEmail(data: NewsletterWelcomeEmailData): Render
   const text = [
     data.subscriberName ? `Hi ${firstNameOf(data.subscriberName)},` : 'Hello,',
     '',
-    "Thanks for joining Noma Insider. We'll send you early notice on new arrivals, restocks, and seasonal offers.",
+    "Thanks for joining Noma Insider. We'll notify you on fresh arrivals, restocks, and seasonal offers.",
     `Browse what's trending: ${baseUrl}/catalog`,
     '',
     'Warm regards,',
@@ -804,11 +870,13 @@ export interface StoreUpdateEmailData {
 }
 
 /**
- * 9. `store_update` — Clean letter template for platform updates, delivery news, or order packing notes.
+ * 9. `store_update` — Editorial letter for platform updates, delivery news, or packing updates.
  */
 export function storeUpdateEmail(data: StoreUpdateEmailData): RenderedEmail {
   const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
-  const greeting = data.recipientName ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},` : 'Hello,'
+  const greeting = data.recipientName
+    ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},`
+    : 'Hello,'
 
   const bodyHtml = [
     paragraph(greeting),
@@ -817,19 +885,15 @@ export function storeUpdateEmail(data: StoreUpdateEmailData): RenderedEmail {
       leadInLine(
         h.leadIn.endsWith(':') ? h.leadIn : `${h.leadIn}:`,
         escapeHtml(h.detail),
-        idx === data.highlights.length - 1 && !data.ctaLabel ? 0 : 12,
+        idx === data.highlights.length - 1 ? 0 : 13,
       ),
     ),
-    data.ctaLabel
-      ? paragraph(
-          inlineLink(data.ctaLabel, data.ctaUrl || `${baseUrl}/catalog`),
-          0,
-        )
-      : '',
+    data.ctaLabel ? primaryCta(data.ctaLabel, data.ctaUrl || `${baseUrl}/catalog`) : '',
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: data.introParagraph.slice(0, 110),
+    eyebrow: 'Noma Update',
     heading: data.title,
     bodyHtml,
   })
@@ -867,26 +931,30 @@ export interface NewArrivalsEmailData {
 }
 
 /**
- * 10. `new_arrivals` — Clean hairline list showcasing newly added items or restocks on Noma.
+ * 10. `new_arrivals` — Structured hairline table showcasing newly added items or restocks.
  */
 export function newArrivalsEmail(data: NewArrivalsEmailData): RenderedEmail {
   const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
-  const greeting = data.recipientName ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},` : 'Hello,'
-  const heading = data.headline || 'Fresh arrivals just landed on Noma'
+  const greeting = data.recipientName
+    ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},`
+    : 'Hello,'
+  const heading = data.headline || 'Fresh arrivals just landed.'
   const intro =
     data.introNote ||
-    'We just added a new batch of quality-checked pieces across our store. Here are a few highlights now in stock:'
+    'We just added a curated batch of quality-checked pieces across our store. Here are a few highlights now in stock:'
 
   const rowsHtml = data.items
     .map((item) => {
       const url = `${baseUrl}/product/${encodeURIComponent(item.slug)}`
-      const catText = item.category ? ` · ${escapeHtml(item.category)}` : ''
       return `
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;font-family:${FONT_STACK};font-size:14px;line-height:1.5;color:#1F2937;">
-            ${inlineLink(item.name, url)}<span style="color:#6B7280;">${catText}</span>
+          <td valign="top" style="padding:14px 12px 14px 0;border-bottom:1px solid #E2E8F0;font-family:${SANS_FONT};">
+            <div style="font-size:14.5px;font-weight:600;line-height:1.4;">
+              ${inlineLink(item.name, url)}
+            </div>
+            ${item.category ? `<div style="font-size:12.5px;color:#64748B;margin-top:2px;">${escapeHtml(item.category)}</div>` : ''}
           </td>
-          <td align="right" style="padding:12px 0 12px 16px;border-bottom:1px solid #E5E7EB;font-family:${FONT_STACK};font-size:14px;font-weight:600;color:#0F172A;white-space:nowrap;font-variant-numeric:tabular-nums;">
+          <td align="right" valign="top" style="padding:14px 0 14px 12px;border-bottom:1px solid #E2E8F0;font-family:${SANS_FONT};font-size:14.5px;font-weight:700;color:#0B1220;white-space:nowrap;font-variant-numeric:tabular-nums;">
             ${escapeHtml(formatNairaEmail(item.price))}
           </td>
         </tr>`
@@ -894,7 +962,15 @@ export function newArrivalsEmail(data: NewArrivalsEmailData): RenderedEmail {
     .join('')
 
   const listTable = `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 22px 0;border-top:1px solid #E5E7EB;border-collapse:collapse;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 18px 0;border-collapse:collapse;">
+      <tr>
+        <th align="left" style="padding:0 12px 10px 0;border-bottom:2px solid #0B1220;font-family:${SANS_FONT};font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748B;">
+          New Piece
+        </th>
+        <th align="right" style="padding:0 0 10px 12px;border-bottom:2px solid #0B1220;font-family:${SANS_FONT};font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748B;">
+          Price
+        </th>
+      </tr>
       ${rowsHtml}
     </table>`
 
@@ -902,15 +978,12 @@ export function newArrivalsEmail(data: NewArrivalsEmailData): RenderedEmail {
     paragraph(greeting),
     paragraph(escapeHtml(intro)),
     listTable,
-    leadInLine(
-      'See everything new:',
-      `Explore the full collection on ${inlineLink('Noma Marketplace', `${baseUrl}/catalog`)}.`,
-      0,
-    ),
+    primaryCta('Shop New Arrivals', `${baseUrl}/catalog`),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `${heading} — see what just landed on Noma.`,
+    eyebrow: 'New Arrivals',
     heading,
     bodyHtml,
   })
@@ -940,10 +1013,10 @@ export function newArrivalsEmail(data: NewArrivalsEmailData): RenderedEmail {
 
 export interface SeasonalPromoEmailData {
   recipientName?: string
-  campaignName: string // e.g., "Christmas & Holiday Sale", "Detty December Deals", "Black Friday", "Eid Offer"
+  campaignName: string
   headline: string
   message: string
-  offerSummary: string // e.g., "Up to 25% off selected fashion, cookware, and appliances"
+  offerSummary: string
   promoCode?: string
   validUntil?: string
   ctaLabel?: string
@@ -952,33 +1025,37 @@ export interface SeasonalPromoEmailData {
 }
 
 /**
- * 11. `seasonal_promo` — Tasteful letter-style template for Christmas, holiday sales, flash deals, and promos.
+ * 11. `seasonal_promo` — Editorial template for Christmas, Detty December, Black Friday, Eid, and flash sales.
  */
 export function seasonalPromoEmail(data: SeasonalPromoEmailData): RenderedEmail {
   const baseUrl = (data.storefrontUrl || DEFAULT_STOREFRONT_URL).replace(/\/$/, '')
-  const greeting = data.recipientName ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},` : 'Hello,'
+  const greeting = data.recipientName
+    ? `Hi ${escapeHtml(firstNameOf(data.recipientName))},`
+    : 'Hello,'
   const targetUrl = data.ctaUrl || `${baseUrl}/catalog`
+
+  const detailsHtml = renderTwoColDetails(
+    {
+      label: 'The Offer',
+      value: data.offerSummary,
+    },
+    {
+      label: data.promoCode ? 'Promo Code' : 'Availability',
+      value: data.promoCode || data.validUntil || 'Limited time',
+      sub: data.promoCode && data.validUntil ? `Valid until ${data.validUntil}` : undefined,
+    },
+  )
 
   const bodyHtml = [
     paragraph(greeting),
     paragraph(escapeHtml(data.message)),
-    leadInLine('The offer:', escapeHtml(data.offerSummary)),
-    data.promoCode
-      ? leadInLine(
-          'Promo code:',
-          `<strong style="color:#0F172A;font-family:monospace;letter-spacing:0.04em;">${escapeHtml(data.promoCode)}</strong> at checkout.`,
-        )
-      : '',
-    data.validUntil ? leadInLine('Available until:', escapeHtml(data.validUntil)) : '',
-    leadInLine(
-      'Shop early:',
-      `Popular sizes and bestsellers move quickly — ${inlineLink(data.ctaLabel || 'shop the sale on Noma', targetUrl)}.`,
-      0,
-    ),
+    detailsHtml,
+    primaryCta(data.ctaLabel || 'Shop the Sale', targetUrl),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `${data.campaignName}: ${data.offerSummary}`,
+    eyebrow: data.campaignName,
     heading: data.headline,
     bodyHtml,
   })
@@ -1026,27 +1103,26 @@ export function vendorWelcomeEmail(data: VendorWelcomeEmailData): RenderedEmail 
   const bodyHtml = [
     paragraph(`Hi ${escapeHtml(firstName)},`),
     paragraph(
-      `Welcome aboard — <strong style="color:#0F172A;">${escapeHtml(data.storeName)}</strong> has been approved to sell on Noma Marketplace.`,
+      `Welcome aboard — <strong style="color:#0B1220;">${escapeHtml(data.storeName)}</strong> has been approved to sell on Noma Marketplace.`,
     ),
     leadInLine(
       'Upload your products:',
-      `Sign in to ${inlineLink('your Noma Vendor Portal', portalUrl)} to upload product photos. Our AI listing assistant will help draft clean titles, descriptions, and specs for review.`,
+      `Add product photos in your Vendor Portal and our AI listing assistant will draft clean titles, descriptions, and specs for review.`,
     ),
     leadInLine(
-      'How orders & payouts work:',
-      `Whenever a customer pays for one of your items, we notify you immediately for dispatch and settle your earnings directly to your verified bank account.`,
-    ),
-    leadInLine(
-      'Need onboarding help?',
-      `Reply to this email or ${inlineLink('message our vendor desk on WhatsApp', waUrl)} anytime.`,
+      'Orders & payouts:',
+      `Every paid order alerts you immediately for dispatch, and earnings settle directly to your verified bank account.`,
       0,
     ),
+    primaryCta('Open Your Vendor Portal', portalUrl),
   ].join('')
 
   const html = renderNomaEmailLayout({
     preheader: `${data.storeName} is approved on Noma Marketplace — start uploading your products.`,
-    heading: `${data.storeName} is approved on Noma`,
+    eyebrow: 'Noma Vendor Portal',
+    heading: `${data.storeName} is approved on Noma.`,
     bodyHtml,
+    whatsappUrl: waUrl,
   })
 
   const text = [
@@ -1054,7 +1130,7 @@ export function vendorWelcomeEmail(data: VendorWelcomeEmailData): RenderedEmail 
     '',
     `Welcome aboard — ${data.storeName} has been approved to sell on Noma Marketplace.`,
     `Vendor Portal: ${portalUrl}`,
-    `Need help? Chat with our vendor desk on WhatsApp: ${waUrl}`,
+    `Need help? Chat on WhatsApp: ${waUrl}`,
     '',
     'Warm regards,',
     'The Noma Team',
