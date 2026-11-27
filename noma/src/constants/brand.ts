@@ -5,8 +5,9 @@ export const brand = {
   phone: '+234 803 000 6662',
   whatsappNumber: '2348030006662',
   whatsapp: 'https://wa.me/2348030006662',
-  email: 'hello@shopnoma.com',
-  supportEmail: 'support@shopnoma.com',
+  email: 'support@shopnoma.com.ng',
+  supportEmail: 'support@shopnoma.com.ng',
+  website: 'https://shopnoma.com.ng',
   salary: 80000,
 }
 

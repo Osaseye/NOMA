@@ -53,7 +53,7 @@ export const initialSiteSettings: SiteSettings = {
   announcementText: 'Nationwide delivery across Nigeria • Retail & bulk orders available',
   announcementActive: true,
   supportPhone: '+234 803 000 6662',
-  supportEmail: 'support@shopnoma.com',
+  supportEmail: 'support@shopnoma.com.ng',
   whatsappNumber: '2348030006662',
   storageProvider: 'cloudflare_r2',
   cloudflareBucketUrl: '',

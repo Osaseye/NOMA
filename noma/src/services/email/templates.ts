@@ -16,7 +16,7 @@
 export const NOMA_EMAIL_HEADER_BANNER_URL =
   'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/noma-email-header-banner.jpg'
 
-export const DEFAULT_STOREFRONT_URL = 'https://noma-africa.vercel.app'
+export const DEFAULT_STOREFRONT_URL = 'https://shopnoma.com.ng'
 export const DEFAULT_WHATSAPP_URL = 'https://wa.me/2348104189461'
 
 export interface RenderedEmail {

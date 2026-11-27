@@ -103,7 +103,7 @@ export function SettingsPage() {
   const announcementActive = draft.announcementActive ?? settings.announcementActive
   const whatsappNumber = draft.whatsappNumber ?? settings.whatsappNumber
   const supportPhone = draft.supportPhone ?? settings.supportPhone
-  const supportEmail = draft.supportEmail ?? settings.supportEmail ?? 'support@shopnoma.com'
+  const supportEmail = draft.supportEmail ?? settings.supportEmail ?? 'support@shopnoma.com.ng'
   const cloudflareUploadEndpoint =
     draft.cloudflareUploadEndpoint ??
     settings.cloudflareUploadEndpoint ??
@@ -1318,7 +1318,7 @@ export function SettingsPage() {
                 onChange={(e) =>
                   setDraft((prev) => ({ ...prev, supportEmail: e.target.value }))
                 }
-                placeholder="support@shopnoma.com"
+                placeholder="support@shopnoma.com.ng"
                 className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-950 focus:border-slate-950 focus:outline-none"
               />
             </div>

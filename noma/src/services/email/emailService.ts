@@ -46,7 +46,7 @@ function resolveStorefrontUrl(): string {
   if (typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin
   }
-  return 'https://noma-africa.vercel.app'
+  return 'https://shopnoma.com.ng'
 }
 
 export const emailService = {
