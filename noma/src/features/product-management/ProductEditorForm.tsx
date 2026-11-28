@@ -170,7 +170,16 @@ export function ProductEditorForm({ product }: { product?: Product }) {
   }
 
   const selectedCategoryObj = categories.find((c) => c.id === category)
-  const availableSubCategories = selectedCategoryObj?.subcategories || []
+  const availableSubCategories = (() => {
+    const raw = selectedCategoryObj?.subcategories || []
+    const seen = new Set<string>()
+    return raw.filter((sub) => {
+      const key = sub.label.trim().toLowerCase()
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  })()
   const categoryMarkupPercent = selectedCategoryObj?.defaultMarkupPercent ?? 20
 
   const selectedSupplierObj = suppliers.find((s) => s.id === supplierId)
@@ -583,7 +592,7 @@ export function ProductEditorForm({ product }: { product?: Product }) {
                     <option value="">Select Subcategory</option>
                     {availableSubCategories.map((sub) => (
                       <option key={sub.id} value={sub.label}>
-                        {sub.label} {sub.ageGroup ? `(${sub.ageGroup})` : ''}
+                        {sub.label}
                       </option>
                     ))}
                   </select>

@@ -1,5 +1,4 @@
 import {
-  ArrowRight,
   CaretRight,
   CheckCircle,
   CircleNotch,
@@ -10,6 +9,7 @@ import {
   Truck,
   UserPlus,
   WarningCircle,
+  X,
 } from '@phosphor-icons/react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -63,6 +63,7 @@ export function MyOrdersPage() {
 
   const [activeTab, setActiveTab] = useState<OrderFilterTab>('All Orders')
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   const [guestOrderInput, setGuestOrderInput] = useState(initialQueryId)
   const [searchedGuestOrder, setSearchedGuestOrder] = useState<Order | null>(null)
@@ -356,16 +357,6 @@ export function MyOrdersPage() {
                       </div>
                     </div>
                   ) : null}
-
-                  <div className="flex justify-end border-t border-slate-200 pt-4">
-                    <Link
-                      to={`/orders/${encodeURIComponent(searchedGuestOrder.id)}`}
-                      className="inline-flex items-center gap-2 rounded-full bg-[#1049EB] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
-                    >
-                      <span>Open Full Order Page</span>
-                      <ArrowRight size={14} weight="bold" />
-                    </Link>
-                  </div>
                 </div>
               ) : null}
 
@@ -495,13 +486,13 @@ export function MyOrdersPage() {
                           </strong>
                         </div>
 
-                        <Link
-                          to={`/orders/${encodeURIComponent(order.id)}`}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+                        <button
+                          type="button"
+                          onClick={() => setSelectedOrder(order)}
+                          className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                         >
-                          <span>View Order Details</span>
-                          <ArrowRight size={13} weight="bold" />
-                        </Link>
+                          View Details
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -511,6 +502,93 @@ export function MyOrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Order Details Modal */}
+      {selectedOrder ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+          <div className="relative max-h-[90vh] w-full max-w-xl space-y-5 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setSelectedOrder(null)}
+              aria-label="Close order details"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700"
+            >
+              <X size={16} weight="bold" />
+            </button>
+
+            <div className="border-b border-slate-100 pb-4">
+              <span className="inline-block rounded-full bg-[#F4F4F5] px-3 py-0.5 text-[11px] font-semibold capitalize text-slate-800">
+                {selectedOrder.status}
+              </span>
+              <h3 className="mt-2 text-lg font-bold text-slate-900">Order {selectedOrder.id}</h3>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Ref: {selectedOrder.paymentRef || 'N/A'}
+                {selectedOrder.paymentMethod ? ` • ${selectedOrder.paymentMethod.toUpperCase()}` : ''}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-[#F4F4F5] p-4 text-xs">
+              <span className="mb-1 block font-bold text-slate-900">Delivery Address</span>
+              <p className="font-medium text-slate-800">{selectedOrder.customer}</p>
+              <p className="text-slate-500">{selectedOrder.phone}</p>
+              <p className="mt-1 text-slate-600">
+                {[selectedOrder.address, selectedOrder.deliveryArea].filter(Boolean).join(', ')}
+              </p>
+            </div>
+
+            {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+              <div className="space-y-2">
+                <span className="block text-xs font-bold text-slate-900">Items</span>
+                <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div
+                      key={`${item.productId}-${idx}`}
+                      className="flex items-center justify-between gap-3 p-3 text-xs"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="h-10 w-10 shrink-0 rounded-lg bg-[#F4F4F5] object-contain p-1"
+                          />
+                        ) : null}
+                        <div className="min-w-0">
+                          <span className="block truncate font-semibold text-slate-900">
+                            {item.name}
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            Qty {item.quantity}
+                            {item.size ? ` • Size ${item.size}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <strong className="shrink-0 font-bold tabular-nums text-slate-900">
+                        {formatNaira(item.unitPrice * item.quantity)}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-2 border-t border-slate-100 pt-4 text-xs">
+              <div className="flex items-center justify-between text-slate-500">
+                <span>Delivery Fee</span>
+                <span className="font-semibold tabular-nums text-slate-900">
+                  {formatNaira(selectedOrder.deliveryFee)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-bold text-slate-900">Total</span>
+                <strong className="text-lg font-bold tabular-nums text-slate-900">
+                  {formatNaira(selectedOrder.total)}
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

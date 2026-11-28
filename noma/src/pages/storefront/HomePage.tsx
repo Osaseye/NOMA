@@ -1,5 +1,5 @@
 import { ScrollReveal } from '../../components/ui/MotionPrimitives'
-import { CuratedBanners } from '../../features/storefront/CuratedBanners'
+import { VendorPartnerBanner } from '../../features/storefront/VendorPartnerBanner'
 import { HomeHero } from '../../features/storefront/HomeHero'
 import { NewsletterCTA } from '../../features/storefront/NewsletterCTA'
 import { ShopByCategory } from '../../features/storefront/ShopByCategory'
@@ -24,7 +24,7 @@ export function HomePage() {
         <TodaysBestDeals />
       </ScrollReveal>
       <ScrollReveal>
-        <CuratedBanners />
+        <VendorPartnerBanner />
       </ScrollReveal>
       <ScrollReveal>
         <NewsletterCTA />

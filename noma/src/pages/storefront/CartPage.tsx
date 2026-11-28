@@ -175,7 +175,7 @@ export function CartPage() {
               action={
                 <Link
                   to="/catalog"
-                  className="inline-flex items-center justify-center rounded-full bg-[#1049EB] px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-[#0D3EC7]"
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                 >
                   Start Shopping
                 </Link>
@@ -219,7 +219,7 @@ export function CartPage() {
                       ) : (
                         <span className="text-slate-600">
                           Add{' '}
-                          <strong className="font-bold tabular-nums text-slate-900">
+                          <strong className="font-bold text-slate-900">
                             {formatNaira(remainingForFreeShipping)}
                           </strong>{' '}
                           more for free standard delivery
@@ -284,7 +284,7 @@ export function CartPage() {
                             ) : null}
                           </div>
 
-                          <div className="text-xs font-medium tabular-nums text-slate-500">
+                          <div className="text-xs font-medium text-slate-500">
                             {formatNaira(product.finalPrice)} each
                           </div>
                         </div>
@@ -404,7 +404,7 @@ export function CartPage() {
                 </div>
                 <div className="flex items-center gap-2.5">
                   <ShieldCheck size={15} weight="regular" className="shrink-0 text-[#1049EB]" />
-                  <span>Instant Bank Transfer &amp; Card checkout</span>
+                  <span>Instant Bank Transfer &amp; Card checkout via Kora</span>
                 </div>
               </div>
             </div>

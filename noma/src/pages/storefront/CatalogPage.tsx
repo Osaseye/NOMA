@@ -119,13 +119,57 @@ export function CatalogPage() {
         c.id.toLowerCase() === activeCategory.id.toLowerCase() ||
         c.label.toLowerCase() === activeCategory.label.toLowerCase(),
     )
-    if (adminCat?.subcategories && adminCat.subcategories.length > 0) {
-      return adminCat.subcategories
-    }
-    return subCategoryMap[activeCategory.id] || []
+    const raw =
+      adminCat?.subcategories && adminCat.subcategories.length > 0
+        ? adminCat.subcategories
+        : subCategoryMap[activeCategory.id] || []
+    const seen = new Set<string>()
+    return raw.filter((sub) => {
+      const key = sub.label.trim().toLowerCase()
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
   }, [activeCategory, categories])
 
   const filteredProducts = useMemo(() => {
+    const selectedSubObj =
+      activeSubCategory && activeSubCategory !== 'all'
+        ? activeCategorySubcategories.find(
+            (s) =>
+              s.id.toLowerCase() === activeSubCategory.toLowerCase() ||
+              s.label.toLowerCase() === activeSubCategory.toLowerCase(),
+          )
+        : undefined
+
+    const normalizeTerm = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+    const subMatchTokens: string[] = []
+    if (activeSubCategory && activeSubCategory !== 'all') {
+      const idNorm = normalizeTerm(activeSubCategory)
+      if (idNorm && !idNorm.startsWith('sub ')) subMatchTokens.push(idNorm)
+      if (selectedSubObj?.label) {
+        const labelNorm = normalizeTerm(selectedSubObj.label)
+        if (labelNorm) {
+          subMatchTokens.push(labelNorm)
+          if (labelNorm.endsWith('s') && labelNorm.length > 3) {
+            subMatchTokens.push(labelNorm.slice(0, -1))
+          }
+          // e.g. "air fryers" -> also match "fryer" for deep fryers / air fryers
+          const words = labelNorm.split(' ').filter((w) => w.length > 3)
+          if (words.length > 1) {
+            const lastWord = words[words.length - 1]
+            subMatchTokens.push(lastWord.endsWith('s') ? lastWord.slice(0, -1) : lastWord)
+          }
+        }
+      }
+    }
+
     return products.filter((p) => {
       if (categoryId && categoryId !== 'all') {
         const matchesCat =
@@ -139,12 +183,24 @@ export function CatalogPage() {
 
       if (activeSubCategory && activeSubCategory !== 'all') {
         const cleanSub = activeSubCategory.toLowerCase()
-        const matchesSub =
-          p.subCategory?.toLowerCase() === cleanSub ||
-          p.subcategory?.toLowerCase() === cleanSub ||
-          (p.specs && p.specs.some((spec) => spec.toLowerCase().includes(cleanSub))) ||
-          p.name.toLowerCase().includes(cleanSub)
-        if (!matchesSub) return false
+        const prodSub = (p.subCategory || p.subcategory || '').toLowerCase()
+        const prodSubNorm = normalizeTerm(prodSub)
+        const searchableText = normalizeTerm(
+          `${p.name} ${prodSub} ${p.description || ''} ${(p.specs || []).join(' ')}`,
+        )
+
+        const exactMatch =
+          prodSub === cleanSub ||
+          (selectedSubObj &&
+            (prodSub === selectedSubObj.id.toLowerCase() ||
+              prodSub === selectedSubObj.label.toLowerCase() ||
+              prodSubNorm === normalizeTerm(selectedSubObj.label)))
+
+        const tokenMatch =
+          subMatchTokens.length > 0 &&
+          subMatchTokens.some((tok) => searchableText.includes(tok))
+
+        if (!exactMatch && !tokenMatch) return false
       }
 
       if (inStockOnly && p.stockQty <= 0) return false
@@ -153,7 +209,15 @@ export function CatalogPage() {
 
       return true
     })
-  }, [categoryId, activeSubCategory, inStockOnly, minRating, maxPriceFilter, products])
+  }, [
+    categoryId,
+    activeSubCategory,
+    activeCategorySubcategories,
+    inStockOnly,
+    minRating,
+    maxPriceFilter,
+    products,
+  ])
 
   const sortedProducts = useMemo(() => {
     const result = [...filteredProducts]

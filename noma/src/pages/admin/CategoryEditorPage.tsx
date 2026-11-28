@@ -268,9 +268,6 @@ export function CategoryEditorPage() {
                 >
                   <div>
                     <span className="font-semibold text-slate-950">{sub.label}</span>
-                    {sub.genderTarget ? (
-                      <span className="ml-2 text-slate-400">({sub.genderTarget})</span>
-                    ) : null}
                   </div>
                   <button
                     type="button"
