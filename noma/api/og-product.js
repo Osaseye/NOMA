@@ -1,7 +1,21 @@
-const SITE_URL = 'https://shopnoma.com.ng'
-const DEFAULT_OG_IMAGE = `${SITE_URL}/images/og-noma-share.jpg`
+const DEFAULT_SITE_URL = 'https://noma-africa.vercel.app'
+const DEFAULT_OG_IMAGE =
+  'https://pub-104edba51a2647c881c1c4db7f453fa7.r2.dev/email/og-noma-share.jpg'
 const FIRESTORE_BASE =
   'https://firestore.googleapis.com/v1/projects/nokenko-1ab8b/databases/noma/documents'
+
+function getRequestOrigin(req) {
+  const rawHost = req.headers?.['x-forwarded-host'] || req.headers?.host || ''
+  const host = String(Array.isArray(rawHost) ? rawHost[0] : rawHost)
+    .split(',')[0]
+    .trim()
+  if (!host) return DEFAULT_SITE_URL
+  const rawProto = req.headers?.['x-forwarded-proto'] || 'https'
+  const proto = String(Array.isArray(rawProto) ? rawProto[0] : rawProto)
+    .split(',')[0]
+    .trim() || 'https'
+  return `${proto}://${host}`
+}
 
 function escapeHtml(value) {
   return String(value || '')
@@ -63,11 +77,11 @@ function parseDataImageUri(uri) {
   }
 }
 
-function toAbsoluteHttpUrl(url) {
+function toAbsoluteHttpUrl(url, siteUrl = DEFAULT_SITE_URL) {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   if (url.startsWith('data:')) return ''
-  return `${SITE_URL}${url.startsWith('/') ? '' : '/'}${url}`
+  return `${siteUrl}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 async function isImageReachable(url, timeoutMs = 2500) {
@@ -98,21 +112,21 @@ async function isImageReachable(url, timeoutMs = 2500) {
   }
 }
 
-async function resolveOgImage(fields, productSlugOrId) {
+async function resolveOgImage(fields, productSlugOrId, siteUrl) {
   const candidates = readFsCandidateImages(fields)
   for (const raw of candidates) {
     const parsedData = parseDataImageUri(raw)
     if (parsedData) {
       return {
-        url: `${SITE_URL}/api/og-product?slug=${encodeURIComponent(productSlugOrId)}&image=1`,
+        url: `${siteUrl}/api/og-product?slug=${encodeURIComponent(productSlugOrId)}&image=1`,
         contentType: parsedData.mimeType,
       }
     }
 
-    const absUrl = toAbsoluteHttpUrl(raw)
+    const absUrl = toAbsoluteHttpUrl(raw, siteUrl)
     if (!absUrl) continue
 
-    if (absUrl.startsWith(`${SITE_URL}/`)) {
+    if (absUrl.startsWith(`${siteUrl}/`)) {
       return { url: absUrl, contentType: '' }
     }
 
@@ -224,6 +238,7 @@ async function fetchProductBySlugOrId(slugOrId) {
 }
 
 export default async function handler(req, res) {
+  const siteUrl = getRequestOrigin(req)
   const rawSlug = Array.isArray(req.query?.slug) ? req.query.slug[0] : req.query?.slug || ''
   const slug = normalizeSlugInput(rawSlug)
   const isImageRequest = req.query?.image === '1' || req.query?.mode === 'image'
@@ -248,7 +263,7 @@ export default async function handler(req, res) {
           res.status(200).send(buffer)
           return
         }
-        const absUrl = toAbsoluteHttpUrl(raw)
+        const absUrl = toAbsoluteHttpUrl(raw, siteUrl)
         if (absUrl) {
           res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
           res.redirect(302, absUrl)
@@ -268,12 +283,12 @@ export default async function handler(req, res) {
   const productSlug = fields ? readFsString(fields, 'slug') || found.id : slug
 
   const resolvedImage = fields
-    ? await resolveOgImage(fields, productSlug || found.id)
+    ? await resolveOgImage(fields, productSlug || found.id, siteUrl)
     : { url: DEFAULT_OG_IMAGE, contentType: 'image/jpeg' }
   const productImage = resolvedImage.url
   const productImageType = resolvedImage.contentType
 
-  const canonicalUrl = `${SITE_URL}/product/${encodeURIComponent(productSlug || slug)}`
+  const canonicalUrl = `${siteUrl}/product/${encodeURIComponent(productSlug || slug)}`
   const title = name
     ? `${name} — ${formatNaira(finalPrice)} | Shop Noma`
     : 'Shop Noma | Everyday Living, Delivered Across Nigeria'
