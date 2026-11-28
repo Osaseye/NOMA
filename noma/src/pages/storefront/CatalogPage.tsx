@@ -80,7 +80,15 @@ export function CatalogPage() {
 
   const [sort, setSort] = useState<'popular' | 'newest' | 'price-asc' | 'price-desc'>('popular')
   const [sortOpen, setSortOpen] = useState(false)
-  const [activeSubCategory, setActiveSubCategory] = useState('all')
+  const [subCategoryState, setSubCategoryState] = useState<{
+    categoryKey: string
+    value: string
+  }>({ categoryKey: activeCategoryKey, value: 'all' })
+  const activeSubCategory =
+    subCategoryState.categoryKey === activeCategoryKey ? subCategoryState.value : 'all'
+  const setActiveSubCategory = (nextSub: string) => {
+    setSubCategoryState({ categoryKey: activeCategoryKey, value: nextSub })
+  }
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [inStockOnly, setInStockOnly] = useState(false)
   const [minRating, setMinRating] = useState<number | null>(null)
@@ -149,22 +157,20 @@ export function CatalogPage() {
         .replace(/\s+/g, ' ')
         .trim()
 
-    const subMatchTokens: string[] = []
+    const subPhrases: string[] = []
     if (activeSubCategory && activeSubCategory !== 'all') {
       const idNorm = normalizeTerm(activeSubCategory)
-      if (idNorm && !idNorm.startsWith('sub ')) subMatchTokens.push(idNorm)
+      if (idNorm && !idNorm.startsWith('sub ')) subPhrases.push(idNorm)
       if (selectedSubObj?.label) {
         const labelNorm = normalizeTerm(selectedSubObj.label)
         if (labelNorm) {
-          subMatchTokens.push(labelNorm)
+          subPhrases.push(labelNorm)
           if (labelNorm.endsWith('s') && labelNorm.length > 3) {
-            subMatchTokens.push(labelNorm.slice(0, -1))
+            subPhrases.push(labelNorm.slice(0, -1))
           }
-          // e.g. "air fryers" -> also match "fryer" for deep fryers / air fryers
-          const words = labelNorm.split(' ').filter((w) => w.length > 3)
-          if (words.length > 1) {
-            const lastWord = words[words.length - 1]
-            subMatchTokens.push(lastWord.endsWith('s') ? lastWord.slice(0, -1) : lastWord)
+          // Specific product-type synonym: "air fryers" also matches "deep fryer"
+          if (labelNorm.includes('fryer')) {
+            subPhrases.push('fryer')
           }
         }
       }
@@ -183,24 +189,29 @@ export function CatalogPage() {
 
       if (activeSubCategory && activeSubCategory !== 'all') {
         const cleanSub = activeSubCategory.toLowerCase()
-        const prodSub = (p.subCategory || p.subcategory || '').toLowerCase()
+        const prodSub = (p.subCategory || p.subcategory || '').trim().toLowerCase()
         const prodSubNorm = normalizeTerm(prodSub)
-        const searchableText = normalizeTerm(
-          `${p.name} ${prodSub} ${p.description || ''} ${(p.specs || []).join(' ')}`,
-        )
+        const selectedLabelNorm = selectedSubObj ? normalizeTerm(selectedSubObj.label) : ''
 
         const exactMatch =
           prodSub === cleanSub ||
           (selectedSubObj &&
             (prodSub === selectedSubObj.id.toLowerCase() ||
               prodSub === selectedSubObj.label.toLowerCase() ||
-              prodSubNorm === normalizeTerm(selectedSubObj.label)))
+              (selectedLabelNorm !== '' && prodSubNorm === selectedLabelNorm)))
 
-        const tokenMatch =
-          subMatchTokens.length > 0 &&
-          subMatchTokens.some((tok) => searchableText.includes(tok))
-
-        if (!exactMatch && !tokenMatch) return false
+        if (exactMatch) {
+          // Explicit subcategory match
+        } else if (prodSub && !prodSub.startsWith('sub-')) {
+          // Product is explicitly assigned to a DIFFERENT subcategory — do not bleed across subcategories
+          return false
+        } else {
+          // Product has no explicit subcategory: match full phrase against product title/specs
+          const titleAndSpecs = normalizeTerm(`${p.name} ${(p.specs || []).join(' ')}`)
+          const phraseMatch =
+            subPhrases.length > 0 && subPhrases.some((phrase) => titleAndSpecs.includes(phrase))
+          if (!phraseMatch) return false
+        }
       }
 
       if (inStockOnly && p.stockQty <= 0) return false
