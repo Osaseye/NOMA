@@ -150,12 +150,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Price & Add Button */}
       <div className="mt-3.5 flex items-center justify-between gap-2 pt-2">
-        <div className="min-w-0">
-          <span className="block text-sm font-bold tabular-nums text-slate-900 sm:text-base">
+        <div className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-bold tabular-nums text-slate-900 sm:text-base">
             {formatNaira(product.finalPrice)}
           </span>
           {retailCompareAt ? (
-            <span className="block text-[11px] tabular-nums text-slate-400 line-through">
+            <span className="block truncate text-[11px] tabular-nums text-slate-400 line-through">
               {formatNaira(retailCompareAt)}
             </span>
           ) : null}
@@ -165,8 +165,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <motion.button
             type="button"
             onClick={handleAddToCart}
-            whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
-            className={`inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-3.5 text-xs font-semibold transition-colors ${
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.94 }}
+            aria-label={added ? 'Added to bag' : hasSizes ? 'Select options' : 'Add to bag'}
+            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-full text-xs font-semibold transition-colors sm:w-auto sm:px-3.5 ${
               added
                 ? 'bg-emerald-600 text-white'
                 : 'bg-slate-900 text-white hover:bg-[#1049EB]'
@@ -174,13 +175,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           >
             {added ? (
               <>
-                <Check size={12} weight="bold" />
-                <span>Added</span>
+                <Check size={13} weight="bold" />
+                <span className="hidden sm:inline">Added</span>
               </>
             ) : (
               <>
-                <Plus size={12} weight="bold" />
-                <span>{hasSizes ? 'Options' : 'Add'}</span>
+                <Plus size={13} weight="bold" />
+                <span className="hidden sm:inline">{hasSizes ? 'Options' : 'Add'}</span>
               </>
             )}
           </motion.button>
