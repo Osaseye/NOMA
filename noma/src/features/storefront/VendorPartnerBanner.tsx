@@ -74,7 +74,7 @@ export function VendorPartnerBanner() {
             {/* Right 6 Cols: Noma Brand Illustration */}
             <div className="relative flex h-full min-h-[260px] items-center justify-center bg-white lg:col-span-6 lg:min-h-[400px]">
               <img
-                src="/images/email-header-banner.jpg"
+                src="/images/vendor-partner-banner.jpg"
                 alt="Shop Noma Brand Partners — Nigerian entrepreneurs and shoppers"
                 loading="lazy"
                 className="h-full w-full object-cover object-center"
